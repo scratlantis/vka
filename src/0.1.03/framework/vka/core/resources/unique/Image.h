@@ -43,6 +43,10 @@ class Image_R : public Resource_T<VkImage>
 	// Current configuration
 	VkImageCreateInfo ci;
 
+	// Relative area
+	float relativeWidth  = 1.0f;
+	float relativeHeight = 1.0f;
+
 	// Overrides
 	VkFormat          format;
 	VkExtent3D        extent;
@@ -53,6 +57,12 @@ class Image_R : public Resource_T<VkImage>
 	ClearValue	clearValue;
 
   public:
+
+	virtual ResourceType type() const
+	{
+		return RESOURCE_TYPE_IMAGE;
+	}
+
 	VkDeviceSize getMemorySize() const
 	{
 		VkDeviceSize size = extent.width * extent.height * extent.depth;
@@ -97,8 +107,7 @@ class Image_R : public Resource_T<VkImage>
 	{
 		this->layout = layout;
 	}
-	Image_R(IResourcePool *pPool, VkImageCreateInfo imgCI, bool createView) :
-	    Resource_T<VkImage>(VK_NULL_HANDLE)
+	Image_R(IResourcePool *pPool, VkImageCreateInfo imgCI, bool createView)
 	{
 		ci               = imgCI;
 		format           = ci.format;
@@ -109,6 +118,23 @@ class Image_R : public Resource_T<VkImage>
 		this->createView = createView;
 		track(pPool);
 	}
+	Image_R(IResourcePool *pPool, VkImageCreateInfo imgCI, bool createView, float widthCoef, float heightCoef)
+	{
+		ci               = imgCI;
+		format           = ci.format;
+		extent           = ci.extent;
+		mipLevels        = ci.mipLevels;
+		usage            = ci.usage;
+		layout           = VK_IMAGE_LAYOUT_UNDEFINED;
+		this->createView = createView;
+		track(pPool);
+
+		relativeWidth  = widthCoef;
+		relativeHeight = heightCoef;
+		extent.width   = static_cast<uint32_t>(extent.width * widthCoef);
+		extent.height  = static_cast<uint32_t>(extent.height * heightCoef);
+	}
+
 	~Image_R()
 	{
 		free();
@@ -141,6 +167,8 @@ class Image_R : public Resource_T<VkImage>
 	virtual void changeExtent(VkExtent3D extent)
 	{
 		this->extent = extent;
+		this->extent.width  = static_cast<uint32_t>(extent.width * relativeWidth);
+		this->extent.height = static_cast<uint32_t>(extent.height * relativeHeight);
 	}
 	virtual void changeMipLevels(uint32_t mipLevels)
 	{

@@ -44,6 +44,7 @@ void CoreState::nextFrame()
 	VK_CHECK(vkWaitForFences(device.logical, 1, &frame->inFlightFence, VK_TRUE, UINT64_MAX));
 	frame->stack->clear();
 	io.readInputs();
+	io.getWindow()->checkToggleFullScreen();
 	io.updateSwapchain();
 	if (io.swapchainRecreated())
 	{

@@ -102,6 +102,27 @@ void GlfwWindow::changeSize(VkExtent2D newSize)
 	glfwSetWindowSize(window, newSize.width, newSize.height);
 }
 
+void GlfwWindow::checkToggleFullScreen()
+{
+	if (gState.io.keyPressed[GLFW_KEY_LEFT_ALT] && gState.io.keyPressedEvent[GLFW_KEY_ENTER])
+	{
+		GLFWmonitor *monitor = glfwGetWindowMonitor(window);
+		if (!monitor)
+		{
+			lastWidth  = width;
+			lastHeight = height;
+			glfwGetWindowPos(window, &lastXPos, &lastYPos);
+			monitor = glfwGetPrimaryMonitor();
+			const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+			glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+		}
+		else
+		{
+			glfwSetWindowMonitor(window, nullptr, lastXPos, lastYPos, lastWidth, lastHeight, 0);
+		}
+	}
+}
+
 void GlfwWindow::addInstanceExtensions(std::vector<const char *> &extensions)
 {
 	uint32_t     glfwExtensionsCount = 0;
@@ -148,11 +169,17 @@ void GlfwWindow::key_callback(GLFWwindow *window, int key, int code, int action,
 		if (action == GLFW_PRESS)
 		{
 			gState.io.keyPressed[key] = true;
+			gState.io.keyPressedEvent[key] = true;
 		}
 		else if (action == GLFW_RELEASE)
 		{
 			gState.io.keyPressed[key] = false;
+			gState.io.keyReleasedEvent[key] = true;
 		}
+	}
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
 }
 
@@ -186,6 +213,18 @@ void GlfwWindow::mouse_button_callback(GLFWwindow *window, int button, int actio
 		else if (action == GLFW_RELEASE)
 		{
 			gState.io.mouse.leftPressed = false;
+		}
+	}
+	else if (button == GLFW_MOUSE_BUTTON_MIDDLE)
+	{
+		gState.io.mouse.middleEvent = true;
+		if (action == GLFW_PRESS)
+		{
+			gState.io.mouse.middlePressed = true;
+		}
+		else if (action == GLFW_RELEASE)
+		{
+			gState.io.mouse.middlePressed = false;
 		}
 	}
 }

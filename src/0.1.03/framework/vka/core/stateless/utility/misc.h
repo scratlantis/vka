@@ -4,6 +4,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 #include "macros.h"
+#include "io.h"
 namespace vka
 {
 
@@ -308,6 +309,27 @@ inline VkVertexInputBindingDescription getInstanceBindingDescription(uint32_t si
 	return vertexInputBindingDescription;
 }
 
+inline VkTransformMatrixKHR glmToVk(glm::mat4 mat)
+{
+	VkTransformMatrixKHR transform;
+	transform.matrix[0][0] = mat[0][0];
+	transform.matrix[0][1] = mat[1][0];
+	transform.matrix[0][2] = mat[2][0];
+	transform.matrix[0][3] = mat[3][0];
+
+	transform.matrix[1][0] = mat[0][1];
+	transform.matrix[1][1] = mat[1][1];
+	transform.matrix[1][2] = mat[2][1];
+	transform.matrix[1][3] = mat[3][1];
+
+	transform.matrix[2][0] = mat[0][2];
+	transform.matrix[2][1] = mat[1][2];
+	transform.matrix[2][2] = mat[2][2];
+	transform.matrix[2][3] = mat[3][2];
+
+	return transform;
+}
+
 inline std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(uint32_t binding, std::vector<VkFormat> formats, std::vector<uint32_t> offsets)
 {
 	std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions;
@@ -321,5 +343,25 @@ inline std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(u
 		vertexInputAttributeDescriptions.push_back(attributeDescription);
 	}
 	return vertexInputAttributeDescriptions;
+}
+
+// https://www.khronos.org/opengl/wiki/Image_Load_Store#Format_qualifiers
+inline std::string getGLSLFormat(VkFormat format)
+{
+	switch (format)
+	{
+		case VK_FORMAT_R8G8B8A8_UNORM:
+			return "rgba8";
+		case VK_FORMAT_R32G32B32A32_SFLOAT:
+			return "rgba32f";
+		case VK_FORMAT_R32G32B32A32_UINT:
+			return "rgba32ui";
+			break;
+		
+		default:
+			printVka("getGLSLFormat: Unsupported format!");
+			DEBUG_BREAK;
+			break;
+	}
 }
 }        // namespace vka

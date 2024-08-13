@@ -78,17 +78,26 @@ VkAccelerationStructureTypeKHR BottomLevelAS_R::getType() const
 
 
 
-void TopLevelAs_R::setInstanceCount(uint32_t count)
+TopLevelAS_R::TopLevelAS_R(IResourcePool *pPool) :
+    AccelerationStructure_R(pPool)
+{
+	VkAccelerationStructureGeometryInstancesDataKHR instancesVk{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR};
+	buildGeom                    = {VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR};
+	buildGeom.geometryType       = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+	buildGeom.geometry.instances = instancesVk;
+}
+
+void TopLevelAS_R::setInstanceCount(uint32_t count)
 {
 	buildRange.primitiveCount = count;
 }
 
-void TopLevelAs_R::setInstanceData(Buffer_R *instanceBuffer)
+void TopLevelAS_R::setInstanceData(Buffer_R *instanceBuffer)
 {
 	buildGeom.geometry.instances.data.deviceAddress = instanceBuffer->getDeviceAddress();
 }
 
-std::vector<const VkAccelerationStructureBuildRangeInfoKHR *> TopLevelAs_R::getBuildRangePtrs() const
+std::vector<const VkAccelerationStructureBuildRangeInfoKHR *> TopLevelAS_R::getBuildRangePtrs() const
 {
 	// Build Offsets info
 	std::vector<const VkAccelerationStructureBuildRangeInfoKHR *> ptrs;
@@ -96,11 +105,11 @@ std::vector<const VkAccelerationStructureBuildRangeInfoKHR *> TopLevelAs_R::getB
 	return ptrs;
 }
 
-const TopLevelAs_R TopLevelAs_R::getShallowCopy() const
+const TopLevelAS_R TopLevelAS_R::getShallowCopy() const
 {
 	return *this;
 }
-VkAccelerationStructureBuildGeometryInfoKHR TopLevelAs_R::getBuildInfoInternal() const
+VkAccelerationStructureBuildGeometryInfoKHR TopLevelAS_R::getBuildInfoInternal() const
 {
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
 	buildInfo.flags         = buildFlags;
@@ -110,7 +119,7 @@ VkAccelerationStructureBuildGeometryInfoKHR TopLevelAs_R::getBuildInfoInternal()
 	return buildInfo;
 }
 
-VkDeviceSize TopLevelAs_R::getBuildSize() const
+VkDeviceSize TopLevelAS_R::getBuildSize() const
 {
 	LOAD_CMD_VK_DEVICE(vkGetAccelerationStructureBuildSizesKHR, gState.device.logical);
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo = getBuildInfoInternal();
@@ -119,18 +128,10 @@ VkDeviceSize TopLevelAs_R::getBuildSize() const
 	return sizeInfo.accelerationStructureSize;
 }
 
-VkAccelerationStructureTypeKHR TopLevelAs_R::getType() const
+VkAccelerationStructureTypeKHR TopLevelAS_R::getType() const
 {
 	return VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 }
-
-TopLevelAs_R::TopLevelAs_R()
-{
-	VkAccelerationStructureGeometryInstancesDataKHR instancesVk{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR};
-	buildGeom                    = {VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR};
-	buildGeom.geometryType       = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-	buildGeom.geometry.instances = instancesVk;
-};
 
 bool AccelerationStructure_R::isBuilt() const
 {
@@ -148,7 +149,7 @@ VkAccelerationStructureBuildGeometryInfoKHR AccelerationStructure_R::getBuildInf
 void AccelerationStructure_R::configureScratchBuffer(Buffer_R *scratchBuffer) const
 {
 	VkPhysicalDeviceAccelerationStructurePropertiesKHR asProp = getAccelerationStructureProperties();
-	scratchBuffer->changeSize(std::min(scratchBuffer->getSize(), getBuildSize() + asProp.minAccelerationStructureScratchOffsetAlignment));
+	scratchBuffer->changeSize(std::max(scratchBuffer->getSize(), getBuildSize() + asProp.minAccelerationStructureScratchOffsetAlignment));
 	scratchBuffer->changeMemoryType(VMA_MEMORY_USAGE_GPU_ONLY);
 	scratchBuffer->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 }
@@ -209,4 +210,13 @@ void AccelerationStructure_R::recreate()
 	createHandles();
 	built = false;
 }
+
+VkDeviceAddress AccelerationStructure_R::getDeviceAddress() const
+{
+	LOAD_CMD_VK_DEVICE(vkGetAccelerationStructureDeviceAddressKHR, gState.device.logical);
+	VkAccelerationStructureDeviceAddressInfoKHR addressInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR};
+	addressInfo.accelerationStructure = handle;
+	return pvkGetAccelerationStructureDeviceAddressKHR(gState.device.logical, &addressInfo);
+}
+
 }        // namespace vka

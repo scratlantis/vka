@@ -4,11 +4,17 @@ namespace vka
 {
 bool ResourcePool::add(Resource *resource)
 {
+	if (resource->type() == RESOURCE_TYPE_MAPPAPLE)
+	{
+		auto resource_ = static_cast<Mappable_T*>(resource);
+		return mappables.insert(resource_).second;
+	}
+	if (resource->type() == RESOURCE_TYPE_IMAGE)
+	{
+		auto resource_ = static_cast<Image_R *>(resource);
+		return images.insert(resource_).second;
+	}
 	return resources.insert(resource).second;
-}
-bool ResourcePool::add(Image_R *img)
-{
-	return images.insert(img).second;
 }
 
 bool ResourcePool::remove(Resource *resource)
@@ -16,10 +22,6 @@ bool ResourcePool::remove(Resource *resource)
 	return resources.erase(resource);
 }
 
-bool ResourcePool::remove(Image_R *img)
-{
-	return images.erase(img);
-}
 
 std::unordered_set<Image_R *>::iterator ResourcePool::getImagesBegin()
 {
@@ -33,6 +35,12 @@ std::unordered_set<Image_R *>::iterator ResourcePool::getImagesEnd()
 
 void ResourcePool::clear()
 {
+	for (auto it = mappables.begin(); it != mappables.end(); ++it)
+	{
+		(*it)->free();
+		delete *it;
+	}
+	mappables.clear();
 	for (auto it = resources.begin(); it != resources.end(); ++it)
 	{
 		(*it)->free();

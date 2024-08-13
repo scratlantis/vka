@@ -3,6 +3,7 @@
 #include "caches/FramebufferCache.h"
 #include "caches/ModelCache.h"
 #include "caches/TextureCache.h"
+#include "caches/DepthBufferCache.h"
 #include <vka/core/core_state/CoreState.h>
 #include <vka/core/resources/cachable/RenderPass.h>
 
@@ -22,6 +23,7 @@ class AdvancedState : public CoreState
 	FramebufferCache *framebufferCache;
 	ModelCache       *modelCache;
 	TextureCache     *textureCache;
+	DepthBufferCache *depthBufferCache;
 
 	IResourcePool *heap;
 
@@ -41,5 +43,6 @@ class AdvancedState : public CoreState
 	void         init(DeviceCI &deviceCI, IOControlerCI &ioControllerCI, Window *window, AdvancedStateConfig &config);
 	void         destroy() override;
 	virtual void nextFrame() override;
+	void         updateSwapchainAttachments();
 };
 }        // namespace vka

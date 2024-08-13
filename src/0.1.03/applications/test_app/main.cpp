@@ -1,6 +1,5 @@
 #include "config.h"
 #include <vka/vka.h>
-
 using namespace vka;
 AdvancedState     gState;
 const std::string gShaderOutputDir = SHADER_OUTPUT_DIR;
@@ -15,7 +14,7 @@ std::vector<GVar *> gVars =
 int main()
 {
 	// Global State Initialization. See config.h for more details.
-	DeviceCI            deviceCI = D3VKPTDeviceCI(APP_NAME);
+	DeviceCI            deviceCI = DefaultDeviceCI(APP_NAME);
 	IOControlerCI       ioCI     = DefaultIOControlerCI(APP_NAME, 1000, 700);
 	GlfwWindow          window   = GlfwWindow();
 	AdvancedStateConfig config   = DefaultAdvancedStateConfig();

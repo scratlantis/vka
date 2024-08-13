@@ -20,6 +20,7 @@ class GlfwWindow : public Window
 	bool         shouldClose();
 	void         requestClose();
 	void         changeSize(VkExtent2D newSize);
+	void         checkToggleFullScreen();
 	void         addInstanceExtensions(std::vector<const char *> &extensions);
 	void         initImGui();
 	void         newFrameImGui();
@@ -30,6 +31,9 @@ class GlfwWindow : public Window
   private:
 	GLFWwindow  *window;
 	GLint        width, height;
+
+	GLint        lastWidth, lastHeight; // used for fullscreen toggle
+	GLint        lastXPos, lastYPos;           // used for fullscreen toggle
 	VkSurfaceKHR surface;
 
 	static void framebuffer_size_callback(GLFWwindow *window, int width, int height);

@@ -21,6 +21,15 @@ struct BlendOperation
 	{
 		return BlendOperation{VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_BLEND_OP_ADD};
 	}
+	static BlendOperation add()
+	{
+		return BlendOperation{VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD};
+	}
+
+	bool operator== (const BlendOperation &other) const
+	{
+		return srcFactor == other.srcFactor && dstFactor == other.dstFactor && op == other.op;
+	}
 };
 
 struct AttachmentLayoutDescription
@@ -69,10 +78,13 @@ class DrawCmd
 	void pushDescriptor(std::vector<Image> images, VkDescriptorType type, VkShaderStageFlags shaderStage);
 	void pushDescriptor(std::vector<SamplerDefinition> samplersDefs, VkShaderStageFlags shaderStage);
 	void pushDescriptor(TLASRef as, VkShaderStageFlags shaderStage);
+	void pushDescriptor(CmdBuffer cmdBuf, IResourcePool *pPool, void *data, VkDeviceSize size, VkShaderStageFlags stageFlags);
 	void pushConstant(void *data, VkDeviceSize size, VkShaderStageFlags stageFlags);
 
 	void setGeometry(DrawSurface surface);
 	void pushInstanceData(BufferRef buffer, VertexDataLayout layout);
+	void pushVertexData(BufferRef buffer, VertexDataLayout layout);
+
 
 	void exec(CmdBuffer cmdBuf) const;
 
@@ -88,7 +100,7 @@ class DrawCmd
   private:
 	std::vector<Image>      attachments;
 	std::vector<ClearValue> clearValues;
-	std::vector<BufferRef>  instanceBuffers;
+	std::vector<BufferRef>  additionalVertexBuffers;
 
 	CmdBufferState getCmdBufferState(const CmdBufferState oldState) const;
 };
@@ -98,9 +110,9 @@ class ComputeCmd
   public:
 	ComputeCmd() = default;
 	ComputeCmd(uint32_t taskSize, const std::string path, std::vector<ShaderArgs> args = {});
-	ComputeCmd(glm::uvec2 taskSize, std::string path, std::vector<ShaderArgs> args);
-	ComputeCmd(VkExtent2D taskSize, std::string path, std::vector<ShaderArgs> args);
-	ComputeCmd(glm::uvec3 taskSize, std::string path, std::vector<ShaderArgs> args);
+	ComputeCmd(glm::uvec2 taskSize, std::string path, std::vector<ShaderArgs> args = {});
+	ComputeCmd(VkExtent2D taskSize, std::string path, std::vector<ShaderArgs> args = {});
+	ComputeCmd(glm::uvec3 taskSize, std::string path, std::vector<ShaderArgs> args = {});
 
 	void pushDescriptor(BufferRef buffer, VkDescriptorType type);
 	void pushDescriptor(Image image, VkDescriptorType type);
@@ -109,7 +121,8 @@ class ComputeCmd
 	void pushDescriptor(std::vector<Image> images, VkDescriptorType type);
 	void pushDescriptor(std::vector<BufferRef> buffers, VkDescriptorType type);
 	void pushDescriptor(std::vector<SamplerDefinition> samplersDefs);
-	void pushDescriptor(TLASRef as, VkShaderStageFlags shaderStage);
+	void pushDescriptor(TLASRef as);
+	void pushDescriptor(CmdBuffer cmdBuf, IResourcePool *pPool, void *data, VkDeviceSize size);
 	void pushConstant(void *data, VkDeviceSize size);
 
 	void exec(CmdBuffer cmdBuf) const;

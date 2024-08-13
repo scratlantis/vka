@@ -151,6 +151,8 @@ void IOController::requestSwapchainRecreation()
 void IOController::readInputs()
 {
 	memset(&keyEvent, 0, VKA_KEY_COUNT * sizeof(bool));
+	memset(&keyPressedEvent, 0, VKA_KEY_COUNT * sizeof(bool));
+	memset(&keyReleasedEvent, 0, VKA_KEY_COUNT * sizeof(bool));
 	mouse.resetEvents();
 	window->pollEvents();
 }

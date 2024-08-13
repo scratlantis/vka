@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include "Camera.h"
 
 namespace vka
 {
@@ -18,22 +19,7 @@ struct FixedCameraCI
 	float     scrollSpeed;
 };
 
-struct FixedCameraCI_Default : public FixedCameraCI
-{
-	FixedCameraCI_Default()
-	{
-		fixpoint    = glm::vec3(0.0f, 0.0f, 0.0f);
-		distance    = 1.0;
-		up          = glm::vec3(0.0f, 1.0f, 0.0f);
-		yaw         = 90.f;
-		pitch       = 0.0f;
-		moveSpeed   = 0.2f;
-		turnSpeed   = 0.25f;
-		scrollSpeed = 0.1f;
-	}
-};
-
-class FixedCamera
+class FixedCamera : public Camera
 {
   public:
 	FixedCamera(FixedCameraCI ci)
@@ -48,16 +34,16 @@ class FixedCamera
 		worldUp       = ci.up;
 		updateRotation();
 	};
-	FixedCamera() : FixedCamera(FixedCameraCI_Default()){};
+	FixedCamera() = default;
 	~FixedCamera(){};
-	void      keyControl(float deltaTime);
-	void      mouseControl(float deltaTime);
-	glm::vec3 getPosition() const;
+	virtual bool      keyControl(float deltaTime) override;
+	virtual bool      mouseControl(float deltaTime) override;
+	virtual glm::vec3 getPosition() const override;
+	virtual glm::vec3 getViewDirection() const override;
+	virtual glm::mat4 getViewMatrix() const override;
+
 	glm::vec3 getFixpoint() const;
 	void      setFixpoint(glm::vec3 newFixpoint);
-	glm::vec3 getViewDirection() const;
-	glm::mat4 getViewMatrix() const;
-
   private:
 	void      updateRotation();
 	float     yaw;

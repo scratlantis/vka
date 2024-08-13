@@ -10,6 +10,6 @@ typedef vka::Image_R               *Image;
 typedef const vka::Image_R         *ImageRef;
 typedef vka::BottomLevelAS_R       *BLAS;
 typedef const vka::BottomLevelAS_R *BLASRef;
-typedef vka::TopLevelAs_R          *TLAS;
-typedef const vka::TopLevelAs_R    *TLASRef;
+typedef vka::TopLevelAS_R          *TLAS;
+typedef const vka::TopLevelAS_R    *TLASRef;
 typedef vka::CmdBuffer_R           *CmdBuffer;

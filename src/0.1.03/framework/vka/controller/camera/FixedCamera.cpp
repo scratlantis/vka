@@ -4,38 +4,45 @@
 #include <vka/globals.h>
 namespace vka
 {
-void FixedCamera::keyControl(float deltaTime)
+bool FixedCamera::keyControl(float deltaTime)
 {
 	float velocity = movementSpeed * deltaTime;
 	bool *keys     = gState.io.keyPressed;
+	bool hasChanged = false;
 	if (keys[GLFW_KEY_W])
 	{
 		fixpoint += front * velocity;
+		hasChanged = true;
 	}
 
 	if (keys[GLFW_KEY_D])
 	{
 		fixpoint += right * velocity;
+		hasChanged = true;
 	}
 
 	if (keys[GLFW_KEY_A])
 	{
 		fixpoint += -right * velocity;
+		hasChanged = true;
 	}
 
 	if (keys[GLFW_KEY_S])
 	{
 		fixpoint += -front * velocity;
+		hasChanged = true;
 	}
 
 	if (keys[GLFW_KEY_SPACE])
 	{
 		fixpoint += -worldUp * velocity;
+		hasChanged = true;
 	}
 
 	if (keys[GLFW_KEY_LEFT_SHIFT])
 	{
 		fixpoint += worldUp * velocity;
+		hasChanged = true;
 	}
 
 	if (keys[GLFW_KEY_P])
@@ -53,14 +60,19 @@ void FixedCamera::keyControl(float deltaTime)
 		pitch = -89.0f;
 	}
 
-	distance -= scrollSpeed * gState.io.mouse.scrollChange * deltaTime / 0.016;
+	float deltaDistance = scrollSpeed * gState.io.mouse.scrollChange * deltaTime / 0.016;
+	distance -= deltaDistance;
+	
+	hasChanged = hasChanged || deltaDistance != 0;
+
 	if (distance < 0.1)
 	{
 		distance = 0.1;
 	}
+	return hasChanged;
 }
 
-void FixedCamera::mouseControl(float deltaTime)
+bool FixedCamera::mouseControl(float deltaTime)
 {
 	float xChange = turnSpeed * gState.io.mouse.change.x * deltaTime / 0.016;
 	float yChange = turnSpeed * gState.io.mouse.change.y * deltaTime / 0.016;
@@ -78,6 +90,8 @@ void FixedCamera::mouseControl(float deltaTime)
 		pitch = -89.0f;
 	}
 	updateRotation();
+
+	return xChange != 0 && yChange != 0;
 }
 
 glm::vec3 FixedCamera::getPosition() const

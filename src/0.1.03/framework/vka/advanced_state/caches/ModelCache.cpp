@@ -7,44 +7,48 @@
 namespace vka
 {
 
-bool loadObj(std::string path, std::vector<ObjVertex> &vertexList, std::vector<Index> &indexList, std::vector<uint32_t> &indexOffsets, uint32_t &totalIndexCount)
+bool ModelCache::loadObj(std::string path, std::vector<ObjVertex> &vertexList, std::vector<Index> &indexList, std::vector<uint32_t> &indexCountList, std::vector<WavefrontMaterial> &surfaceList) const
 {
 	tinyobj::attrib_t                vertexAttributes;
 	std::vector<tinyobj::shape_t>    shapes;
 	std::vector<tinyobj::material_t> materials;
 	std::string                      errorString;
 	std::string                      warningString;
-	bool                             success = tinyobj::LoadObj(&vertexAttributes, &shapes, &materials, &warningString, &errorString, path.c_str());
 
+	// Parse obj and mtl files
+	std::string mtldir = path.substr(0, path.find_last_of("/"));
+	bool        success = tinyobj::LoadObj(&vertexAttributes, &shapes, &materials, &warningString, &errorString, path.c_str(), mtldir.c_str());
 	if (!success)
 	{
 		std::cerr << "Failed to load model: " << path << std::endl;
 		DEBUG_BREAK
 		return false;
 	}
+
+	// Convert to internal format:
+	// Obj
 	std::unordered_map<ObjVertex, uint32_t> vertexMap;
 	vertexMap.reserve(vertexAttributes.vertices.size());
 	vertexList.reserve(vertexAttributes.vertices.size());
-	totalIndexCount       = 0;
-	uint32_t surfaceCount = 0;
+	indexCountList.reserve(shapes.size());
+	
+	uint64_t totalIndexCount  = 0;
 	for (auto &shape : shapes)
 	{
 		totalIndexCount += shape.mesh.indices.size();
-		surfaceCount++;
+		indexCountList.push_back(shape.mesh.indices.size());
 	}
 	indexList.reserve(totalIndexCount);
-	indexOffsets.reserve(surfaceCount);
 	uint64_t cnt = 0;
 	for (auto &shape : shapes)
 	{
-		indexOffsets.push_back(indexList.size());
 		for (auto &index : shape.mesh.indices)
 		{
 			ObjVertex objVertex{};
 			objVertex.v =
 			    glm::vec3(
 			        vertexAttributes.vertices[index.vertex_index * 3],
-			        vertexAttributes.vertices[index.vertex_index * 3 + 1],
+			        -vertexAttributes.vertices[index.vertex_index * 3 + 1], // inv y coord
 			        vertexAttributes.vertices[index.vertex_index * 3 + 2]);
 			if (index.texcoord_index >= 0)
 				objVertex.vt =
@@ -55,7 +59,7 @@ bool loadObj(std::string path, std::vector<ObjVertex> &vertexList, std::vector<I
 				objVertex.vn =
 				    glm::vec3(
 				        vertexAttributes.normals[index.normal_index * 3],
-				        vertexAttributes.normals[index.normal_index * 3 + 1],
+				        -vertexAttributes.normals[index.normal_index * 3 + 1], // inv y coord
 				        vertexAttributes.normals[index.normal_index * 3 + 2]);
 			auto it = vertexMap.insert({objVertex, cnt});
 			// New vertex
@@ -73,7 +77,113 @@ bool loadObj(std::string path, std::vector<ObjVertex> &vertexList, std::vector<I
 	}
 	vertexList.shrink_to_fit();
 	indexList.shrink_to_fit();
+
+	// Mtl
+	surfaceList.reserve(materials.size());
+	for (auto &shape : shapes)
+	{
+		VKA_ASSERT(!shape.mesh.material_ids.empty());
+		uint32_t matId = shape.mesh.material_ids[0];
+		
+		IF_VALIDATION(
+		bool multiMat = false;
+		for (auto &id : shape.mesh.material_ids) {
+			if (id != matId)
+			{
+				multiMat = true;
+				break;
+			}
+		})
+		VKA_ASSERT(!multiMat);
+
+		WavefrontMaterial surface{};
+		if (matId != -1)
+		{
+			auto &mat = materials[matId];
+			surface.name             = mat.name;
+			surface.ambient          = glm::vec3(mat.ambient[0], mat.ambient[1], mat.ambient[2]);
+			surface.ambientMap       = mat.ambient_texname;
+			surface.diffuse          = glm::vec3(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
+			surface.diffuseMap       = mat.diffuse_texname;
+			surface.specular         = glm::vec3(mat.specular[0], mat.specular[1], mat.specular[2]);
+			surface.specularMap      = mat.specular_texname;
+			surface.specularExponent = mat.shininess;
+			surface.emission         = glm::vec3(mat.emission[0], mat.emission[1], mat.emission[2]);
+			surface.emissionMap      = mat.emissive_texname;
+			surface.roughness        = mat.roughness;
+			surface.roughnessMap     = mat.roughness_texname;
+			surface.metallic         = mat.metallic;
+			surface.metallicMap      = mat.metallic_texname;
+			surface.dissolve         = mat.dissolve;
+			surface.ior              = mat.ior;
+			surface.normalMap        = mat.normal_texname;
+		}
+		surfaceList.push_back(surface);
+	}
+
 	return true;
+}
+
+BLAS ModelCache::buildAccelerationStructure(CmdBuffer cmdBuf, const ModelData &modelData, uint32_t loadFlags) const
+{
+	std::vector<VkAccelerationStructureGeometryKHR>       geometry;
+	std::vector<VkAccelerationStructureBuildRangeInfoKHR> buildRange;
+	uint32_t                                              offset = 0;
+	for (uint32_t i = 0; i < modelData.indexCount.size(); i++)
+	{
+		VkAccelerationStructureGeometryTrianglesDataKHR trianglesKHR{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR};
+		trianglesKHR.vertexFormat             = modelData.vertexLayout.formats[0];        // We hereby assume that the vertex position is the first attribute
+		trianglesKHR.vertexData.deviceAddress = modelData.vertexBuffer->getDeviceAddress();
+		trianglesKHR.vertexStride             = modelData.vertexLayout.stride;
+		trianglesKHR.indexType                = VK_INDEX_TYPE_UINT32;
+		trianglesKHR.indexData.deviceAddress  = modelData.indexBuffer->getDeviceAddress();
+		VkAccelerationStructureGeometryKHR geometryKHR{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR};
+		geometryKHR.geometryType       = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+		geometryKHR.geometry.triangles = trianglesKHR;
+		geometryKHR.flags              = (loadFlags & MODEL_LOAD_FLAG_IS_OPAQUE) ? VK_GEOMETRY_OPAQUE_BIT_KHR : 0;
+		geometry.push_back(geometryKHR);
+
+		VkAccelerationStructureBuildRangeInfoKHR rangeKHR{};
+		rangeKHR.primitiveCount  = modelData.indexCount[i] / 3;
+		rangeKHR.primitiveOffset = offset * sizeof(Index);
+		rangeKHR.firstVertex     = 0;
+		rangeKHR.transformOffset = 0;
+		buildRange.push_back(rangeKHR);
+
+		offset += modelData.indexCount[i];
+	}
+	BLAS blas = createBottomLevelAS(pPool, geometry, buildRange);
+	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);
+	cmdBuildAccelerationStructure(cmdBuf, blas, createStagingBuffer());
+	return blas;
+}
+
+void ModelCache::findAreaLights(std::vector<AreaLight> &lightList, const std::vector<ObjVertex> &vertexList, const std::vector<Index> &indexList, const std::vector<uint32_t> &indexCountList, const std::vector<WavefrontMaterial> &surfaceList) const
+{
+	// Area Lights for importance sampling
+	uint32_t indexOffset = 0;
+	for (size_t i = 0; i < surfaceList.size(); i++)
+	{
+		const WavefrontMaterial &surface  = surfaceList[i];
+		float              emission = surface.emission.x + surface.emission.y + surface.emission.z;
+		if (emission > 0)
+		{
+			for (size_t j = indexOffset; j < indexOffset + indexCountList[i]; j += 3)
+			{
+				AreaLight light{};
+				light.v0       = vertexList[indexList[j]].v;
+				light.v1       = vertexList[indexList[j + 1]].v;
+				light.v2       = vertexList[indexList[j + 2]].v;
+				glm::vec3 normal = glm::normalize(glm::cross(light.v1 - light.v0, light.v2 - light.v0));
+				light.center     = (light.v0 + light.v1 + light.v2) / 3.0f;
+				light.normal     = glm::normalize(normal);
+				light.importance = glm::length(emission * normal);
+				lightList.push_back(light);
+			}
+		}
+
+		indexOffset += indexCountList[i];
+	}
 }
 
 void ModelCache::clear()
@@ -86,68 +196,6 @@ void ModelCache::clear()
 			model.second.indexBuffer->garbageCollect();
 	}
 	map.clear();
-}
-
-ModelData ModelCache::fetch(CmdBuffer cmdBuf, std::string path, void (*parse)(Buffer vertexBuffer, VertexDataLayout &vertexLayout, const std::vector<ObjVertex> &vertexList), uint32_t loadFlags)
-{
-	ModelKey key{path, parse, loadFlags};
-	auto     it = map.find(key);
-	if (it == map.end())
-	{
-		ModelData modelData{};
-		VkBufferUsageFlags additionalBufferUsageFlags = 0;
-		if (loadFlags & MODEL_LOAD_FLAG_CREATE_ACCELERATION_STRUCTURE)
-		{
-			additionalBufferUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT; 
-		}
-		modelData.vertexBuffer          = createBuffer(pPool, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | bufferUsageFlags | additionalBufferUsageFlags);
-		modelData.indexBuffer           = createBuffer(pPool, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | bufferUsageFlags | additionalBufferUsageFlags);
-		std::string            fullPath = modelPath + path;
-		std::vector<ObjVertex> vertexList;
-		std::vector<Index>     indexList;
-		if (loadObj(fullPath, vertexList, indexList, modelData.indexOffsets, modelData.indexCount))
-		{
-			printVka(("Loading model: " + path).c_str());
-			map.insert({key, modelData});
-			parse(modelData.vertexBuffer, modelData.vertexLayout, vertexList);
-			write(modelData.indexBuffer, indexList.data(), indexList.size()*sizeof(Index));
-			cmdUpload(cmdBuf, modelData.vertexBuffer);
-			cmdUpload(cmdBuf, modelData.indexBuffer);
-
-			if (loadFlags & MODEL_LOAD_FLAG_CREATE_ACCELERATION_STRUCTURE)
-			{
-				std::vector<VkAccelerationStructureGeometryKHR>       geometry;
-				std::vector<VkAccelerationStructureBuildRangeInfoKHR> buildRange;
-				for (uint32_t i = 0; i < modelData.indexOffsets.size(); i++)
-				{
-					VkAccelerationStructureGeometryTrianglesDataKHR trianglesKHR{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR};
-					trianglesKHR.vertexFormat             = VK_FORMAT_R32G32B32_SFLOAT;
-					trianglesKHR.vertexData.deviceAddress = modelData.vertexBuffer->getDeviceAddress();
-					trianglesKHR.vertexStride             = modelData.vertexBuffer->getSize() / vertexList.size();
-					trianglesKHR.indexType                = VK_INDEX_TYPE_UINT32;
-					trianglesKHR.indexData.deviceAddress  = modelData.indexBuffer->getDeviceAddress();
-					VkAccelerationStructureGeometryKHR geometryKHR{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR};
-					geometryKHR.geometryType       = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-					geometryKHR.geometry.triangles = trianglesKHR;
-					geometryKHR.flags              = (loadFlags & MODEL_LOAD_FLAG_IS_OPAQUE) ? VK_GEOMETRY_OPAQUE_BIT_KHR : 0;
-					geometry.push_back(geometryKHR);
-
-					VkAccelerationStructureBuildRangeInfoKHR rangeKHR{};
-					rangeKHR.primitiveCount  = indexList.size() / 3;
-					rangeKHR.primitiveOffset = 0;
-					rangeKHR.firstVertex     = 0;
-					rangeKHR.transformOffset = 0;
-					buildRange.push_back(rangeKHR);
-				}
-				modelData.blas = createBottomLevelAS(pPool, geometry, buildRange);
-				cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);
-				cmdBuildAccelerationStructure(cmdBuf, modelData.blas, createStagingBuffer());
-			}
-
-		}
-		return modelData;
-	}
-	return it->second;
 }
 
 }        // namespace vka

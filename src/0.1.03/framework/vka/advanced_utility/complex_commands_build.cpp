@@ -1,6 +1,7 @@
 #include "complex_commands.h"
 #include "complex_commands_utility.h"
 #include <vka/core/core_utility/buffer_utility.h>
+#include <vka/core/core_utility/general_commands.h>	
 #include <vka/globals.h>
 namespace vka
 {
@@ -44,7 +45,7 @@ CmdBufferState DrawCmd::getCmdBufferState(const CmdBufferState oldState) const
 	{
 		state.vertexBuffers = {surf.vertexBuffer};
 	}
-	state.vertexBuffers.insert(state.vertexBuffers.end(), instanceBuffers.begin(), instanceBuffers.end());
+	state.vertexBuffers.insert(state.vertexBuffers.end(), additionalVertexBuffers.begin(), additionalVertexBuffers.end());
 	state.indexBuffer = surf.indexBuffer;
 	return state;
 }
@@ -56,6 +57,7 @@ CmdBufferState ComputeCmd::getCmdBufferState() const
 	state.pipeline          = gState.cache->fetch(pipelineDef);
 	state.bindPoint         = VK_PIPELINE_BIND_POINT_COMPUTE;
 	state.pipelineLayoutDef = pipelineDef.pipelineLayoutDefinition;
+	state.pipelineLayout	= gState.cache->fetch(pipelineDef.pipelineLayoutDefinition);
 	return state;
 }
 
@@ -82,7 +84,7 @@ ComputeCmd::ComputeCmd(glm::uvec2 taskSize, std::string path, std::vector<Shader
 	pipelineDef.shaderDef                = ShaderDefinition(path, args);
 }
 
-ComputeCmd::ComputeCmd(VkExtent2D taskSize, std::string path, std::vector<ShaderArgs> args = {})
+ComputeCmd::ComputeCmd(VkExtent2D taskSize, std::string path, std::vector<ShaderArgs> args)
 {
 	glm::uvec3 workGroupSize                        = {32, 32, 1};
 	glm::uvec3 resolution                           = {taskSize.width, taskSize.height, 1};
@@ -153,7 +155,14 @@ void DrawCmd::pushDescriptor(BufferRef buffer, VkDescriptorType type, VkShaderSt
 void DrawCmd::pushDescriptor(Image image, VkDescriptorType type, VkShaderStageFlags shaderStage)
 {
 	addDescriptor(pipelineDef, type, shaderStage);
-	descriptors.push_back(Descriptor(image, type, shaderStage));
+	if (type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+	{
+		descriptors.push_back(Descriptor(SamplerDefinition(), image, shaderStage));
+	}
+	else
+	{
+		descriptors.push_back(Descriptor(image, type, shaderStage));
+	}
 }
 
 void DrawCmd::pushDescriptor(const SamplerDefinition sampler, VkShaderStageFlags shaderStage)
@@ -192,6 +201,13 @@ void DrawCmd::pushDescriptor(TLASRef as, VkShaderStageFlags shaderStage)
 	descriptors.push_back(Descriptor(as, shaderStage));
 }
 
+void DrawCmd::pushDescriptor(CmdBuffer cmdBuf, IResourcePool *pPool, void *data, VkDeviceSize size, VkShaderStageFlags stageFlags)
+{
+	Buffer buf = createBuffer(pPool, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	cmdWriteCopy(cmdBuf, buf, data, size);
+	pushDescriptor(buf, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, stageFlags);
+}
+
 void DrawCmd::setGeometry(DrawSurface surface)
 {
 	surf = surface;
@@ -203,8 +219,14 @@ void DrawCmd::setGeometry(DrawSurface surface)
 
 void DrawCmd::pushInstanceData(BufferRef buffer, VertexDataLayout layout)
 {
-	instanceBuffers.push_back(buffer);
+	additionalVertexBuffers.push_back(buffer);
 	addInput(pipelineDef, layout, VK_VERTEX_INPUT_RATE_INSTANCE);
+}
+
+void DrawCmd::pushVertexData(BufferRef buffer, VertexDataLayout layout)
+{
+	additionalVertexBuffers.push_back(buffer);
+	addInput(pipelineDef, layout, VK_VERTEX_INPUT_RATE_VERTEX);
 }
 
 void ComputeCmd::pushDescriptor(BufferRef buffer, VkDescriptorType type)
@@ -212,10 +234,18 @@ void ComputeCmd::pushDescriptor(BufferRef buffer, VkDescriptorType type)
 	addDescriptor(pipelineDef, type);
 	descriptors.push_back(Descriptor(buffer, type, VK_SHADER_STAGE_COMPUTE_BIT));
 }
+
 void ComputeCmd::pushDescriptor(Image image, VkDescriptorType type)
 {
 	addDescriptor(pipelineDef, type);
-	descriptors.push_back(Descriptor(image, type, VK_SHADER_STAGE_COMPUTE_BIT));
+	if (type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+	{
+		descriptors.push_back(Descriptor(SamplerDefinition(), image, VK_SHADER_STAGE_COMPUTE_BIT));
+	}
+	else
+	{
+		descriptors.push_back(Descriptor(image, type, VK_SHADER_STAGE_COMPUTE_BIT));
+	}
 }
 
 void ComputeCmd::pushDescriptor(const SamplerDefinition sampler)
@@ -249,12 +279,17 @@ void ComputeCmd::pushDescriptor(std::vector<SamplerDefinition> samplersDefs)
 }
 
 
-void ComputeCmd::pushDescriptor(TLASRef as, VkShaderStageFlags shaderStage)
+void ComputeCmd::pushDescriptor(TLASRef as)
 {
 	addDescriptor(pipelineDef, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR);
-	descriptors.push_back(Descriptor(as, shaderStage));
+	descriptors.push_back(Descriptor(as, VK_SHADER_STAGE_COMPUTE_BIT));
 }
-
+void ComputeCmd::pushDescriptor(CmdBuffer cmdBuf, IResourcePool *pPool, void *data, VkDeviceSize size)
+{
+	Buffer buf = createBuffer(pPool, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	cmdWriteCopy(cmdBuf, buf, data, size);
+	pushDescriptor(buf, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+}
 void ComputeCmd::pushConstant(void *data, VkDeviceSize size)
 {
 	pushConstantsSizes.push_back(size);

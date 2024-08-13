@@ -27,6 +27,15 @@ struct ClearValue
 		type = CLEAR_VALUE_NONE;
 	}
 
+	ClearValue( glm::vec4 color )
+	{
+		type                   = CLEAR_VALUE_FLOAT;
+		value.color.float32[0] = color.r;
+		value.color.float32[1] = color.g;
+		value.color.float32[2] = color.b;
+		value.color.float32[3] = color.a;
+	}
+
 	ClearValue(float r, float g, float b, float a)
 	{
 		type                   = CLEAR_VALUE_FLOAT;
@@ -331,6 +340,12 @@ struct VkRect2D_OP : public VkRect2D
 		this->offset = other.offset;
 		this->extent = other.extent;
 	}
+
+	VkRect2D_OP(VkExtent2D const &extent)
+	{
+		this->offset = {0, 0};
+		this->extent = extent;
+	}
 	bool operator==(VkRect2D_OP const &other) const
 	{
 		// clang-format off
@@ -344,7 +359,7 @@ struct VkRect2D_OP : public VkRect2D
 	{
 		return offset.x > 0 && offset.y > 0 && this->extent.width > 0 && this->extent.height > 0 && offset.x + this->extent.width <= extent.width && offset.y + this->extent.height <= extent.height;
 	}
-	VkRect2D_OP operator*(Rect2D<float> const &other)
+	VkRect2D_OP operator*(Rect2D<float> const &other) const
 	{
 		// clang-format off
 		VkRect2D_OP result;
@@ -355,6 +370,23 @@ struct VkRect2D_OP : public VkRect2D
 		return result;
 		// clang-format on
 	}
+
+	static VkRect2D_OP absRegion(VkRect2D_OP const &other, Rect2D<float> const &relative)
+	{
+		return other * Rect2D<float>{relative.x, relative.y, std::min(relative.width, 1.0f - relative.x), std::min(relative.height, 1.0f - relative.y)};
+	}
+
+	static Rect2D<float> relRegion(VkRect2D_OP const &outer, VkRect2D_OP const &inner)
+	{
+		Rect2D<float> relative;
+		relative.x = (float)inner.offset.x / outer.extent.width;
+		relative.y = (float)inner.offset.y / outer.extent.height;
+		relative.width = (float)inner.extent.width / outer.extent.width;
+		relative.height = (float)inner.extent.height / outer.extent.height;
+		return relative;
+	}
+
+
 	void operator*=(Rect2D<float> const &other)
 	{
 		// clang-format off
@@ -936,7 +968,43 @@ struct VkViewport_OP : public VkViewport
 		// clang-format on
 	}
 };
+
+class VkExtent2D_OP : public VkExtent2D
+{
+	public:
+	VkExtent2D_OP() = default;
+	VkExtent2D_OP(uint32_t width, uint32_t height)
+	{
+		this->width  = width;
+		this->height = height;
+	}
+	VkExtent2D_OP(VkExtent2D const &other)
+	{
+		this->width  = other.width;
+		this->height = other.height;
+	}
+	bool operator==(VkExtent2D_OP const &other) const
+	{
+		// clang-format off
+		return width == other.width
+			&& height == other.height;
+		// clang-format on
+	}
+	bool operator!=(VkExtent2D_OP const &other) const
+	{
+		return !(*this == other);
+	}
+	bool hash() const
+	{
+		// clang-format off
+		return width
+			HASHC height;
+		// clang-format on
+	}
+};
+
 }        // namespace vka
+DECLARE_HASH(vka::VkExtent2D_OP, hash)
 DECLARE_HASH(vka::PipelineMultisampleStateCreateInfo_OP, hash)
 DECLARE_HASH(vka::SubpassDescription, hash)
 DECLARE_HASH(vka::VkRect2D_OP, hash)

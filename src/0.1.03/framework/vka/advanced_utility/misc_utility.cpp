@@ -21,7 +21,8 @@ void swapBuffers(std::vector<CmdBuffer> cmdBufs)
 
 vka::VkRect2D_OP getScissorRect(float x, float y, float width, float height)
 {
-	return vka::VkRect2D_OP{{{0, 0}, gState.io.extent}} * Rect2D<float>{x, y, std::min(width, 1.0f - x), std::min(height, 1.0f - y)};
+	return VkRect2D_OP::absRegion(VkRect2D_OP(gState.io.extent), Rect2D<float>{x, y,width, height});
+	//return vka::VkRect2D_OP{{{0, 0}, gState.io.extent}} * Rect2D<float>{x, y, std::min(width, 1.0f - x), std::min(height, 1.0f - y)};
 }
 
 
@@ -30,6 +31,23 @@ Image createSwapchainAttachment(VkFormat format, VkImageUsageFlags usageFlags, V
 	VkImageCreateInfo ci = ImageCreateInfo_Default(usageFlags, gState.io.extent, format);
 	ci.initialLayout     = initialLayout;
 	Image img         = new Image_R(gState.swapchainAttachmentPool, ci, true);
+	img->createHandles();
+	if (usageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+	{
+		img->setClearValue({1.f, 0});
+	}
+	else
+	{
+		img->setClearValue({0.f, 0.f, 0.f, 1.f});
+	}
+	return img;
+}
+
+Image createSwapchainAttachment(VkFormat format, VkImageUsageFlags usageFlags, VkImageLayout initialLayout, float widthCoef, float heightCoef)
+{
+	VkImageCreateInfo ci = ImageCreateInfo_Default(usageFlags, gState.io.extent, format);
+	ci.initialLayout     = initialLayout;
+	Image img            = new Image_R(gState.swapchainAttachmentPool, ci, true, widthCoef, heightCoef);
 	img->createHandles();
 	if (usageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	{
@@ -58,6 +76,12 @@ void clearShaderCache()
 	vkDeviceWaitIdle(gState.device.logical);
 	gState.cache->clearShaders();
 	gState.shaderLog = "";
+}
+
+void waitIdle()
+{
+	printVka("Waiting for device idle");
+	vkDeviceWaitIdle(gState.device.logical);
 }
 
 }		// namespace vka

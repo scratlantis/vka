@@ -11,6 +11,14 @@
 
 namespace vka
 {
+
+enum ResourceType
+	{
+	RESOURCE_TYPE_IMAGE,
+	RESOURCE_TYPE_MAPPAPLE,
+	RESOURCE_TYPE_GENERAL
+};
+
 class Resource
 {
   private:
@@ -35,6 +43,11 @@ class Resource
 	virtual void untrack();
 	virtual IResourcePool *getPool() const;
 	virtual void garbageCollect();
+
+	virtual ResourceType type() const
+	{
+		return RESOURCE_TYPE_GENERAL;
+	}
 
 	Resource() :
 	    pPool(nullptr){};

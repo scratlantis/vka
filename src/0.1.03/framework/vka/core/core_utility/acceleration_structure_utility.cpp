@@ -9,4 +9,12 @@ BLAS createBottomLevelAS(IResourcePool *pPool, std::vector<VkAccelerationStructu
 	blas->createHandles();
 	return blas;
 }
+
+TLAS createTopLevelAS(IResourcePool* pPool, uint32_t instanceCount)
+{
+	TLAS tlas = new TopLevelAS_R(pPool);
+	tlas->setInstanceCount(instanceCount);
+	tlas->createHandles();
+	return tlas;
+}
 }

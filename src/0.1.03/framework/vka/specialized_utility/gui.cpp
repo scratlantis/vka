@@ -167,6 +167,13 @@ namespace shader_console_gui
 {
 void buildGui(VkRect2D_OP viewport)
 {
+	if (gState.shaderLog == "")
+		return;
+	if (!gState.guiRendered)
+	{
+		gState.imguiWrapper->newFrame();
+		gState.guiRendered = true;
+	}
 	ImGui::SetNextWindowPos({(float) viewport.offset.x, (float) viewport.offset.y});
 	ImGui::SetNextWindowSize({(float) viewport.extent.width, (float) viewport.extent.height});
 	ImGui::Begin("ShaderLog", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);

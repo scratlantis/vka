@@ -1,8 +1,8 @@
 #pragma once
 #include <vka/vka.h>
-struct D3VKPTDeviceCI : vka::DeviceCI
+struct DefaultDeviceCI : vka::DeviceCI
 {
-	D3VKPTDeviceCI(std::string appName)
+	DefaultDeviceCI(std::string appName)
 	{
 		applicationName     = appName;
 		universalQueueCount = 1;

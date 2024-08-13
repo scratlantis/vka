@@ -16,8 +16,7 @@ void cmdClearState(CmdBuffer cmdBuf)
 // Buffer
 void cmdCopyBuffer(CmdBuffer cmdBuf, BufferRef src, BufferRef dst)
 {
-    VkDeviceSize minDataSize = std::min(src->getSize(), dst->getSize());
-    VkBufferCopy copyRegion{0, 0, minDataSize};
+	VkBufferCopy copyRegion{src->getRange().offset, dst->getRange().offset, src->getSize()};
 	cmdClearState(cmdBuf);
     vkCmdCopyBuffer(cmdBuf->getHandle(), src->getHandle(), dst->getHandle(), 1, &copyRegion);
 }
@@ -35,9 +34,18 @@ void cmdWriteCopy(CmdBuffer cmdBuf, Buffer buf, void* data, VkDeviceSize size)
 	buf->addUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     buf->changeSize(size);
 	buf->recreate();
-	Buffer_R stagingBuf = buf->getStagingBuffer();
-	write(&stagingBuf, data, size);
-	cmdCopyBuffer(cmdBuf, &stagingBuf, buf);
+	Buffer stagingBuf = createStagingBuffer();
+	write(stagingBuf, data, size);
+	cmdCopyBuffer(cmdBuf, stagingBuf, buf);
+}
+
+void cmdUploadCopy(CmdBuffer cmdBuf, Buffer src, Buffer dst)
+{
+	dst->addUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    dst->changeMemoryType(VMA_MEMORY_USAGE_GPU_ONLY);
+	dst->changeSize(src->getSize());
+	dst->recreate();
+	cmdCopyBuffer(cmdBuf, src, dst);
 }
 
 
@@ -245,9 +253,9 @@ void cmdPushDescriptors(CmdBuffer cmdBuf, uint32_t setIdx, std::vector<Descripto
     VKA_ASSERT(cmdBuf->state.pipelineLayoutDef.descSetLayoutDef.size() > setIdx);
 
     std::vector<VkWriteDescriptorSet>   writes(VKA_COUNT(desc));
-    uint32_t bufferInfoCount = 0;
-    uint32_t imageInfoCount  = 0;
-    uint32_t accelerationStructureWriteCount = 0;
+    uint32_t bufferInfoCount = 1;
+    uint32_t imageInfoCount  = 1;
+    uint32_t accelerationStructureWriteCount = 1;
 	for (size_t i = 0; i < writes.size(); i++)
 	{
 		desc[i].countStructures(bufferInfoCount, imageInfoCount, accelerationStructureWriteCount);

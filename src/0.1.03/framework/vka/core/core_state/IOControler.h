@@ -19,11 +19,14 @@ struct Mouse
 	bool      leftEvent;
 	bool      rightPressed;
 	bool      rightEvent;
+	bool	  middlePressed;
+	bool	  middleEvent;
 	double scrollChange;
 	void   resetEvents()
 	{
 		leftEvent    = false;
 		rightEvent   = false;
+		middleEvent  = false;
 		change       = glm::vec2(0, 0);
 		scrollChange = 0.0;
 	}

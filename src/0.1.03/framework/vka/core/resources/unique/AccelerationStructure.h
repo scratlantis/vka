@@ -13,9 +13,6 @@ class AccelerationStructureVK_R : public Resource_T<VkAccelerationStructureKHR>
 
   protected:
 	void free();
-
-  private:
-	VkAccelerationStructureKHR handle;
 };
 
 class AccelerationStructure_R : public Resource_T<VkAccelerationStructureKHR>
@@ -55,7 +52,8 @@ class AccelerationStructure_R : public Resource_T<VkAccelerationStructureKHR>
 
 	void createHandles();
 	void detachChildResources();
-	void recreate();
+	void            recreate();
+	VkDeviceAddress getDeviceAddress() const;
 };
 
 class BottomLevelAS_R : public AccelerationStructure_R
@@ -83,12 +81,12 @@ class BottomLevelAS_R : public AccelerationStructure_R
 	const BottomLevelAS_R                                         getShallowCopy() const;
 };
 
-class TopLevelAs_R : public AccelerationStructure_R
+class TopLevelAS_R : public AccelerationStructure_R
 {
   protected:
 	VkAccelerationStructureBuildRangeInfoKHR buildRange = {};
 	VkAccelerationStructureGeometryKHR       buildGeom  = {};
-	TopLevelAs_R(const TopLevelAs_R &rhs)               = default;
+	TopLevelAS_R(const TopLevelAS_R &rhs)               = default;
 
   private:
 	VkAccelerationStructureBuildGeometryInfoKHR getBuildInfoInternal() const;
@@ -96,12 +94,11 @@ class TopLevelAs_R : public AccelerationStructure_R
 	virtual VkAccelerationStructureTypeKHR      getType() const;
 
   public:
-	TopLevelAs_R();
-	TopLevelAs_R(IResourcePool *pPool) :
-	    AccelerationStructure_R(pPool){};
+	TopLevelAS_R() = default;
+	TopLevelAS_R(IResourcePool *pPool);
 	void                                                                  setInstanceCount(uint32_t count);
 	void                                                                  setInstanceData(Buffer_R *instanceBuffer);
 	virtual std::vector<const VkAccelerationStructureBuildRangeInfoKHR *> getBuildRangePtrs() const;
-	const TopLevelAs_R                                                    getShallowCopy() const;
+	const TopLevelAS_R                                                    getShallowCopy() const;
 };
 }        // namespace vka

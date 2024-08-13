@@ -14,14 +14,13 @@ void AdvancedState::init(DeviceCI &deviceCI, IOControlerCI &ioControllerCI, Wind
 	textureCache            = new TextureCache(heap, config.texturePath);
 	swapchainImage          = nullptr;
 	imguiWrapper            = new ImGuiWrapper();
+	depthBufferCache        = new DepthBufferCache(heap);
 }
 
 void AdvancedState::destroy()
 {
 	vkDeviceWaitIdle(device.logical);
 	swapchainAttachmentPool->clear();
-	modelCache->clear();
-	textureCache->clear();
 	framebufferCache->clear();
 	if (guiEnabled)
 	{
@@ -35,6 +34,7 @@ void AdvancedState::destroy()
 	delete heap;
 	delete swapchainAttachmentPool;
 	delete imguiWrapper;
+	delete depthBufferCache;
 	if (swapchainImage != nullptr)
 	{
 		delete swapchainImage;
@@ -49,17 +49,24 @@ void AdvancedState::nextFrame()
 	{
 		if (initBits & STATE_INIT_ALL_BIT)
 		{
-			// Resize swapchain attachments
-			CmdBuffer cmdBuf = createCmdBuffer(frame->stack);
-			for (auto it = swapchainAttachmentPool->getImagesBegin(); it != swapchainAttachmentPool->getImagesEnd(); ++it)
-			{
-				(*it)->changeExtent({io.extent.width, io.extent.height, 1});
-				(*it)->recreate();
-				cmdTransitionLayout(cmdBuf, (*it), (*it)->getInitialLayout());
-			}
-			executeImmediat(cmdBuf);
+			updateSwapchainAttachments();
 		}
 	}
 	guiRendered = false;
 }
+
+// resize attachments to swapchain size, and aquire desired layout
+void AdvancedState::updateSwapchainAttachments()
+{
+	// Resize swapchain attachments
+	CmdBuffer cmdBuf = createCmdBuffer(frame->stack);
+	for (auto it = swapchainAttachmentPool->getImagesBegin(); it != swapchainAttachmentPool->getImagesEnd(); ++it)
+	{
+		(*it)->changeExtent({io.extent.width, io.extent.height, 1});
+		(*it)->recreate();
+		cmdTransitionLayout(cmdBuf, (*it), (*it)->getInitialLayout());
+	}
+	executeImmediat(cmdBuf);
+}
+
 }        // namespace vka

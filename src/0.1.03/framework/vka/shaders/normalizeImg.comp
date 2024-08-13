@@ -1,0 +1,25 @@
+#version 460
+
+#ifndef FORMAT
+#define FORMAT rgba32f
+#endif
+
+layout(local_size_x_id = 0, local_size_x_id = 1, local_size_x_id = 2) in;
+layout(binding = 0, FORMAT) uniform image2D img;
+layout(push_constant) uniform PC {uvec2 extent;};
+void main()
+{
+	uvec2 gID = gl_GlobalInvocationID.xy;
+	if (gID.x >= extent.x || gID.y >= extent.y) return;
+	vec4 color = imageLoad(img, ivec2(gID));
+	if(color.a == 0.0)
+	{
+		color.xyz = vec3(0.0);
+	}
+	else
+	{
+		color.xyz = color.xyz / color.a;
+	}
+	color.a = 1.0;
+	imageStore(img, ivec2(gID), color);
+}

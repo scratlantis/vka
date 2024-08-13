@@ -84,7 +84,7 @@ bool Descriptor::getLayoutTransforms(std::vector<Image_R *> &images, std::vector
 {
 	if (type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 	{
-		for (auto &image : images)
+		for (auto &image : this->images)
 		{
 			if (image->getLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 			{
@@ -95,7 +95,7 @@ bool Descriptor::getLayoutTransforms(std::vector<Image_R *> &images, std::vector
 	}
 	else if (type == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
 		{
-		for (auto &image : images)
+		for (auto &image : this->images)
 		{
 			if (image->getLayout() != VK_IMAGE_LAYOUT_GENERAL)
 			{

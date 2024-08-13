@@ -19,6 +19,7 @@ void cmdClearState(CmdBuffer cmdBuf);
 void cmdCopyBuffer(CmdBuffer cmdBuf, BufferRef src, BufferRef dst);
 void cmdUpload(CmdBuffer cmdBuf, Buffer buf);
 void cmdWriteCopy(CmdBuffer cmdBuf, Buffer buf, void *data, VkDeviceSize size);
+void cmdUploadCopy(CmdBuffer cmdBuf, Buffer src, Buffer dst);
 void cmdFillBuffer(CmdBuffer cmdBuf, Buffer dst, VkDeviceSize offset, VkDeviceSize size, uint32_t data);
 void cmdFillBuffer(CmdBuffer cmdBuf, Buffer dst, uint32_t data);
 // Image

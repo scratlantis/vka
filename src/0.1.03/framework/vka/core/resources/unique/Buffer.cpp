@@ -59,7 +59,7 @@ bool Buffer_R::isMappable() const
 const Buffer_R Buffer_R::recreate()
 {
 	Buffer_R bufferCopy = *this;
-	if (state.size == newState.size && state.usage == newState.usage && state.memProperty.vma == newState.memProperty.vma)
+	if (handle != VK_NULL_HANDLE && state.size == newState.size && state.usage == newState.usage && state.memProperty.vma == newState.memProperty.vma)
 	{
 		return bufferCopy;
 	}
@@ -148,28 +148,19 @@ BufferRange Buffer_R::getRange() const
 	return range;
 }
 
-const Buffer_R Buffer_R::getSubBuffer(BufferRange range) const
+const Buffer_R *Buffer_R::getSubBuffer(BufferRange range) const
 {
-	Buffer_R subBuffer = *this;
-	subBuffer.range     = range;
+	Buffer_R *subBuffer = new Buffer_R(*this);
+	subBuffer->range	= range;
+	VKA_ASSERT(subBuffer->getPool() == nullptr);
+	// Ugly hack to avoid double tracking
+	// larger structual problem, will fix in next refactor
+	subBuffer->res = nullptr;
+	subBuffer->viewRes = nullptr;
+	subBuffer->track(gState.frame->stack);
+	subBuffer->res = res;
+	subBuffer->viewRes = viewRes;
 	return subBuffer;
-}
-
-const Buffer_R Buffer_R::getShallowCopy() const
-{
-	return *this;
-}
-
-Buffer_R Buffer_R::getStagingBuffer() const
-{
-	Buffer_R stagingBuffer = *this;
-	VKA_ASSERT(stagingBuffer.getPool() == nullptr);
-	stagingBuffer.track(gState.frame->stack);
-	stagingBuffer.changeMemoryType(VMA_MEMORY_USAGE_CPU_ONLY);
-	stagingBuffer.changeUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	stagingBuffer.state = stagingBuffer.newState;
-	stagingBuffer.createHandles();
-	return stagingBuffer;
 }
 
 VkDeviceAddress Buffer_R::getDeviceAddress() const

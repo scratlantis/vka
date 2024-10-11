@@ -1,5 +1,5 @@
 #pragma once
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 #include <vka/core/stateless/utility/macros.h>
 
 namespace vka

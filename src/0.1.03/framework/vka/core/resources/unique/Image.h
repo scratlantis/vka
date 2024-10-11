@@ -2,7 +2,7 @@
 #include "../Resource.h"
 #include <vka/core/stateless/utility/constants.h>
 #include <vka/core/stateless/vk_types/misc.h>
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 namespace vka
 {
 

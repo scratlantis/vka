@@ -1,0 +1,82 @@
+#ifndef FORMAT
+#define FORMAT rgba32f
+#endif
+
+layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
+layout(binding = 0) readonly buffer INPUT{ float buf[]; };
+layout(binding = 1, FORMAT) writeonly uniform image2D img;
+
+// | CNT | STEP_SUM | step | val | step | val | step | val |...
+
+struct PushStruct
+{
+	vec3 color;
+	uint width;
+	uint height;
+	uint offset;
+
+};
+
+layout(push_constant) uniform PC {PushStruct pc;};
+
+
+
+void main()
+{
+	uvec2 gID = gl_GlobalInvocationID.xy;
+	if (gID.x >= pc.width || gID.y >= pc.height) return;
+	
+
+	uint dataPointCount = uint(buf[pc.offset]);
+
+	if(dataPointCount == 0)
+	{
+		imageStore(img, ivec2(gID), vec4(0, 0, 0.2, 1));
+		return;
+	}
+	//imageStore(img, ivec2(gID), vec4(0.2, 0, 0, 1));
+	//return;
+
+	float stepSum  = buf[pc.offset + 1];
+	uint firstDataPoint = pc.offset + 2;
+
+	float x = stepSum * float(gID.x)/float(pc.width);
+	float y = float(gID.y)/float(pc.height);
+	
+	int leftIndex = -1;
+	int rightIndex = 0;
+	float distanceSum = 0;
+	float coef = 0;
+	while(rightIndex < dataPointCount)
+	{
+		float nextStep = buf[firstDataPoint + rightIndex * 2 + 0];
+		distanceSum += nextStep;
+		if (distanceSum > x)
+		{
+			coef = ( distanceSum - x ) / nextStep;
+			break;
+		}
+		leftIndex = rightIndex;
+		rightIndex++;
+	}
+	float leftVal = 1.0;
+	float rightVal = 1.0;
+	if(rightIndex < dataPointCount)
+	{
+		rightVal = buf[firstDataPoint + rightIndex * 2 + 1];
+		leftVal = rightVal;
+	}
+	if(leftIndex >= 0)
+	{
+		leftVal = buf[firstDataPoint + leftIndex * 2 + 1];
+	}
+	float val = mix(rightVal, leftVal, coef);
+	if(1.0 - y < val)
+	{
+		imageStore(img, ivec2(gID), vec4(pc.color, 1));
+	}
+	else
+	{
+		imageStore(img, ivec2(gID), vec4(0, 0, 0, 1));
+	}
+}

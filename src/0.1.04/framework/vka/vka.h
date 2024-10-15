@@ -1,0 +1,16 @@
+#pragma once
+#include <vka/globals.h>
+#include <vka/advanced_utility/complex_commands.h>
+#include <vka/advanced_utility/misc_utility.h>
+#include <vka/specialized_utility/gui.h>
+#include <vka/specialized_utility/draw_2D.h>
+#include <vka/specialized_utility/draw_3D.h>
+#include <vka/specialized_utility/image_metrics.h>
+#include <vka/core/stateless/utility/io.h>
+#include <vka/core/core_state/GlfwWindow.h>
+#include <vka/core/core_utility/cmd_buffer_utility.h>
+#include <vka/core/core_utility/buffer_utility.h>
+#include <vka/core/core_utility/general_commands.h>
+#include <vka/controller/camera/FixedCamera.h>
+#include <vka/pbr/universal/UScene.h>
+#include <vka/specialized_modules/default_scene.h>

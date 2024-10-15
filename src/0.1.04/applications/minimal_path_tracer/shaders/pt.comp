@@ -1,0 +1,225 @@
+#include "interface_structs.glsl"
+layout(binding = LOCAL_BINDING_OFFSET, FORMAT1) writeonly uniform image2D colorOut;
+layout(binding = LOCAL_BINDING_OFFSET + 1) uniform VOLUME_INSTANCE { GLSLMediumInstance volInst;};
+
+
+
+Range traceMediumConservative(Ray ray)
+{
+	vec3 localOrigin = (volInst.invMat * vec4(ray.origin, 1.0)).xyz;
+	vec3 localDir = (volInst.invMat * vec4(ray.direction, 0.0)).xyz;
+	vec3 localEntry, localExit;
+	Range range;
+	bool intersect = unitCubeIntersection(localOrigin, localDir, localEntry, localExit);
+	if(intersect && distance(localEntry, localExit) > distance(localOrigin, localExit)) 
+	{
+		// Inside Cube
+		vec3 worldExitPos = (volInst.mat * vec4(localExit, 1.0)).xyz;
+		range.rMin = 0.0;
+		range.rMax = distance(ray.origin, worldExitPos);
+	}
+	else if(intersect)
+	{
+	    // Intersect Cube
+		vec3 worldEntryPos = (volInst.mat * vec4(localEntry, 1.0)).xyz;
+		vec3 worldExitPos = (volInst.mat * vec4(localExit, 1.0)).xyz;
+		range.rMin = distance(ray.origin, worldEntryPos);
+		range.rMax = distance(ray.origin, worldExitPos);
+	}
+	else
+	{
+		// Miss Cube
+		range.rMin = TMAX;
+		range.rMax = TMAX;
+	}
+	return range;
+}
+
+float traceMedium(Ray ray, Range range, uint bounce, inout uint seed)
+{
+	vec3 localOrigin = (volInst.invMat * vec4(ray.origin + range.rMin * ray.direction, 1.0)).xyz;
+	vec3 localExit = (volInst.invMat * vec4(ray.origin + range.rMax * ray.direction, 1.0)).xyz;
+	vec3 localDir = normalize(volInst.invMat * vec4(ray.direction, 0.0)).xyz;
+	float localTMax = distance(localOrigin, localExit);
+
+	float tLocal = rayMarcheMedium(localOrigin, localDir, localTMax, seed);
+	if(tLocal == TMAX)
+	{
+		return TMAX;
+	}
+
+	vec3 worldHitPos = (volInst.mat * vec4(localOrigin + tLocal * localDir, 1.0)).xyz;
+	return distance(ray.origin, worldHitPos);
+}
+
+float traceMediumTransmittance(Ray ray, Range range, inout uint seed)
+{
+	vec3 localOrigin = (volInst.invMat * vec4(ray.origin + range.rMin * ray.direction, 1.0)).xyz;
+	vec3 localExit = (volInst.invMat * vec4(ray.origin + range.rMax * ray.direction, 1.0)).xyz;
+	vec3 localDir = normalize(volInst.invMat * vec4(ray.direction, 0.0)).xyz;
+	float localTMax = distance(localOrigin, localExit);
+	return rayMarcheMediumTransmittance(localOrigin, localDir, localTMax, seed);
+}
+
+float traceTransmittance(Ray ray, inout uint seed)
+{
+	float geomTransmittance = traceGeometryTransmittance(ray, 0x0F);
+	if(geomTransmittance == 0.0) return geomTransmittance;
+
+	Range rMedium = traceMediumConservative(ray);
+	if(rMedium.rMin == TMAX) return geomTransmittance;
+
+	return geomTransmittance * traceMediumTransmittance(ray, rMedium, seed);
+}
+
+#if AREA_LIGHT_COUNT > 0
+void sampleDirectIllumAreaLight(vec3 pos, inout uint seed, out vec3 L_i, out vec3 omega_i)
+{
+	Ray ray = genDirectIllumRayAreaLight(pos, seed);
+	L_i = traceTransmittance(ray, seed) * ray.weight;
+	omega_i = ray.direction;
+}
+#endif
+
+void sampleDirectIllumEnvMap(vec3 pos, inout uint seed, out vec3 L_i, out vec3 omega_i)
+{
+	Ray ray = genDirectIllumRayEnvMap(pos, seed);
+	L_i = traceTransmittance(ray, seed) * ray.weight;
+	omega_i = ray.direction;
+}
+
+const uint PATH_TERMINATED_EMISSION = 0;
+const uint PATH_TERMINATED_INFINITY = 1;
+const uint PATH_SURFACE_SCATTER = 2;
+const uint PATH_MEDIUM_SCATTER = 3;
+
+Ray nextBounce(
+	Ray ray, uint bounce, uint cullMask,
+	inout uint seed,
+	out uint hitType, out MaterialData matData, out mat4x3 tangentFrame)
+{
+	Ray nextRay;
+	HitData hitData;
+	float tGeom = traceGeometry(ray, cullMask, hitData);
+	Range rMedium = traceMediumConservative(ray);
+	rMedium.rMax = min(rMedium.rMax, tGeom);
+
+	if(tGeom < rMedium.rMin)
+	{
+		hitType = PATH_SURFACE_SCATTER;
+		evalHit(hitData, matData, tangentFrame);
+		nextRay = reflectLampertDiffuse(matData, tangentFrame, seed);
+		nextRay.weight *= ray.weight;
+	}
+	else if( rMedium.rMin == TMAX )
+	{
+		hitType = PATH_TERMINATED_INFINITY;
+	}
+	else
+	{
+		float tMedium = traceMedium(ray, rMedium, bounce, seed);
+		if(tGeom < tMedium)
+		{
+			hitType = PATH_SURFACE_SCATTER;
+			evalHit(hitData, matData, tangentFrame);
+
+			nextRay = reflectLampertDiffuse(matData, tangentFrame, seed);
+			nextRay.weight *= ray.weight;
+		}
+		else if( tMedium == TMAX )
+		{
+			hitType = PATH_TERMINATED_INFINITY;
+		}
+		else
+		{
+			hitType = PATH_MEDIUM_SCATTER;
+			tangentFrame[3] = ray.origin + tMedium * ray.direction;
+			matData.albedo = volInst.albedo;
+
+			nextRay = scatterUniform(matData.albedo, tangentFrame[3], seed);
+			nextRay.weight *= ray.weight;
+		}
+	}
+	return nextRay;
+}
+
+void main()
+{
+	if(!validInvocation())
+	{
+		return;
+	}
+	uint seed = getSeed();
+	vec3 totalIllumination = vec3(0.0);
+
+	for(uint j = 0; j < SAMPLE_COUNT; j++)
+	{
+		Ray ray = genPrimaryRay(gl_GlobalInvocationID.xy, seed);
+		for(uint i = 0; i < MAX_BOUNCES; i++)
+		{
+			uint hitType;
+			MaterialData matData;
+			mat4x3 tangentFrame;
+			uint cullMask = 0xFF;
+
+			Ray nextRay = nextBounce(ray, i, cullMask, seed, hitType, matData, tangentFrame);
+			vec3 L_o = vec3(0.0);
+			if(hitType == PATH_TERMINATED_EMISSION)
+			{
+				totalIllumination += ray.weight * matData.emission;
+				break;
+			}
+			else if(hitType == PATH_TERMINATED_INFINITY)
+			{
+				if(i == 0)
+				{
+					totalIllumination += ray.weight * sampleEnvMap(ray.direction);
+				}
+				break;
+			}
+			else if(hitType == PATH_SURFACE_SCATTER) 
+			{
+				if(i == 0) // Emission only from the first hit. Other emissions from light sources are collected via NEE
+				{
+					L_o += matData.emission;
+				}
+				vec3 brdf = lampertBRDF(matData.albedo);
+				vec3 L_i, omega_i;
+				// Direct illumination from area lights
+				#if AREA_LIGHT_COUNT > 0
+				{
+					sampleDirectIllumAreaLight(tangentFrame[3], seed, L_i, omega_i);
+					L_o += brdf * L_i * pos_dot(tangentFrame[2], omega_i);
+				}
+				#endif
+				// Direct illumination from envMap
+				{
+					sampleDirectIllumEnvMap(tangentFrame[3], seed, L_i, omega_i);
+					L_o += brdf * L_i * pos_dot(tangentFrame[2], omega_i);
+				}
+			}
+			else if(hitType == PATH_MEDIUM_SCATTER)
+			{
+				// Direct illumination from area lights
+				vec3 bsdf = uniformScatterBSDF(volInst.albedo);
+				vec3 L_i, omega_i;
+				#if AREA_LIGHT_COUNT > 0
+				{
+					sampleDirectIllumAreaLight(tangentFrame[3], seed, L_i, omega_i);
+					L_o += bsdf * L_i;
+				}
+				#endif
+				// Direct illumination from envMap
+				{
+					sampleDirectIllumEnvMap(tangentFrame[3], seed, L_i, omega_i);
+					L_o += bsdf * L_i;
+				}
+			}
+			totalIllumination += ray.weight * L_o;
+			ray = nextRay;
+		}
+	}
+
+	totalIllumination /= float(SAMPLE_COUNT);
+	imageStore(colorOut, ivec2(gl_GlobalInvocationID.xy), vec4(totalIllumination, 1.0));
+}

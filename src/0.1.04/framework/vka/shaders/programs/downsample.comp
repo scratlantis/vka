@@ -1,0 +1,69 @@
+#include "reduce_operations.glsl"
+
+#ifndef FORMAT_IN
+#define FORMAT_IN rgba32f
+#endif
+
+#ifndef FORMAT_OUT
+#define FORMAT_OUT r32f
+#endif
+
+#ifndef REDUCE_OP
+#define REDUCE_OP REDUCE_OP_IMAGE_PDF
+#endif
+
+layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
+layout(binding = 0, FORMAT_IN) readonly uniform image2D imgIN;
+layout(binding = 1, FORMAT_OUT) writeonly uniform image2D imgOUT;
+
+struct PushStruct
+{
+	uvec2 extentIN;
+	uvec2 extentOUT;
+};
+
+layout(push_constant) uniform PC {PushStruct pc;};
+
+
+
+void main()
+{
+	uvec2 gID = gl_GlobalInvocationID.xy;
+	if(gID.x >= pc.extentOUT.x || gID.y >= pc.extentOUT.y)
+	{
+		return;
+	}
+
+	uvec2 segmentSize = pc.extentIN / pc.extentOUT;
+	uvec2 segmentOffset = gID * segmentSize;
+
+
+	// Segments at the border may be smaller
+	if(gID.x == pc.extentOUT.x - 1)
+	{
+		segmentSize.x = pc.extentIN.x - (pc.extentOUT.x - 1) * segmentSize.x;
+	}
+	if(gID.y == pc.extentOUT.y - 1)
+	{
+		segmentSize.y = pc.extentIN.y - (pc.extentOUT.y - 1) * segmentSize.y;
+	}
+
+	vec4 colorOUT = vec4(0.0);
+	float normalizationTerm = 1.0/ float(segmentSize.x * segmentSize.y);
+	for(uint x = 0; x < segmentSize.x; x++)
+	{
+		for(uint y = 0; y < segmentSize.y; y++)
+		{
+			ivec2 texelCoord = ivec2(segmentOffset.x + x, segmentOffset.y + y);
+			vec4 colorIN = imageLoad(imgIN, texelCoord);
+			#if REDUCE_OP == REDUCE_OP_IMAGE_PDF
+				float luminance = (colorIN.r + colorIN.g + colorIN.b) / 3.0;
+				float sinTheta = sin((texelCoord.y+0.5) / float(pc.extentIN.y) * 3.14159265359);
+				float importance = luminance * normalizationTerm * sinTheta;
+				colorOUT += vec4(importance);
+			#endif
+			// Reduce op
+		}
+	}
+	imageStore(imgOUT, ivec2(gID), colorOUT);
+}

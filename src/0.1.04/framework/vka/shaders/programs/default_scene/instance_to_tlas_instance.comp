@@ -1,0 +1,39 @@
+#include "../../lib/interface_structs.glsl"
+#include "../../lib/default_scene/interface_structs.glsl"
+
+#ifndef INPUT_SIZE
+#define INPUT_SIZE 1
+#endif
+
+layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
+layout(binding = 0) readonly buffer INSTANCE{ GLSLInstance instance_buf[INPUT_SIZE]; };
+layout(binding = 1) buffer TLAS_INSTANCE{ GLSLAccelerationStructureInstanceKHR tlas_instance_buf[INPUT_SIZE]; };
+
+void main()
+{
+	uint gID = gl_GlobalInvocationID.x;
+	if (gID >= INPUT_SIZE) return;
+	GLSLInstance inst = instance_buf[gID];
+	GLSLAccelerationStructureInstanceKHR tlas_inst = tlas_instance_buf[gID];
+
+	uint mask = 0x000000FF & inst.cullMask;
+	mask = mask << 24;
+	tlas_inst.instanceCustomIndex24_mask8 = mask | tlas_inst.instanceCustomIndex24_mask8;
+
+	tlas_inst.transform[0] = inst.mat[0].x;
+	tlas_inst.transform[1] = inst.mat[1].x;
+	tlas_inst.transform[2] = inst.mat[2].x;
+	tlas_inst.transform[3] = inst.mat[3].x;
+
+	tlas_inst.transform[4] = inst.mat[0].y;
+	tlas_inst.transform[5] = inst.mat[1].y;
+	tlas_inst.transform[6] = inst.mat[2].y;
+	tlas_inst.transform[7] = inst.mat[3].y;
+
+	tlas_inst.transform[8] = inst.mat[0].z;
+	tlas_inst.transform[9] = inst.mat[1].z;
+	tlas_inst.transform[10] = inst.mat[2].z;
+	tlas_inst.transform[11] = inst.mat[3].z;
+
+	tlas_instance_buf[gID] = tlas_inst;
+}

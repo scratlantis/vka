@@ -144,18 +144,6 @@ void Shader_R::preprocess(ShaderDefinition const& def)
 	}
 
 	shaderCode = shaderPrefix + shaderCode;
-	//for (uint32_t i = shaderCode.size() - 1; i > 0; i--)
-	//{
-	//	char c = shaderCode[i];
-	//	if (c != '}') // Todo: very hacky, but works for now
-	//	{
-	//		shaderCode.pop_back();
-	//	}
-	//	else
-	//	{
-	//		break;
-	//	}
-	//}
 	writeFile(shaderPath, shaderCode);
 }
 

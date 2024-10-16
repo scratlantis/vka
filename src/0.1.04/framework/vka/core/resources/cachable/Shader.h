@@ -65,7 +65,7 @@ class Shader_R : public Cachable_T<VkShaderModule>
 	Shader_R(IResourceCache *pCache, ShaderDefinition const &definition);
 };
 
-static VkPipelineShaderStageCreateInfo makeShaderStageCI(const ShaderDefinition const &def, VkShaderModule shaderModule)
+static VkPipelineShaderStageCreateInfo makeShaderStageCI(const ShaderDefinition &def, VkShaderModule shaderModule)
 {
 	{
 		VkPipelineShaderStageCreateInfo ci{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};

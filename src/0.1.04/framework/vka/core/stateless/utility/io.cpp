@@ -95,3 +95,9 @@ void copyRecursive(const fs::path &src, const fs::path &target,
 		std::cout << e.what();
 	}
 }
+
+void printVka(const char *path, glm::mat4 mat);
+
+void printVka(const char *path, glm::vec4 v);
+
+std::vector<std::string> split(const std::string &s, char delimiter);

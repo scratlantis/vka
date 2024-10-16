@@ -103,7 +103,7 @@ int operator>(LHSlt<A, decltype(hashCombine_OP)> lhsof, B rhs)
 {
 	A &lhs = lhsof.lhs_;
 	// actual implementation
-	return vka::hashCombine(lhs, rhs);
+	return static_cast<int>(vka::hashCombine(lhs, rhs));
 }
 
 #define HASHC < hashCombine_OP >

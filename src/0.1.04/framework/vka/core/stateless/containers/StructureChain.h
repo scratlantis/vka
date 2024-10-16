@@ -30,15 +30,7 @@ class StructureChain
 	std::list<Node> chain;
 };
 
-inline uint32_t StructureChain::getSize()
-{
-	return VKA_COUNT(chain);
-}
 
-inline bool StructureChain::empty()
-{
-	return chain.empty();
-}
 class StructureChain::Node
 {
   public:
@@ -54,10 +46,7 @@ class StructureChain::Node
 	void  *data;
 };
 
-inline size_t StructureChain::Node::getSize() const
-{
-	return size;
-}
+
 
 template <class StructureType>
 inline StructureChain::Node::Node(const StructureType &node) :
@@ -70,21 +59,8 @@ inline StructureChain::Node::Node(const StructureType &node) :
 	data = copyBinaryData(node);
 }
 
-inline StructureChain::Node::Node(const Node &node) :
-    size(node.size)
-{
-	data = copyBinaryData(node.data, node.size);
-}
 
-inline StructureChain::Node::~Node()
-{
-	delete[] reinterpret_cast<char *>(data);
-}
 
-inline VkBaseOutStructure *StructureChain::Node::getNode() const
-{
-	return reinterpret_cast<VkBaseOutStructure *>(data);
-}
 
 template <class StructureType>
 inline void StructureChain::addNode(const StructureType &node)
@@ -92,46 +68,8 @@ inline void StructureChain::addNode(const StructureType &node)
 	chain.emplace_back(node);
 }
 
-inline VkBaseOutStructure *StructureChain::firstNode()
-{
-	return chain.empty() ? nullptr : chain.begin()->getNode();
-}
 
-inline VkBaseOutStructure *StructureChain::lastNode()
-{
-	return chain.empty() ? nullptr : chain.rbegin()->getNode();
-}
 
-inline VkBaseOutStructure *StructureChain::chainNodes()
-{
-	if (chain.empty())
-		return nullptr;
-	auto head = chain.begin(), curr = head, next = head;
-	while (++next != chain.end())
-	{
-		VkBaseOutStructure *node = curr->getNode();
-		node->pNext              = next->getNode();
-		curr                     = next;
-	}
-	VkBaseOutStructure *last = curr->getNode();
-	last->pNext              = nullptr;
-	return head->getNode();
-}
-
-// unsafe
-inline hash_t StructureChain::getHash()
-{
-	if (chain.empty())
-		return 0;
-	auto   node = chain.cbegin();
-	hash_t hash = byteHashPtr(node->getNode());
-	while (++node != chain.cend())
-	{
-		hash_t nodeHash = byteHashPtr(node->getNode());
-		hashCombineLocal(hash, nodeHash);
-	}
-	return hash;
-}
 
 #define VKA_SPECIALIZE_STRUCTURE_CHAIN_NODE(StructureType, structureType)         \
 	template <>                                                                   \

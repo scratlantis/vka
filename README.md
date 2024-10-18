@@ -57,8 +57,7 @@ git clone --recurse-submodules https://github.com/scratlantis/vka.git
 
 
 ## Authors
-Sidney Hansen
-Contact: scratlantis@protonmail.com
+Sidney Hansen (Contact: scratlantis@protonmail.com)
 
 ## License
 

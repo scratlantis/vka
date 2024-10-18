@@ -141,8 +141,8 @@ FOREACH(vka_version ${VKA_VERSIONS})
   target_include_directories(${current_lib} PUBLIC   ./src/${vka_version}/framework/ )
   target_include_directories(${current_lib} PRIVATE ${Vulkan_INCLUDE_DIRS})
   target_link_libraries(
-      ${current_lib} Vulkan::Vulkan glfw imgui stb glm tinyobjloader vma nlohmann_json ktx
-      csvwriter ${CMAKE_DL_LIBS} Threads::Threads)
+      ${current_lib} Vulkan::Vulkan glfw imgui stb glm tinyobjloader vma nlohmann_json
+      ${CMAKE_DL_LIBS} Threads::Threads)
   
   # folder
   set_target_properties (${current_lib} PROPERTIES FOLDER ${vka_version}/framework )
@@ -177,8 +177,8 @@ FOREACH(vka_version ${VKA_VERSIONS})
     target_include_directories(${current_app} PUBLIC   ./src/${vka_version}/framework/ )
     #target_include_directories(${current_app} PUBLIC   ./src/${vka_version}/applications_common/ )
     target_include_directories(${current_app} PRIVATE ${Vulkan_INCLUDE_DIRS})
-    target_link_libraries(${current_app} Vulkan::Vulkan glfw imgui stb glm tinyobjloader vma nlohmann_json ktx
-      csvwriter ${CMAKE_DL_LIBS} Threads::Threads)
+    target_link_libraries(${current_app} Vulkan::Vulkan glfw imgui stb glm tinyobjloader vma nlohmann_json
+      ${CMAKE_DL_LIBS} Threads::Threads)
     target_link_libraries(${current_app} ${current_lib})
 
     # folder

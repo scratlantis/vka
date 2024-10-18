@@ -31,7 +31,7 @@ Current applications:
 
 ## Dependencies
 
-###Contained in repo:
+### Contained in repo:
 - glfw
 - ImGui
 - nlohmann_json
@@ -39,7 +39,7 @@ Current applications:
 - tiny_obj_loader
 - vma
 
-###Other:
+### Other:
 - Vulkan 1.3
 - CMake
 

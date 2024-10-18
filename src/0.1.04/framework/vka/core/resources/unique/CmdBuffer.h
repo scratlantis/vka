@@ -108,7 +108,7 @@ struct CmdBufferState
 		{
 			diffBits |= RENDER_STATE_ACTION_BIT_START_RENDER_PASS;
 		}
-		else if (other.renderPass != renderPass || !cmpVector(clearValues, other.clearValues) || renderArea != other.renderArea)
+		else if (other.renderPass != renderPass || !cmpVector(clearValues, other.clearValues) || renderArea != other.renderArea || framebuffer != other.framebuffer)
 		{
 			diffBits |= RENDER_STATE_ACTION_BIT_END_RENDER_PASS;
 			diffBits |= RENDER_STATE_ACTION_BIT_START_RENDER_PASS;

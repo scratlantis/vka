@@ -7,6 +7,7 @@ namespace vka
 
 void cmdFill(CmdBuffer cmdBuf, Image dst, VkImageLayout dstLayout, glm::vec4 color)
 {
+	cmdClearState(cmdBuf);
 	RenderPassDefinition rpDef = defaultRenderPass();
 	addColorAttachment(rpDef, VK_IMAGE_LAYOUT_UNDEFINED, dstLayout, dst->getFormat(), true);
 	VkRenderPass rp = gState.cache->fetch(rpDef);

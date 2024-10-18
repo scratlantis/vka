@@ -117,6 +117,10 @@ class Buffer_R : public Resource_T<VkBuffer>
 	{
 		newState.usage = usage;
 	};
+	ResourceType type() const override
+	{
+		return RESOURCE_TYPE_BUFFER;
+	}
 	~Buffer_R()
 	{
 		free();

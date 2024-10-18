@@ -28,6 +28,10 @@ inline void *copyBinaryData(const T &src) noexcept
 	return dst;
 }
 
+bool andOp(std::vector<bool> values);
+bool orOp(std::vector<bool> values);
+
+
 // T must have zero padding
 template <class T>
 inline bool selectByPreference(const std::vector<T> &options, const std::vector<T> &preferences, T &selection)

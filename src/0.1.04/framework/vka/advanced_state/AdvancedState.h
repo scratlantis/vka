@@ -5,6 +5,7 @@
 #include "caches/TextureCache.h"
 #include "caches/DepthBufferCache.h"
 #include "caches/DataCache.h"
+#include "caches/FeedbackDataCache.h"
 #include "caches/ImGuiTextureIDCache.h"
 #include <vka/core/core_state/CoreState.h>
 #include <vka/core/resources/cachable/RenderPass.h>
@@ -31,6 +32,10 @@ class AdvancedState : public CoreState
 
 	IResourcePool *heap;
 
+	IResourcePool     *hostCachedHeap;
+	HostCache         *hostCache;
+	FeedbackDataCache *feedbackDataCache;
+
 	// Swapchain attachments
 	IResourcePool    *swapchainAttachmentPool;
 	SwapchainImage_R *swapchainImage;
@@ -48,5 +53,8 @@ class AdvancedState : public CoreState
 	void         destroy() override;
 	virtual void nextFrame() override;
 	void         updateSwapchainAttachments();
+
+	private:
+	IResourcePool *hostCacheLocalPool;
 };
 }        // namespace vka

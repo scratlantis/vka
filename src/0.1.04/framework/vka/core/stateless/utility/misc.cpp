@@ -26,6 +26,32 @@ void *copyBinaryData(const void *src, std::size_t size) noexcept
 	return dst;
 }
 
+bool andOp(std::vector<bool> values)
+{
+	for (bool v : values)
+	{
+		if (!v)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool orOp(std::vector<bool> values)
+{
+	for (bool v : values)
+	{
+		if (v)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
 std::vector<uint8_t> getByteVector(void *data, size_t size)
 {
 	std::vector<uint8_t> out(size);

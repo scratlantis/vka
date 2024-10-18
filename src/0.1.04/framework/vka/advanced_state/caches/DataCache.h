@@ -1,3 +1,4 @@
+#pragma once
 #include <vka/core/core_common.h>
 #include <unordered_map>
 

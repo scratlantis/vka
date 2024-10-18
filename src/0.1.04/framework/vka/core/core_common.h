@@ -13,5 +13,7 @@
 #include "stateless/utility/io.h"
 #include "stateless/utility/misc.h"
 #include "stateless/utility/setup.h"
+#include "stateless/utility/enum.h"
 #include "core_utility/debug_utility.h"
+
 

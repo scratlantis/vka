@@ -9,6 +9,10 @@ void AdvancedState::init(DeviceCI &deviceCI, IOControlerCI &ioControllerCI, Wind
 	CoreState::init(deviceCI, ioControllerCI, window);
 	swapchainAttachmentPool = new ResourcePool();
 	heap                    = new ResourcePool();
+	hostCachedHeap          = new ResourcePool();
+	hostCacheLocalPool      = new ResourcePool();
+	hostCache               = new HostCache(hostCachedHeap, hostCacheLocalPool);
+	feedbackDataCache       = new FeedbackDataCache(hostCache);
 	framebufferCache        = new FramebufferCache();
 	modelCache              = new ModelCache(heap, config.modelPath, config.modelUsage);
 	textureCache            = new TextureCache(heap, config.texturePath);

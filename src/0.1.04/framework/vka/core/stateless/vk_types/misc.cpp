@@ -321,11 +321,11 @@ bool VkRect2D_OP::isValid(VkExtent2D const &extent) const
 VkRect2D_OP VkRect2D_OP::operator*(Rect2D<float> const &other) const
 {
 	// clang-format off
-		VkRect2D_OP result;
+		VkRect2D_OP result; 
 		result.offset.x = other.x * extent.width;
 		result.offset.y = other.y * extent.height;
-		result.extent.width = extent.width * static_cast<uint32_t>(other.width);
-		result.extent.height = extent.height * static_cast<uint32_t>(other.height);
+		result.extent.width = other.width * extent.width;
+		result.extent.height = other.height * extent.height;
 		return result;
 	// clang-format on
 }

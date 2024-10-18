@@ -12,9 +12,11 @@ void swapBuffers(std::vector<CmdBuffer> cmdBufs)
 	{
 		cmdClearState(cmdBuf);
 	}
+	cmdBarrier(cmdBufs[0], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+	           VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+	gState.hostCache->update(cmdBufs[0]);
 	SubmitSynchronizationInfo syncInfo = gState.acquireNextSwapchainImage();
 	submit(cmdBufs, gState.device.universalQueues[0], syncInfo);
-	//vkDeviceWaitIdle(gState.device.logical);
 	gState.presentFrame();
 	gState.nextFrame();
 }

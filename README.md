@@ -29,9 +29,9 @@ Current applications:
 ![Alt text](/media/screenshot_pt_with_gui_1.png?raw=true "path_tracer_with_gui")
 
 
-### Dependencies
+## Dependencies
 
-Contained in repo:
+###Contained in repo:
 - glfw
 - ImGui
 - nlohmann_json
@@ -39,14 +39,14 @@ Contained in repo:
 - tiny_obj_loader
 - vma
 
-Other:
+###Other:
 - Vulkan 1.3
 - CMake
 
-## C++ Standard
+### C++ Standard
 - C++17
 
-### Installing
+## Installing
 
 * Install Latest Vulkan Version (https://vulkan.lunarg.com/)
 * clone

@@ -23,7 +23,7 @@ namespace vka
 			GLSLCameraInstance camInst{};
 	        camInst.view = glm::lookAt(ci.pos, ci.pos + glm::normalize(ci.frontDir), glm::normalize(ci.upDir));
 	        camInst.invView = glm::inverse(camInst.view);
-	        camInst.seed = ci.seed;
+	        camInst.frameIdx = ci.frameIdx;
 			camInstBuf->addUsage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 			cmdWriteCopy(cmdBuf, camInstBuf, &camInst, sizeof(GLSLCameraInstance));
 		}
@@ -44,6 +44,7 @@ namespace vka
 	        cmd.pushDescriptor(pScene->envMap, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 	        cmd.pushDescriptor(pScene->envMapPdfBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 
+
 	        cmd.pipelineDef.shaderDef.args.push_back({"ENVMAP_PDF_BINS_X", pScene->envMapSubdivisions.x});
 	        cmd.pipelineDef.shaderDef.args.push_back({"ENVMAP_PDF_BINS_Y", pScene->envMapSubdivisions.y});
 	        cmd.pipelineDef.shaderDef.args.push_back({"AREA_LIGHT_COUNT", pScene->areaLightCount});
@@ -52,13 +53,36 @@ namespace vka
         {
 	        cmd.pushSubmodule(cVkaShaderModulePath + "mock/pt_uscene_mock.glsl");
         }
-        void bindScalarField(ComputeCmd &cmd, Image scalarField, float rayMarchStepSize)
+        Buffer cmdGetScalarFieldUniform(CmdBuffer cmdBuf, IResourcePool* pPool, float densityScale, float minDensity, float maxDensity)
+		{
+	        Buffer uboBuf = createBuffer(pPool, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	        struct UBOStruct
+	        {
+				float densityScale;
+	            float minDensity;
+	            float maxDensity;
+
+	        } ubo;
+			ubo.densityScale = densityScale;
+			ubo.minDensity = minDensity;
+	        ubo.maxDensity = maxDensity;
+	        cmdWriteCopy(cmdBuf, uboBuf, &ubo, sizeof(UBOStruct));
+	        return uboBuf;
+		}
+        void bindScalarField(ComputeCmd &cmd, Image scalarField, float rayMarchStepSize, Buffer ubo)
 		{
 	        cmd.pushSubmodule(cVkaShaderModulePath + "pt_scalar_field.glsl");
 			cmd.pushDescriptor(scalarField, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-			cmd.pipelineDef.shaderDef.args.push_back({"RAY_MARCH_STEP_SIZE", std::to_string(rayMarchStepSize)});
-	        VKA_ASSERT(scalarField->getExtent().width == scalarField->getExtent().height && scalarField->getExtent().depth == scalarField->getExtent().height);
+	        cmd.pushDescriptor(ubo, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+			cmd.pipelineDef.shaderDef.args.push_back({"RAY_MARCHE_STEP_SIZE", std::to_string(rayMarchStepSize)});
+	        //VKA_ASSERT(scalarField->getExtent().width == scalarField->getExtent().height && scalarField->getExtent().depth == scalarField->getExtent().height);
 	        cmd.pipelineDef.shaderDef.args.push_back({"VOLUME_RESOLUTION", scalarField->getExtent().width});
+		}
+
+		void bindBoxIntersector(ComputeCmd& cmd, TLAS tlas)
+		{
+	        cmd.pushSubmodule(cVkaShaderModulePath + "default_scene/pt_box_intersection.glsl");
+			cmd.pushDescriptor(tlas);
 		}
 	}
 }

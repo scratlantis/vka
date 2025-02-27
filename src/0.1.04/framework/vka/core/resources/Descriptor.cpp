@@ -180,6 +180,7 @@ void Descriptor::writeDescriptorInfo(VkWriteDescriptorSet &write, VkDescriptorBu
 		    pAccelerationStructureWrite->pNext                      = nullptr;
 		    pAccelerationStructureWrite->accelerationStructureCount = 1;
 		    pAccelerationStructureWrite->pAccelerationStructures    = &as;
+		    pAccelerationStructureWrite++;
 		    return;
 	}
 	printVka("Invalid descriptor type!");

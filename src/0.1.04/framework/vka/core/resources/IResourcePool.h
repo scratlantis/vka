@@ -14,10 +14,11 @@ class IResourcePool
 	virtual bool remove(Resource *resource)         = 0;
 
 	virtual std::unordered_set<Image_R *>::iterator getImagesBegin() = 0;
-	virtual std::unordered_set<Image_R *>::iterator getImagesEnd() = 0;
+	virtual std::unordered_set<Image_R *>::iterator getImagesEnd()   = 0;
 
-	virtual std::unordered_set<Buffer_R *>::iterator getBuffersBegin() = 0;
-	virtual std::unordered_set<Buffer_R *>::iterator getBuffersEnd()   = 0;
+	virtual std::unordered_set<Buffer_R *>::iterator getBuffersBegin()              = 0;
+	virtual std::unordered_set<Buffer_R *>::iterator getBuffersEnd()                = 0;
+	virtual void                                     dump(IResourcePool *otherPool) = 0;
 
 	virtual void clear()                            = 0;
 };

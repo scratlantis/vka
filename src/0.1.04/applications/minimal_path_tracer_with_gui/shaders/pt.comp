@@ -2,7 +2,12 @@
 layout(binding = LOCAL_BINDING_OFFSET, FORMAT1) writeonly uniform image2D colorOut;
 layout(binding = LOCAL_BINDING_OFFSET + 1) uniform VOLUME_INSTANCE { GLSLMediumInstance volInst;};
 
-
+struct PushStruct
+{
+	float areaLightEmissionScale;
+	float envMapEmissionScale;
+};
+layout(push_constant) uniform PC {PushStruct pc;};
 
 Range traceMediumConservative(Ray ray)
 {
@@ -166,14 +171,14 @@ void main()
 			vec3 L_o = vec3(0.0);
 			if(hitType == PATH_TERMINATED_EMISSION)
 			{
-				totalIllumination += ray.weight * matData.emission;
+				totalIllumination += ray.weight * matData.emission * pc.areaLightEmissionScale;
 				break;
 			}
 			else if(hitType == PATH_TERMINATED_INFINITY)
 			{
 				if(i == 0)
 				{
-					totalIllumination += ray.weight * sampleEnvMap(ray.direction);
+					totalIllumination += ray.weight * sampleEnvMap(ray.direction) * pc.envMapEmissionScale;
 				}
 				break;
 			}
@@ -189,13 +194,13 @@ void main()
 				#if AREA_LIGHT_COUNT > 0
 				{
 					sampleDirectIllumAreaLight(tangentFrame[3], seed, L_i, omega_i);
-					L_o += brdf * L_i * pos_dot(tangentFrame[2], omega_i);
+					L_o += brdf * L_i * pos_dot(tangentFrame[2], omega_i) * pc.areaLightEmissionScale;
 				}
 				#endif
 				// Direct illumination from envMap
 				{
 					sampleDirectIllumEnvMap(tangentFrame[3], seed, L_i, omega_i);
-					L_o += brdf * L_i * pos_dot(tangentFrame[2], omega_i);
+					L_o += brdf * L_i * pos_dot(tangentFrame[2], omega_i) * pc.envMapEmissionScale;
 				}
 			}
 			else if(hitType == PATH_MEDIUM_SCATTER)
@@ -206,13 +211,13 @@ void main()
 				#if AREA_LIGHT_COUNT > 0
 				{
 					sampleDirectIllumAreaLight(tangentFrame[3], seed, L_i, omega_i);
-					L_o += bsdf * L_i;
+					L_o += bsdf * L_i * pc.areaLightEmissionScale;
 				}
 				#endif
 				// Direct illumination from envMap
 				{
 					sampleDirectIllumEnvMap(tangentFrame[3], seed, L_i, omega_i);
-					L_o += bsdf * L_i;
+					L_o += bsdf * L_i * pc.envMapEmissionScale;
 				}
 			}
 			totalIllumination += ray.weight * L_o;

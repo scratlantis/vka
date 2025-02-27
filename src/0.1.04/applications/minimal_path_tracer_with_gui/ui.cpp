@@ -1,23 +1,32 @@
 #include "ui.h"
 
+GVar gvar_menu{"Menu", 0U, GVAR_ENUM, GUI_CAT_MENU_BAR, std::vector<std::string>({"Default"}), GVAR_FLAGS_V2};
+
+bool guiCatChanged(uint32_t setting, std::vector<bool> settingsChanged)
+{
+	return gvar_menu.val.v_uint == setting >> GUI_CAT_SHIFT && settingsChanged[setting & GUI_INDEX_MASK];
+}
 
 std::vector<bool> buildGui()
 {
-	// GVar Gui
+	// Top
+	beginGui("Top", topGuiDimensions, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar, nullptr);
+	GVar::addAllToGui<GuiGroupMenuBar>(GUI_FLAGS_MENU_BAR);
+	endGui();
+
+	// Left
 	std::vector<bool> changed;
-	beginGui("Settings", leftGuiDimensions, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize, nullptr);
-	for (GuiCatergories cat = eIterator_begin<GuiCatergories>()(); cat != eIterator_end<GuiCatergories>()(); cat = eIterator_next<GuiCatergories>()(cat))
+	beginGui("Left", leftGuiDimensions, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize, nullptr);
+	switch (gvar_menu.val.v_uint)
 	{
-		std::string         name  = eString_val<GuiCatergories>()(cat);
-		std::vector<GVar *> gvars = GVar::filterSortID(GVar::getAll(), cat);
-		changed.push_back(false);
-		//ImGui::PushItemWidth(ImGui::GetWindowSize().x * 0.3);
-		if (ImGui::CollapsingHeader(name.c_str()))
-		{
-			changed.back() = GVar::addToGui(gvars, name);
-		}
+	case GUI_GROUP_DEFAULT:
+		changed = GVar::addAllToGui<GuiGroupDefault>(GUI_FLAGS_OPEN_NODES);
+		break;
 	}
 	endGui();
+	//ImPlot::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
+
 	// Shader Log Gui
 	if (gState.shaderLog.size() > 0)
 	{

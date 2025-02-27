@@ -22,7 +22,7 @@
 #endif
 
 
-#define PT_USCENE_BINDING_COUNT 13
+#define PT_USCENE_BINDING_COUNT 14
 layout(binding = PT_USCENE_BINDING_OFFSET + 0) readonly buffer VERTICES { GLSLVertex vertices[]; };
 layout(binding = PT_USCENE_BINDING_OFFSET + 1) readonly buffer INDICES { uint indices[]; };
 layout(binding = PT_USCENE_BINDING_OFFSET + 2) readonly buffer MODEL_OFFSETS { VKAModelDataOffset modelOffsets[]; };
@@ -36,6 +36,8 @@ layout(binding = PT_USCENE_BINDING_OFFSET + 9) uniform sampler smp;
 layout(binding = PT_USCENE_BINDING_OFFSET + 10) uniform texture2D tex[];
 layout(binding = PT_USCENE_BINDING_OFFSET + 11) uniform sampler2D envMap;
 layout(binding = PT_USCENE_BINDING_OFFSET + 12) readonly buffer ENV_MAP_PDF {float envMapPdf[];};
+//layout(binding = PT_USCENE_BINDING_OFFSET + 13) uniform accelerationStructureEXT otherAs;
+//layout(binding = PT_USCENE_BINDING_OFFSET + 13) readonly buffer TEST123 { GLSLVertex vertices123[]; };
 
 struct HitData
 {
@@ -51,7 +53,7 @@ GLSLInstance getInstanceData(HitData hitData)
 	return instances[hitData.instanceCustomID];
 }
 
-float traceGeometry(Ray ray, uint cullMask,inout HitData hData)
+float traceGeometry(Ray ray, uint cullMask, inout HitData hData)
 {
 	rayQueryEXT rq;
 	rayQueryInitializeEXT(rq, as, gl_RayFlagsOpaqueEXT, cullMask, ray.origin, ray.tmin, ray.direction, ray.tmax);
@@ -102,7 +104,7 @@ void evalHit(HitData hitData, inout MaterialData matData, inout mat4x3 tangentFr
 	matData.albedo = mat.albedo;
 	//matData.albedo = vec3(0.5);
 	matData.specular = mat.specular;
-	matData.emission = 20.0 * mat.emission;
+	matData.emission = mat.emission;
 	matData.roughness = mat.roughness;
 	matData.f0 = mat.f0;
 
@@ -142,7 +144,7 @@ Ray genDirectIllumRayAreaLight(vec3 pos, inout uint seed)
 	ray.direction = normalize(samplePos-ray.origin);
 	ray.tmin = TMIN;
 	ray.tmax = distance(samplePos, ray.origin)-TMIN;
-	ray.weight = vec3(areaLight.intensity * 10.0) / pdf;
+	ray.weight = areaLight.color * vec3(areaLight.intensity) / pdf;
 	return ray;
 }
 #endif

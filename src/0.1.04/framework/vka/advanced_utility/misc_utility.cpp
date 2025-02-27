@@ -47,6 +47,22 @@ vka::Rect2D<float> addMarginToRect(Rect2D<float> rect, float margin)
 	return Rect2D<float>{ rect.x + margin, rect.y + margin, rect.width - 2 * margin, rect.height - 2 * margin };
 }
 
+glm::vec2 mouseViewCoord(vka::Rect2D<float> viewRect)
+{
+	glm::vec2 coord;
+	coord.x = (gState.io.mouse.pos.x - viewRect.x * gState.io.extent.width) / (viewRect.width * gState.io.extent.width);
+	coord.y = (gState.io.mouse.pos.y - viewRect.y * gState.io.extent.height) / (viewRect.height * gState.io.extent.height);
+	return coord;
+}
+
+bool mouseInView(vka::Rect2D<float> viewRect)
+{
+	glm::vec2 pos = mouseViewCoord(viewRect);
+	bool inView = true;
+	inView      = inView && pos.x >= 0 && pos.x <= 1;
+	inView      = inView && pos.y >= 0 && pos.y <= 1;
+	return inView;
+}
 
 Image createSwapchainAttachment(VkFormat format, VkImageUsageFlags usageFlags, VkImageLayout initialLayout)
 {

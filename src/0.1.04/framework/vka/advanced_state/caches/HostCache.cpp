@@ -20,7 +20,7 @@ void HostCache::clear()
 void HostCache::update(CmdBuffer cmdBuf)
 {
 	auto &currentMap = map[gState.frame->frameIndex];
-	for (auto it = currentMap.begin(); it != currentMap.end();)
+	for (auto it = currentMap.begin(); it != currentMap.end(); it++)
 	{
 		it->second.writeFlag = 0;
 	}

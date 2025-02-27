@@ -1,0 +1,48 @@
+#ifndef FORMAT
+#define FORMAT r32f
+#endif
+
+#extension GL_EXT_shader_explicit_arithmetic_types_int8 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int16 : enable
+#extension GL_EXT_shader_16bit_storage : require
+
+#include "../lib/math.glsl"
+
+
+#define SF_UINT8 0
+#define SF_UINT16 1
+
+#ifndef SCALAR_FIELD_FORMAT
+#define SCALAR_FIELD_FORMAT SF_UINT8
+#endif
+
+#if SCALAR_FIELD_FORMAT == SF_UINT8
+#define SCALAR_FIELD_TYPE uint8_t
+#define SCALAR_FIELD_RANGE 255.0
+#elif SCALAR_FIELD_FORMAT == SF_UINT16
+#define SCALAR_FIELD_TYPE uint16_t
+#define SCALAR_FIELD_RANGE 65025.0
+#endif
+
+layout(binding = 0) readonly buffer OUTPUT{ SCALAR_FIELD_TYPE buf[]; };
+layout(binding = 1, FORMAT) writeonly uniform image3D img;
+
+struct PushStruct
+{
+	float minVal;
+};
+layout(push_constant) uniform PC {PushStruct pc;};
+
+void main()
+{
+	if(!validInvocation()) return;
+	uint index = invocationID();
+	SCALAR_FIELD_TYPE value = buf[index];
+	float scalarValue  = float(value) / SCALAR_FIELD_RANGE;
+	if(scalarValue < pc.minVal)
+	{
+		scalarValue = 0.0;
+	}
+	ivec3 gID = ivec3(gl_GlobalInvocationID);
+	imageStore(img, gID, vec4(scalarValue));
+}

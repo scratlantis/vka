@@ -71,6 +71,20 @@ VkDeviceSize BottomLevelAS_R::getBuildSize() const
 	return sizeInfo.accelerationStructureSize;
 }
 
+VkDeviceSize BottomLevelAS_R::getScratchSize() const
+{
+	LOAD_CMD_VK_DEVICE(vkGetAccelerationStructureBuildSizesKHR, gState.device.logical);
+	VkAccelerationStructureBuildGeometryInfoKHR buildInfo = getBuildInfoInternal();
+	std::vector<uint32_t>                       maxPrimCount(buildRange.size());
+	for (uint32_t i = 0; i < buildRange.size(); i++)
+	{
+		maxPrimCount[i] = buildRange[i].primitiveCount;
+	}
+	VkAccelerationStructureBuildSizesInfoKHR sizeInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
+	pvkGetAccelerationStructureBuildSizesKHR(gState.device.logical, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, maxPrimCount.data(), &sizeInfo);
+	return sizeInfo.buildScratchSize;
+}
+
 VkAccelerationStructureTypeKHR BottomLevelAS_R::getType() const
 {
 	return VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
@@ -89,7 +103,7 @@ TopLevelAS_R::TopLevelAS_R(IResourcePool *pPool) :
 
 void TopLevelAS_R::setInstanceCount(uint32_t count)
 {
-	buildRange.primitiveCount = count;
+	instanceCount = count;
 }
 
 void TopLevelAS_R::setInstanceData(Buffer_R *instanceBuffer)
@@ -128,9 +142,37 @@ VkDeviceSize TopLevelAS_R::getBuildSize() const
 	return sizeInfo.accelerationStructureSize;
 }
 
+VkDeviceSize TopLevelAS_R::getScratchSize() const
+{
+	LOAD_CMD_VK_DEVICE(vkGetAccelerationStructureBuildSizesKHR, gState.device.logical);
+	VkAccelerationStructureBuildGeometryInfoKHR buildInfo = getBuildInfoInternal();
+	VkAccelerationStructureBuildSizesInfoKHR    sizeInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
+	pvkGetAccelerationStructureBuildSizesKHR(gState.device.logical, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &buildRange.primitiveCount, &sizeInfo);
+	return sizeInfo.buildScratchSize;
+}
+
 VkAccelerationStructureTypeKHR TopLevelAS_R::getType() const
 {
 	return VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+}
+
+void TopLevelAS_R::createHandles()
+{
+	buildRange.primitiveCount = instanceCount;
+	AccelerationStructure_R::createHandles();
+}
+
+void TopLevelAS_R::recreate()
+{
+	if (instanceCount == 0)
+	{
+		throw std::runtime_error("TopLevelAS_R::recreate() called with instanceCount == 0");
+	}
+	else if (asRes != nullptr && instanceCount == buildRange.primitiveCount)
+	{
+		return;
+	}
+	AccelerationStructure_R::recreate();
 }
 
 bool AccelerationStructure_R::isBuilt() const
@@ -149,8 +191,7 @@ VkAccelerationStructureBuildGeometryInfoKHR AccelerationStructure_R::getBuildInf
 void AccelerationStructure_R::configureScratchBuffer(Buffer_R *scratchBuffer) const
 {
 	VkPhysicalDeviceAccelerationStructurePropertiesKHR asProp = getAccelerationStructureProperties();
-	// * 2 because i dont know why, validation layer complains for tlas, idk, should probably find out :P
-	scratchBuffer->changeSize(std::max(scratchBuffer->getSize(), alignUp(2 * getBuildSize() + asProp.minAccelerationStructureScratchOffsetAlignment, asProp.minAccelerationStructureScratchOffsetAlignment)));
+	scratchBuffer->changeSize(std::max(scratchBuffer->getSize(), alignUp(getScratchSize() + asProp.minAccelerationStructureScratchOffsetAlignment, asProp.minAccelerationStructureScratchOffsetAlignment)));
 	scratchBuffer->changeMemoryType(VMA_MEMORY_USAGE_GPU_ONLY);
 	scratchBuffer->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 }

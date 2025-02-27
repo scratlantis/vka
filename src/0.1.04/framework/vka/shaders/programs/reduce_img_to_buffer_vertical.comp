@@ -43,7 +43,7 @@ void main()
 		inputCount = pc.height - segmentSize * (pc.segmentCount - 1);
 	}
 
-	#if(REDUCE_OP == AVERAGE)
+	#if(REDUCE_OP == REDUCE_OP_AVERAGE)
 	float denominator = 1.0/float(inputCount);
 	BUFFER_TYPE sum = 0.0;
 

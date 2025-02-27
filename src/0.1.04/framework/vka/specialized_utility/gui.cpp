@@ -8,6 +8,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
+
 namespace vka
 {
 
@@ -19,6 +20,7 @@ void configureGui_Default()
 	gState.guiConfigured = true;
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImPlot::CreateContext(); 	  // ImPlot context for fancy plots
 	ImGuiIO &io         = ImGui::GetIO();
 	float    sizePixels = 12;
 	io.Fonts->AddFontFromFileTTF("../external/IMGUI/misc/fonts/Roboto-Medium.ttf", sizePixels);

@@ -60,10 +60,6 @@ void ImGuiWrapper::upload()
 	ImGui_ImplVulkan_CreateFontsTexture();
 }
 
-//void ImGuiWrapper::freeStaging()
-//{
-//	ImGui_ImplVulkan_DestroyFontUploadObjects();
-//}
 
 void ImGuiWrapper::newFrame()
 {
@@ -80,6 +76,7 @@ void ImGuiWrapper::render(CmdBuffer cmdBuf)
 void ImGuiWrapper::destroy()
 {
 	ImGui_ImplVulkan_Shutdown();
+	gState.io.getWindow()->destroyImGui();
 	vkDestroyDescriptorPool(gState.device.logical, descriptorPool, nullptr);
 }
 }        // namespace vka

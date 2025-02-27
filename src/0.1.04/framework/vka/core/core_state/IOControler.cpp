@@ -23,6 +23,10 @@ void IOController::configure(IOControlerCI &controllerCI, Window *window)
 	VKA_CHECK(gState.initBits & STATE_INIT_DEVICE_INSTANCE_BIT);
 	this->controllerCI = controllerCI;
 	this->window       = window;
+	if (controllerCI.menuBar == false)
+	{
+		window->hideMenuBar();
+	}
 	window->init(controllerCI.getWindowCI(), gState.device.instance);
 	surface = window->getSurface();
 	gState.initBits |= STATE_INIT_IO_WINDOW_BIT;
@@ -199,5 +203,9 @@ void IOController::buildShaderLib()
 	    };
 	copyRecursive(gAppShaderRoot, shaderRootDir + "/app", isIncludableShader);
 	copyRecursive(cVkaShaderRoot, shaderRootDir + "/lib", isIncludableShader);
+}
+void IOController::requestTerminate()
+{
+	window->requestClose();
 }
 }        // namespace vka

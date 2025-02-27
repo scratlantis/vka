@@ -10,4 +10,11 @@ VkPhysicalDeviceAccelerationStructurePropertiesKHR getAccelerationStructurePrope
 	vkGetPhysicalDeviceProperties2(gState.device.physical, &properties);
 	return asProperties;
 }
+
+VkPhysicalDeviceProperties getDeviceProperties()
+{
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(gState.device.physical, &properties);
+	return properties;
+}
 }        // namespace vka

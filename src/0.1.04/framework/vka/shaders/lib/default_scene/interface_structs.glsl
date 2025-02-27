@@ -1,6 +1,6 @@
 // Must be cpp compatible
-#ifndef INTERFACE_STRUCTS_H
-#define INTERFACE_STRUCTS_H
+#ifndef DEFAULT_SCENE_INTERFACE_STRUCTS_H
+#define DEFAULT_SCENE_INTERFACE_STRUCTS_H
 
 struct GLSLCamera
 {
@@ -15,7 +15,7 @@ struct GLSLCameraInstance
 {
 	mat4 view;
 	mat4 invView;
-	uint seed;
+	uint frameIdx;
 	uint padding[3];
 };
 
@@ -52,11 +52,12 @@ struct GLSLMaterial
 struct GLSLInstance
 {
 	mat4 mat;
+	mat4 invMat;
 
 	vec3 color;
 	uint cullMask;
 
-	uint type;
+	uint id;
 	uint padding[3];
 };
 #endif // INTERFACE_H

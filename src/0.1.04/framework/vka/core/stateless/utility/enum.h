@@ -19,6 +19,16 @@ struct eString_val<TYPE>\
 	}\
 };
 
+#define MASKED_ENUM_ADD_STRING_VALUES(TYPE, VALUES, MASK) \
+	template <>                              \
+	struct eString_val<TYPE>                 \
+	{                                        \
+		std::string operator()(TYPE val)     \
+		{                                    \
+			return VALUES[MASK & val];       \
+		}                                    \
+	};
+
 #define ENUM_ADD_ITERATOR(TYPE, FIRST, LAST)\
 template <>\
 struct eIterator_begin<TYPE>\

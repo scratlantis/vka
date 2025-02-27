@@ -4,5 +4,5 @@
 namespace vka
 {
 	VkPhysicalDeviceAccelerationStructurePropertiesKHR getAccelerationStructureProperties();
-
+	VkPhysicalDeviceProperties getDeviceProperties();
 }

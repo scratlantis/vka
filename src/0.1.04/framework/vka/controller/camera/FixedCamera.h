@@ -51,6 +51,8 @@ class FixedCamera : public Camera
 	~FixedCamera(){};
 	virtual bool      keyControl(float deltaTime) override;
 	virtual bool      mouseControl(float deltaTime) override;
+	virtual bool      keyControl() override;
+	virtual bool      mouseControl() override;
 	virtual glm::vec3 getPosition() const override;
 	virtual glm::vec3 getViewDirection() const override;
 	virtual glm::vec3 getViewUpDirection() const override;

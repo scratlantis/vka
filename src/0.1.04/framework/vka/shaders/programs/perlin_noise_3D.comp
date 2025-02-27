@@ -1,4 +1,5 @@
 #include "../lib/random.glsl"
+#include "../lib/math.glsl"
 layout(binding = 0, r32f) uniform image3D volumeData;
 #extension GL_EXT_debug_printf : enable
 struct PushStruct
@@ -8,8 +9,9 @@ struct PushStruct
 	float    minVal;
 	float    maxVal;
 	float	 frequency;
-	uint     falloffAtEdge;
-	uint	 blendOp;
+	float    falloffAtEdge;
+	float	 blendCoef;
+	uint	 blendMode;
 };
 
 layout(push_constant) uniform PC {PushStruct pc;};
@@ -19,17 +21,33 @@ void main()
 	ivec3 gID = ivec3(gl_GlobalInvocationID.xyz);
 	if(!validInvocation()) return;
 	vec3 pos = vec3(gID) / vec3(INVOCATION_COUNT_X, INVOCATION_COUNT_Y, INVOCATION_COUNT_Z);
-	pos += random3D(pc.seed);
+	//pos += random3D(pc.seed);
 	
-	float density = pc.scale * perlinNoise(pos*pc.frequency);
-	if(pc.falloffAtEdge == 1)
+	float density = pc.scale * ( perlinNoise(pos*pc.frequency));
+	if(pc.falloffAtEdge > 0.0001)
 	{
 		float distanceToLowerBound = min(min(pos.x, pos.y), pos.z);
 		float distanceToUpperBound = 1.0 - max(max(pos.x, pos.y), pos.z);
 		float distanceToBound = min(distanceToLowerBound, distanceToUpperBound);
-		if(pc.falloffAtEdge == 1)
+		distanceToBound /= pc.falloffAtEdge;
+		//distanceToBound = 1.0 / 0.0001;
+		distanceToBound = min(PI*0.5, distanceToBound);
+		density*= clamp(sin(distanceToBound), 0.0, 1.0);
+	}
+	if(pc.blendMode != 0)
+	{
+		float texVal = imageLoad(volumeData, gID).x;
+		if(pc.blendMode == 1)
 		{
-			density*= clamp(sin(distanceToBound), 0.0, 1.0);
+			density += texVal * pc.blendCoef;
+		}
+		if(pc.blendMode == 2)
+		{
+			density *= pow(texVal, pc.blendCoef);
+		}
+		if(pc.blendMode == 3)
+		{
+			density = texVal - abs(pc.blendCoef * density);
 		}
 	}
 	density = clamp(density, pc.minVal, pc.maxVal);

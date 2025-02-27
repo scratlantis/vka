@@ -94,6 +94,18 @@ bool FixedCamera::mouseControl(float deltaTime)
 	return xChange != 0 || yChange != 0;
 }
 
+bool FixedCamera::keyControl()
+{
+	float deltaTime = float(gState.frameTime) * 0.001;
+	return keyControl(deltaTime);
+}
+
+bool FixedCamera::mouseControl()
+{
+	float deltaTime = float(gState.frameTime) * 0.001;
+	return mouseControl(deltaTime);
+}
+
 glm::vec3 FixedCamera::getPosition() const
 {
 	return fixpoint - front * distance;

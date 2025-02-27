@@ -23,6 +23,26 @@ Image   cmdCreateDummyTexture(CmdBuffer cmdBuf, IResourcePool *pPool, VkExtent2D
 Image   cmdCreateDummyTexture(CmdBuffer cmdBuf, IResourcePool *pPool, VkExtent2D extent = {1, 1});
 DrawCmd getCmdAccumulate(Image src, Image dst, VkImageLayout dstLayout);
 DrawCmd getCmdAccumulate(Image src, Image dst, VkImageLayout dstLayout, VkRect2D_OP srcArea, VkRect2D_OP dstArea);
+ComputeCmd getCmdNormalize(Image target, VkImageLayout dstLayout);
+
+
+
+
+struct MapImgArgs
+{
+	bool        normalize;
+	bool        useTonemapping;
+	float       whitePoint;
+	bool        useGammaCorrection;
+	float       exposure;
+	bool        useScissors;
+	VkRect2D_OP srcArea;
+	VkRect2D_OP dstArea;
+	VkImageLayout dstLayout;
+};
+
+DrawCmd getCmdMapImg(Image src, Image dst, MapImgArgs args);
+
 DrawCmd getCmdNormalize(Image src, Image dst, VkImageLayout dstLayout, VkRect2D_OP srcArea, VkRect2D_OP dstArea);
 DrawCmd getCmdNormalizeDiff(Image srcA, Image srcB, Image dst, VkImageLayout dstLayout, VkRect2D_OP srcArea, VkRect2D_OP dstArea);
 DrawCmd getCmdNormalizeSquaredDiff(Image srcA, Image srcB, Image dst, VkImageLayout dstLayout, VkRect2D_OP srcArea, VkRect2D_OP dstArea);

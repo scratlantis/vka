@@ -101,6 +101,71 @@ ComputeCmd getCmdNormalize(Image target, VkImageLayout dstLayout)
 	return cmd;
 }
 
+DrawCmd getCmdMap(Image src, Image dst, VkImageLayout dstLayout, VkRect2D_OP srcArea, VkRect2D_OP dstArea)
+{
+	DrawCmd drawCmd = DrawCmd();
+	drawCmd.setGeometry(DrawSurface::screenFillingTriangle());
+	drawCmd.pushColorAttachment(dst, dstLayout);
+	drawCmd.pushDescriptor(src, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+	Rect2D<float> region = VkRect2D_OP::relRegion(VkRect2D_OP(src->getExtent2D()), srcArea);
+	drawCmd.pushConstant(&region, sizeof(Rect2D<float>), VK_SHADER_STAGE_FRAGMENT_BIT);
+	drawCmd.renderArea = dstArea;
+	addShader(drawCmd.pipelineDef, cVkaShaderPath + "fill_texture.vert");
+	addShader(drawCmd.pipelineDef, cVkaShaderPath + "normalizeImg.frag");
+	return drawCmd;
+}
+
+DrawCmd getCmdMapImg(Image src, Image dst, MapImgArgs args)
+{
+	if (args.dstLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+	{
+		args.dstLayout = dst->getLayout();
+	}
+	DrawCmd drawCmd = DrawCmd();
+	drawCmd.setGeometry(DrawSurface::screenFillingTriangle());
+	drawCmd.pushColorAttachment(dst, args.dstLayout);
+	drawCmd.pushDescriptor(src, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+	if (!args.useScissors)
+	{
+		args.srcArea = VkRect2D_OP(src->getExtent2D());
+		args.dstArea = VkRect2D_OP(dst->getExtent2D());
+	}
+	Rect2D<float> region = VkRect2D_OP::relRegion(VkRect2D_OP(src->getExtent2D()), args.srcArea);
+
+	struct PushStruct
+	{
+		float x;
+		float y;
+		float width;
+		float height;
+		float whitePoint;
+		float exposure;
+	} pc;
+	pc.exposure = args.exposure;
+	pc.whitePoint = args.whitePoint;
+	pc.x = region.x;
+	pc.y = region.y;
+	pc.width = region.width;
+	pc.height = region.height;
+	drawCmd.pushConstant(&pc, sizeof(PushStruct), VK_SHADER_STAGE_FRAGMENT_BIT);
+	drawCmd.renderArea = args.dstArea;
+	addShader(drawCmd.pipelineDef, cVkaShaderPath + "fill_texture.vert");
+	addShader(drawCmd.pipelineDef, cVkaShaderPath + "mapImg.frag");
+	if (args.normalize)
+	{
+		drawCmd.pipelineDef.shaderDefinitions.back().args.push_back({"NORMALIZE", ""});
+	}
+	if (args.useTonemapping)
+	{
+		drawCmd.pipelineDef.shaderDefinitions.back().args.push_back({"TONEMAPPING", ""});
+	}
+	if (args.useGammaCorrection)
+	{
+		drawCmd.pipelineDef.shaderDefinitions.back().args.push_back({"GAMMA_CORRECTION", ""});
+	}
+	return drawCmd;
+}
+
 DrawCmd getCmdNormalize(Image src, Image dst, VkImageLayout dstLayout, VkRect2D_OP srcArea, VkRect2D_OP dstArea)
 {
 	DrawCmd drawCmd = DrawCmd();

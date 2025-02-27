@@ -14,16 +14,19 @@ struct VKAAreaLight
 	uint  instanceIndex;
 
 	vec3  normal;
-	uint  padding2[1];
+	uint  padding1[1];
 
 	vec3  v0;
-	uint  padding3[1];
+	uint  padding2[1];
 
 	vec3  v1;
-	uint  padding4[1];
+	uint  padding3[1];
 
 	vec3  v2;
 	float intensity; // Area * intensity
+
+	vec3  color;
+	uint  padding4[1];
 
 };
 

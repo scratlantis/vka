@@ -21,5 +21,22 @@ bool validInvocation()
 	return gID.x < INVOCATION_COUNT_X && gID.y < INVOCATION_COUNT_Y && gID.z < INVOCATION_COUNT_Z;
 }
 
+uint invocationID()
+{
+	uvec3 gID = gl_GlobalInvocationID;
+	return gID.x + gID.y * INVOCATION_COUNT_X + gID.z * INVOCATION_COUNT_X * INVOCATION_COUNT_Y;
+}
+
+uint invocationCount()
+{
+	return INVOCATION_COUNT_X * INVOCATION_COUNT_Y * INVOCATION_COUNT_Z;
+}
+
+#ifdef DEBUG
+#define IF_DEBUG( A ) A
+#else
+#define IF_DEBUG( A )
+#endif
+
 
 #endif

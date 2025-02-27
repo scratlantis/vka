@@ -116,7 +116,8 @@ class ComputeCmd
 	ComputeCmd(glm::uvec3 taskSize, std::string path, std::vector<ShaderArgs> args = {});
 
 	void pushSubmodule(const std::string path, std::vector<ShaderArgs> args = {});
-	void startLocalBindings();
+	void pushSIDebugHeader();
+	void pushLocal();
 	void pushDescriptor(BufferRef buffer, VkDescriptorType type);
 	void pushDescriptor(Image image, VkDescriptorType type);
 	void pushDescriptor(const SamplerDefinition sampler);
@@ -127,6 +128,11 @@ class ComputeCmd
 	void pushDescriptor(TLASRef as);
 	void pushDescriptor(CmdBuffer cmdBuf, IResourcePool *pPool, void *data, VkDeviceSize size);
 	void pushConstant(void *data, VkDeviceSize size);
+	void pushSpecializationConst(void *data, uint32_t size);
+	void pushSpecializationConst(uint32_t val);
+	void pushSpecializationConst(int val);
+	void pushSpecializationConst(float val);
+
 
 	void exec(CmdBuffer cmdBuf) const;
 

@@ -32,15 +32,6 @@ void cmdCopyBufferRegion(CmdBuffer cmdBuf, BufferRef src, BufferRef dst, uint32_
 	vkCmdCopyBuffer(cmdBuf->getHandle(), src->getHandle(), dst->getHandle(), 1, &copyRegion);
 }
 
-void cmdUpload(CmdBuffer cmdBuf, Buffer buf)
-{
-	VKA_ASSERT(buf->getMemoryType() != VMA_MEMORY_USAGE_GPU_ONLY);
-    buf->changeMemoryType(VMA_MEMORY_USAGE_GPU_ONLY);
-    buf->addUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-    const Buffer_R localBuf = buf->recreate();
-	cmdCopyBuffer(cmdBuf, &localBuf, buf);
-}
-
 void cmdWriteCopy(CmdBuffer cmdBuf, Buffer buf, const void* data, VkDeviceSize size)
 {
 	buf->addUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT);
@@ -73,6 +64,28 @@ void cmdFillBuffer(CmdBuffer cmdBuf, Buffer dst, uint32_t data)
 	vkCmdFillBuffer(cmdBuf->getHandle(), dst->getHandle(), 0, VK_WHOLE_SIZE, data);
 }
 
+
+void cmdZeroBuffer(CmdBuffer cmdBuf, Buffer dst)
+{
+	cmdFillBuffer(cmdBuf, dst, 0);
+}
+
+void cmdInitBuffer(CmdBuffer cmdBuf, Buffer buf, void* pData, uint32_t size)
+{
+	buf->addUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+	buf->changeSize(size);
+	buf->recreate();
+    uint32_t data = *reinterpret_cast<uint32_t*>(pData);
+	cmdFillBuffer(cmdBuf, buf, data);
+}
+
+void cmdInitBuffer(CmdBuffer cmdBuf, Buffer buf, uint32_t data, uint32_t size)
+{
+	buf->addUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+	buf->changeSize(size);
+	buf->recreate();
+	cmdFillBuffer(cmdBuf, buf, data);
+}
 
 
 // Image
@@ -126,6 +139,22 @@ void cmdCopyBufferToImage(CmdBuffer cmdBuf, Buffer src, Image dst, uint32_t laye
     region.imageExtent                     = dst->getExtent();
     cmdClearState(cmdBuf);
     vkCmdCopyBufferToImage(cmdBuf->getHandle(), src->getHandle(), dst->getHandle(), dst->getLayout(), 1, &region);
+}
+
+void cmdCopyImageToBuffer(CmdBuffer cmdBuf, Image src, Buffer dst, uint32_t layer, uint32_t mipLevel)
+{
+	VkBufferImageCopy region{};
+	region.bufferOffset                    = 0;
+	region.bufferRowLength                 = 0;
+	region.bufferImageHeight               = 0;
+	region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.mipLevel       = mipLevel;
+	region.imageSubresource.baseArrayLayer = layer;
+	region.imageSubresource.layerCount     = 1;
+	region.imageOffset                     = {0, 0, 0};
+	region.imageExtent                     = src->getExtent();
+	cmdClearState(cmdBuf);
+	vkCmdCopyImageToBuffer(cmdBuf->getHandle(), src->getHandle(), src->getLayout(), dst->getHandle(), 1, &region);
 }
 
 void cmdUploadImageData(CmdBuffer cmdBuf, void *data, size_t dataSize, Image dst, VkImageLayout finalLayout, uint32_t layer, uint32_t mipLevel)
@@ -338,5 +367,45 @@ void cmdDrawIndexed(CmdBuffer cmdBuf, uint32_t indexCount, uint32_t instanceCoun
 void cmdDraw(CmdBuffer cmdBuf, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
 {
     vkCmdDraw(cmdBuf->getHandle(), vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+BLAS cmdBuildBoxBlas(CmdBuffer cmdBuf, IResourcePool *pPool)
+{
+	VkAabbPositionsKHR aabbPositionsKHR{};
+	aabbPositionsKHR.minX = 0.0;
+	aabbPositionsKHR.minY = 0.0;
+	aabbPositionsKHR.minZ = 0.0;
+	aabbPositionsKHR.maxX = 1.0;
+	aabbPositionsKHR.maxY = 1.0;
+	aabbPositionsKHR.maxZ = 1.0;
+
+    Buffer aabbBuffer = createBuffer(gState.frame->stack, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
+	cmdWriteCopy(cmdBuf, aabbBuffer, &aabbPositionsKHR, sizeof(VkAabbPositionsKHR));
+
+    cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);
+
+	VkAccelerationStructureGeometryAabbsDataKHR aabbsKHR{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_AABBS_DATA_KHR};
+	aabbsKHR.stride           = sizeof(VkAabbPositionsKHR);
+	aabbsKHR.data.deviceAddress = aabbBuffer->getDeviceAddress();
+
+	VkAccelerationStructureGeometryKHR geometryKHR{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR};
+	geometryKHR.geometryType   = VK_GEOMETRY_TYPE_AABBS_KHR;
+	geometryKHR.geometry.aabbs = aabbsKHR;
+	geometryKHR.flags          = 0;
+
+	VkAccelerationStructureBuildRangeInfoKHR rangeKHR{};
+	rangeKHR.primitiveCount  = 1;
+	rangeKHR.primitiveOffset = 0;
+	rangeKHR.firstVertex     = 0;
+	rangeKHR.transformOffset = 0;
+	std::vector<VkAccelerationStructureGeometryKHR> geometry{geometryKHR};
+    std::vector<VkAccelerationStructureBuildRangeInfoKHR> range{rangeKHR};
+
+	BLAS blas = new BottomLevelAS_R(pPool);
+	blas->setGeometry(geometry);
+	blas->setBuildRange(range);
+	blas->createHandles();
+	cmdBuildAccelerationStructure(cmdBuf, blas, createStagingBuffer());
+    return blas;
 }
 }        // namespace vka

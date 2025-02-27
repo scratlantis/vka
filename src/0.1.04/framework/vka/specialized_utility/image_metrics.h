@@ -46,6 +46,23 @@ namespace vka
 			    mse = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(float));
 			}
 		}
+
+	    void garbageCollect()
+	    {
+		    if (diffImage)
+		    {
+			    diffImage->garbageCollect();
+		    }
+		    if (verticalAverage)
+		    {
+			    verticalAverage->garbageCollect();
+		    }
+		    if (mse)
+		    {
+			    mse->garbageCollect();
+		    }
+	    }
 	};
     void cmdComputeMSE(CmdBuffer cmdBuf, Image srcA, Image srcB, Buffer dst, MSEComputeResources *pMSEResources);
+    void cmdComputeRMSE(CmdBuffer cmdBuf, Image srcA, Image srcB, Buffer dst, MSEComputeResources *pMSEResources);
     }        // namespace vka

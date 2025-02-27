@@ -4,6 +4,7 @@
 #include "../../lib/local_structs.glsl"
 #include "../../lib/random.glsl"
 #include "../../lib/default_scene/interface_structs.glsl"
+#include "../../lib/compute_shader_base.glsl"
 
 layout(binding = PT_CAMERA_BINDING_OFFSET) uniform CAM									 
 {																		 
@@ -17,7 +18,7 @@ layout(binding = PT_CAMERA_BINDING_OFFSET + 1) uniform CAM_INST
 Ray genPrimaryRay(uvec2 pixel, inout uint seed)
 {
 	Ray ray;
-	const vec2 pixelCenter = vec2(gl_GlobalInvocationID.xy) + vec2(unormNext(seed), unormNext(seed));
+	const vec2 pixelCenter = vec2(pixel) + vec2(unormNext(seed), unormNext(seed));
 	const vec2 pixelUV = pixelCenter / vec2(cam.width, cam.height);
 	const vec2 d = pixelUV * 2.0 - 1.0;
 	ray.origin = (camInst.invView * vec4(0,0,0,1)).xyz;
@@ -31,7 +32,22 @@ Ray genPrimaryRay(uvec2 pixel, inout uint seed)
 
 uint getSeed()
 {
-	return gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * cam.width + cam.width * cam.height * camInst.seed;
+	return invocationID() + invocationCount() * camInst.frameIdx;
+}
+
+uint pixelID(uvec2 pixel)
+{
+	return pixel.x + pixel.y * cam.width;
+}
+
+uint pixelCount()
+{
+	return cam.width * cam.height;
+}
+
+uint getFrameIdx()
+{
+	return camInst.frameIdx;
 }
 
 

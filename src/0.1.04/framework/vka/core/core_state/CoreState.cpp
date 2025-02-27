@@ -51,6 +51,18 @@ void CoreState::nextFrame()
 		frame = &frames[0];
 	}
 	io.imageLayouts[frame->frameIndex] = VK_IMAGE_LAYOUT_UNDEFINED;
+
+	uint32_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+	VKA_ASSERT(timestamp >= lastTimeStamp);
+	if (lastTimeStamp != 0)
+	{
+		frameTime = timestamp - lastTimeStamp;
+		if (frameTime == 0)
+		{
+			frameTime = 1;
+		}
+	}
+	lastTimeStamp = timestamp;
 }
 
 CoreState::CoreState()
@@ -73,6 +85,8 @@ void CoreState::init(DeviceCI &deviceCI, IOControlerCI ioControllerCI, Window *w
 	cmdAlloc.init();
 	cache = new ResourceCache();
 	io.buildShaderLib();
+	frameTime = 0;
+	lastTimeStamp = 0;
 	initBits |= STATE_INIT_ALL_BIT;
 }
 SubmitSynchronizationInfo CoreState::acquireNextSwapchainImage()

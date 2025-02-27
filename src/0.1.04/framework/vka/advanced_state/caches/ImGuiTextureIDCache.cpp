@@ -3,6 +3,14 @@
 #include <vka/globals.h>
 namespace vka
 {
+void ImGuiTextureIDCache::garbage(ImTextureID id)
+{
+	garbageList[gState.frame->frameIndex].push_back(id);
+}
+ImGuiTextureIDCache::ImGuiTextureIDCache(IResourcePool *pPool) : pPool(pPool)
+{
+	garbageList.resize(gState.io.imageCount);
+}
 void ImGuiTextureIDCache::clear()
 {
 	for (auto &pair : map)
@@ -10,6 +18,7 @@ void ImGuiTextureIDCache::clear()
 		ImGui_ImplVulkan_RemoveTexture(pair.second);
 	}
 	map.clear();
+	invMap.clear();
 }
 ImTextureID ImGuiTextureIDCache::fetch(Image img)
 {
@@ -33,8 +42,30 @@ ImTextureID ImGuiTextureIDCache::fetch(Image img)
 		smplInfo.maxAnisotropy = 1.0f;
 		VkDescriptorSet descSet    = ImGui_ImplVulkan_AddTexture(gState.cache->fetch(smplInfo), img->getViewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		map[key] = descSet;
+		invMap[descSet] = img;
 		return descSet;
 	}
+}
+void ImGuiTextureIDCache::processGarbage()
+{
+	for (auto &garbage : garbageList[gState.frame->frameIndex])
+	{
+		freeGarbage(garbage);
+	}
+	garbageList[gState.frame->frameIndex].clear();
+}
+
+bool ImGuiTextureIDCache::freeGarbage(ImTextureID id)
+{
+	VkDescriptorSet descSet = reinterpret_cast<VkDescriptorSet>(id);
+	if (invMap.find(descSet) != invMap.end())
+	{
+		Image img = invMap[descSet];
+		map.erase(img->getHandle());
+		ImGui_ImplVulkan_RemoveTexture(descSet);
+		img->garbageCollect();
+	}
+	return false;
 }
 
 

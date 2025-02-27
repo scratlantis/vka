@@ -16,6 +16,18 @@ constexpr integral alignUp(integral x, size_t a) noexcept
 	return integral((x + (integral(a) - 1)) & ~integral(a - 1));
 }
 
+template <class integral>
+constexpr integral squared(integral x) noexcept
+{
+	return x * x;
+}
+
+template <class integral>
+constexpr integral cubed(integral x) noexcept
+{
+	return x * x * x;
+}
+
 // from https://github.com/vcoda/magma
 void *copyBinaryData(const void *src, std::size_t size) noexcept;
 

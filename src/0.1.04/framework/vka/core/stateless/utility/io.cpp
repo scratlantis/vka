@@ -15,7 +15,12 @@ std::string getRelativePath(const std::string &dir, const std::string &path)
 	std::string rel_path = path.substr(lcp);
 	std::string rel_dir  = dir.substr(lcp);
 
-	uint32_t dir_depth = std::count(rel_dir.begin(), rel_dir.end(), '/') + 1;
+	//if (rel_dir.size() == 0)
+	//{
+	//	rel_path
+	//}
+
+	uint32_t dir_depth = std::count(rel_dir.begin(), rel_dir.end(), '/');
 
 	for (uint32_t i = 0; i < dir_depth; i++)
 	{

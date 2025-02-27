@@ -3,16 +3,21 @@
 #include "ui.h"
 AdvancedState     gState;
 const std::string gShaderOutputDir = SHADER_OUTPUT_DIR;
-const std::string gAppShaderRoot   = std::string(APP_SRC_DIR) + "/shaders";
+const std::string gAppShaderRoot   = std::string(APP_SRC_DIR) + "/shaders/";
 using namespace glm;
 
+
+#include <shaders/interface_structs.glsl>
+
 GVar perlinFrequency{"Perlin frequency", 4.f, GVAR_FLOAT_RANGE, GUI_CAT_NOISE, {1.f, 10.f}};
+
+extern GVar gvar_menu;
 
 int main()
 {
 	//// Global State Initialization. See config.h for more details.
 	DeviceCI            deviceCI = DefaultDeviceCI(APP_NAME);
-	IOControlerCI       ioCI     = DefaultIOControlerCI(APP_NAME, 1000, 700);
+	IOControlerCI       ioCI     = DefaultIOControlerCI(APP_NAME, 1000, 700, true);
 	GlfwWindow          window   = GlfwWindow();
 	AdvancedStateConfig config   = DefaultAdvancedStateConfig();
 	gState.init(deviceCI, ioCI, &window, config);
@@ -28,12 +33,12 @@ int main()
 	//// Load stuff:
 	CmdBuffer cmdBuf = createCmdBuffer(gState.frame->stack);
 	//// Load Geometry
-	sceneBuilder.loadEnvMap("/envmap/2k/autumn_field_2k.hdr", glm::uvec2(64, 64));
+	sceneBuilder.loadEnvMap( texturePath + "/envmap/2k/autumn_field_2k.hdr", glm::uvec2(64, 64));
 #ifdef RAY_TRACING_SUPPORT
 	GLSLInstance instance{};
 	instance.cullMask = 0xFF;
 	instance.mat      = getMatrix(vec3(0, 0.2, -0.3), vec3(0.0, 180.0, 0.0), 0.1);
-	sceneBuilder.addModel(cmdBuf, "cornell_box/cornell_box.obj", &instance, 1);
+	sceneBuilder.addModel(cmdBuf, modelPath + "cornell_box/cornell_box.obj", &instance, 1);
 	scene = sceneBuilder.create(cmdBuf, gState.heap);
 	scene.build(cmdBuf, sceneBuilder.uploadInstanceData(cmdBuf, gState.heap));
 #endif
@@ -85,8 +90,10 @@ int main()
 		{
 			cmdFill(cmdBuf, img_pt_accumulation, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, vec4(0.0,0.0,0.0,0.0));
 		}
+
+		
 		// Regenerate noise
-		if (settingsChanged[GUI_CAT_NOISE] || shaderRecompiled)
+		if (guiCatChanged(GUI_CAT_NOISE, settingsChanged) || shaderRecompiled)
 		{
 			perlinArgs.frequency = perlinFrequency.val.v_float;
 			getCmdPerlinNoise(medium, perlinArgs).exec(cmdBuf);
@@ -97,11 +104,11 @@ int main()
 			camCI.pos      = cam.getPosition();
 			camCI.frontDir = cam.getViewDirection();
 			camCI.upDir    = cam.getViewUpDirection();
-			camCI.seed     = frameCount;
 			camCI.extent = img_pt->getExtent2D();
 			camCI.yFovDeg = 60.0;
 			camCI.zNear  = 0.1;
 			camCI.zFar = 100.0;
+			camCI.frameIdx = frameCount;
 
 			TraceArgs traceArgs{};
 			traceArgs.sampleCount          = 1;

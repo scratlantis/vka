@@ -33,10 +33,24 @@ struct PerlinNoiseArgs
 	float     min;
 	float     max;
 	float     frequency;
-	bool      falloffAtEdge;
-	bool      blend;
+	float     falloffAtEdge;
+	float     blendCoef;
+	uint32_t  blendMode;
 	VkBlendOp blendOp;
 };
 
 ComputeCmd getCmdPerlinNoise(Image target, PerlinNoiseArgs args);
+
+enum class ScalarFieldFormat
+{
+	UINT8 = 0,
+	UINT16 = 1,
+};
+struct ScalarFieldInfo
+{
+	ScalarFieldFormat format;
+	VkExtent3D        extent;
+	float             minVal;
+};
+void cmdLoadScalarField(CmdBuffer cmdBuf, Buffer src, Image dst, const ScalarFieldInfo &info);
 }        // namespace vka

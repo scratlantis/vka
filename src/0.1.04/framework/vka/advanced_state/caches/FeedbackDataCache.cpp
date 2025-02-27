@@ -11,16 +11,22 @@ void FeedbackDataCache::clear()
 }
 bool FeedbackDataCache::fetch(Buffer &buf, hash_t key)
 {
-	return dataCache.fetch(buf, key);
+	bool found = dataCache.fetch(buf, key);
+	buf->addUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	return found;
 }
 
-bool FeedbackDataCache::fetchHostData(void *&data, uint32_t &size, hash_t key)
+bool FeedbackDataCache::fetchHostData(void *&data, hash_t key, uint32_t* pSize)
 {
 	Buffer deviceBuf, hostBuffer;
-	if (dataCache.fetch(deviceBuf, key) && pHostCache->fetch(deviceBuf, hostBuffer))
+	bool found = dataCache.fetch(deviceBuf, key);
+	if (found && pHostCache->fetch(deviceBuf, hostBuffer))
 	{
 		data = hostBuffer->map();
-		size = hostBuffer->getSize();
+		if (pSize)
+		{
+			*pSize = hostBuffer->getSize();
+		}
 		return true;
 	}
 	return false;

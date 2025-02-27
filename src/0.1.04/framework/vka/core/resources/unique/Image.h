@@ -107,6 +107,17 @@ class Image_R : public Resource_T<VkImage>
 	{
 		this->layout = layout;
 	}
+
+	uint32_t getWidth() const
+	{
+		return getExtent().width;
+	}
+
+	uint32_t getHeight() const
+	{
+		return getExtent().height;
+	}
+
 	Image_R(IResourcePool *pPool, VkImageCreateInfo imgCI, bool createView)
 	{
 		ci               = imgCI;
@@ -179,8 +190,8 @@ class Image_R : public Resource_T<VkImage>
 		this->usage = usage;
 	}
 
-	virtual void    createHandles();
-	virtual Image_R recreate();
+	virtual void   createHandles();
+	virtual bool   recreate();
 	virtual void   detachChildResources();
 	virtual void   track(IResourcePool *pPool) override;
 	virtual void   free() override;
@@ -248,11 +259,11 @@ class SwapchainImage_R : public Image_R
 		printVka("Attempted to create handles for swapchain image");
 		DEBUG_BREAK;
 	};
-	Image_R recreate() override
+	bool recreate() override
 	{
 		printVka("Attempted to recreate swapchain image");
 		DEBUG_BREAK;
-		return *this;
+		return false;
 	};
 	void detachChildResources() override{};
 	void track(IResourcePool *pPool) override

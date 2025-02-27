@@ -60,7 +60,7 @@ Image TextureCache::fetch(CmdBuffer cmdBuf, std::string path, VkFormat format, V
 	{
 		ImageData imgData;
 		Image  img = nullptr;
-		if (loadImg(texturePath + path, imgData))
+		if (loadImg(path, imgData))
 		{
 			printVka(("Loading texture: " + path).c_str());
 			img = createImage(pPool, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VkExtent2D{static_cast<uint32_t>(imgData.width), static_cast<uint32_t>(imgData.height)});

@@ -139,6 +139,11 @@ void GlfwWindow::initImGui()
 	ImGui_ImplGlfw_InitForVulkan(window, true);
 }
 
+void GlfwWindow::destroyImGui()
+{
+	ImGui_ImplGlfw_Shutdown();
+}
+
 void GlfwWindow::newFrameImGui()
 {
 	ImGui_ImplGlfw_NewFrame();
@@ -147,6 +152,11 @@ void GlfwWindow::newFrameImGui()
 void GlfwWindow::destroy()
 {
 	glfwDestroyWindow(window);
+}
+
+void GlfwWindow::hideMenuBar()
+{
+	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 }
 
 GlfwWindow::~GlfwWindow()

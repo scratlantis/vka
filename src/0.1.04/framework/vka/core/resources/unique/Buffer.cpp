@@ -56,28 +56,18 @@ bool Buffer_R::isMappable() const
 	//clang-format on
 }
 
-const Buffer_R Buffer_R::recreate()
+bool Buffer_R::recreate()
 {
+	VKA_ASSERT(newState.size != 0);
 	Buffer_R bufferCopy = *this;
 	if (handle != VK_NULL_HANDLE && state.size == newState.size && state.usage == newState.usage && state.memProperty.vma == newState.memProperty.vma)
 	{
-		return bufferCopy;
+		return false;
 	}
 	state = newState;
 	detachChildResources();
 	createHandles();
-	return bufferCopy;
-}
-
-
-
-void Buffer_R::update()
-{
-	const Buffer_R oldBuffer   = recreate();
-	VkDeviceSize   minDataSize = std::min(oldBuffer.getSize(), getSize());
-	void* data_old            = oldBuffer.map(0, minDataSize);
-	void* data_new			= this->map(0, minDataSize);
-	std::memcpy(data_new, data_old, minDataSize);
+	return true;
 }
 
 
@@ -148,7 +138,7 @@ BufferRange Buffer_R::getRange() const
 	return range;
 }
 
-const Buffer_R *Buffer_R::getSubBuffer(BufferRange range) const
+Buffer_R *Buffer_R::getSubBuffer(BufferRange range) const
 {
 	Buffer_R *subBuffer = new Buffer_R(*this);
 	subBuffer->range	= range;

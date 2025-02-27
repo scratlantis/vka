@@ -80,13 +80,18 @@ struct AreaLight
 	glm::vec3 v2; // Vertices
 	float intensity; // Area * intensity
 
+	glm::vec3 color;
+	uint32_t  padding4[1];
+
 };
 static_assert(offsetof(AreaLight, normal) == 1 * 16, "Offset is not correct");
 static_assert(offsetof(AreaLight, v0) == 2 * 16, "Offset is not correct");
 static_assert(offsetof(AreaLight, v1) == 3 * 16, "Offset is not correct");
 static_assert(offsetof(AreaLight, v2) == 4 * 16, "Offset is not correct");
 static_assert(offsetof(AreaLight, intensity) == 4 * 16 + 3 * 4, "Offset is not correct");
-static_assert(sizeof(AreaLight) == 5 * 16, "Size is not correct");
+static_assert(offsetof(AreaLight, color) == 5 * 16, "Offset is not correct");
+
+static_assert(sizeof(AreaLight) == 6 * 16, "Size is not correct");
 
 
 struct VertexDataLayout
@@ -233,7 +238,6 @@ class ModelCache
 {
   private:
 	std::unordered_map<ModelKey, ModelData> map;
-	std::string                             modelPath;
 	IResourcePool                          *pPool;
 	VkBufferUsageFlags                      bufferUsageFlags;
 
@@ -242,8 +246,8 @@ class ModelCache
 	void findAreaLights(std::vector<AreaLight> &lightList, const std::vector<ObjVertex> &vertexList, const std::vector<Index> &indexList, const std::vector<uint32_t> &indexCountList, const std::vector<WavefrontMaterial> &surfaceList) const;
 
   public:
-	ModelCache(IResourcePool *pPool, std::string modelPath, VkBufferUsageFlags bufferUsageFlags) :
-	    modelPath(modelPath), pPool(pPool), bufferUsageFlags(bufferUsageFlags)
+	ModelCache(IResourcePool *pPool, VkBufferUsageFlags bufferUsageFlags) :
+	    pPool(pPool), bufferUsageFlags(bufferUsageFlags)
 	{}
 	void      clear();
 	template <typename Vertex>
@@ -254,7 +258,7 @@ class ModelCache
 		auto     it = map.find(key);
 		if (it == map.end())
 		{
-			std::string                    fullPath = modelPath + path;
+			std::string                    fullPath = path;
 			std::vector<ObjVertex>         vertexList;
 			std::vector<Index>             indexList;
 			ModelData modelData{};

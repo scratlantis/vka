@@ -60,36 +60,12 @@ endforeach()
 ############################################################
 
 # dependencies:
+
 # vulkan
 find_package(Vulkan REQUIRED)
-# external folder
+# external depencenies contained in repo
 add_subdirectory(external)
-# imgui
-FILE(GLOB SRCS_IMGUI "external/IMGUI/*.cpp" "external/IMGUI/*.h"
-"external/IMGUI/backends/imgui_impl_vulkan.h"
-"external/IMGUI/backends/imgui_impl_vulkan.cpp"
-"external/IMGUI/backends/imgui_impl_glfw.h"
-"external/IMGUI/backends/imgui_impl_glfw.cpp")
-add_library(imgui STATIC ${SRCS_IMGUI})
-target_include_directories(imgui PUBLIC   ./external/IMGUI/ ./external/IMGUI/backends/)
-target_include_directories(imgui PRIVATE ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(imgui glfw Vulkan::Vulkan)
-# glfw
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-add_subdirectory(external/GLFW/glfw-3.3.4)
 # threads
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-# boost
-#FIND_PACKAGE(Boost)
-#IF (Boost_FOUND)
-#    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-#    ADD_DEFINITIONS( "-DHAS_BOOST" )
-#ENDIF()
-#find_package(Boost 1.56 REQUIRED)
-#find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 ############################################################
 
@@ -113,6 +89,14 @@ SET(library_targets "")
 SET(executable_targets "")
 SET(all_targets "")
 SUBDIRLIST(VKA_VERSIONS "${CMAKE_CURRENT_SOURCE_DIR}/src")
+list(SORT VKA_VERSIONS)
+list(GET VKA_VERSIONS -1 LATEST_VERSION)
+
+option(build_all_versions "build all versions" false)
+IF(NOT ${build_all_versions})
+SET(VKA_VERSIONS ${LATEST_VERSION})
+ENDIF()
+
 FOREACH(vka_version ${VKA_VERSIONS})
   FILE(GLOB_RECURSE current_lib_sources 
   "src/${vka_version}/framework/*.cpp"
@@ -129,7 +113,6 @@ FOREACH(vka_version ${VKA_VERSIONS})
 
   string(REPLACE "." "_" current_lib "vka_${vka_version}")
   cmake_print_variables(current_lib)
-  #cmake_print_variables(${current_sources})
   add_library(${current_lib} STATIC ${current_lib_sources})
   LIST(APPEND library_targets ${current_lib})
   LIST(APPEND all_targets ${current_lib})
@@ -141,8 +124,8 @@ FOREACH(vka_version ${VKA_VERSIONS})
   target_include_directories(${current_lib} PUBLIC   ./src/${vka_version}/framework/ )
   target_include_directories(${current_lib} PRIVATE ${Vulkan_INCLUDE_DIRS})
   target_link_libraries(
-      ${current_lib} Vulkan::Vulkan glfw imgui stb glm tinyobjloader vma nlohmann_json
-      ${CMAKE_DL_LIBS} Threads::Threads)
+      ${current_lib} Vulkan::Vulkan glfw imgui stb tinyexr glm tinyobjloader
+      implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma)
   
   # folder
   set_target_properties (${current_lib} PROPERTIES FOLDER ${vka_version}/framework )
@@ -171,14 +154,15 @@ FOREACH(vka_version ${VKA_VERSIONS})
     target_compile_definitions(${current_app} PUBLIC APP_NAME="${application}")
     target_compile_definitions(${current_app} PUBLIC APP_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}/src/${vka_version}/applications/${application}")
     target_compile_definitions(${current_app} PUBLIC RESOURCE_BASE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+    target_compile_definitions(${current_app} PUBLIC CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
+    target_compile_definitions(${current_app} PUBLIC RESULT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/results")
 
     # link
     target_include_directories(${current_app} PUBLIC   ./src/${vka_version}/applications/${application}/ )
     target_include_directories(${current_app} PUBLIC   ./src/${vka_version}/framework/ )
-    #target_include_directories(${current_app} PUBLIC   ./src/${vka_version}/applications_common/ )
     target_include_directories(${current_app} PRIVATE ${Vulkan_INCLUDE_DIRS})
-    target_link_libraries(${current_app} Vulkan::Vulkan glfw imgui stb glm tinyobjloader vma nlohmann_json
-      ${CMAKE_DL_LIBS} Threads::Threads)
+    target_link_libraries(${current_app} Vulkan::Vulkan glfw imgui stb tinyexr glm tinyobjloader
+    implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma)
     target_link_libraries(${current_app} ${current_lib})
 
     # folder
@@ -192,8 +176,6 @@ ENDFOREACH()
 # target properties
 set_target_properties( ${library_targets} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set_target_properties( ${executable_targets} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-#set_target_properties (${library_targets} PROPERTIES FOLDER framework )
-#set_target_properties (${executable_targets} PROPERTIES FOLDER applications)
 
 ############################################################
 

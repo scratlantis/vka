@@ -62,6 +62,11 @@ vec3 random3D( vec3  v ) {
     );
 }
 
+uint hash3f(vec3 v)
+{
+	return hash(floatBitsToUint(v));
+}
+
 float unormNext(inout uint seed)
 {
     seed = hash(seed);
@@ -71,6 +76,11 @@ float unormNext(inout uint seed)
 vec3 random3D(uint seed)
 {
 	return vec3(unormNext(seed),unormNext(seed),unormNext(seed));
+}
+
+vec2 random2D(uint seed)
+{
+	return vec2(unormNext(seed),unormNext(seed));
 }
 
 void applyJitter(float coefPos, float coefAngle, inout vec3 pos, inout vec3 dir)
@@ -120,5 +130,53 @@ float perlinNoise(vec3 val)
 	return mix(cellNoiseZ[0], cellNoiseZ[1], a.z);
 }
 
+// iteratively construct a bit mask with P(mask[i] = 1) = p
+#if 1
+uint randomBitMask(float p, uint iterations, inout uint seed)
+{
+	uint upperMask = 0xFFFFFFFFU; // 32 bits all 1
+	uint lowerMask = 0x00000000U; // 32 bits all 0
+	float upperP = 1.0;
+	float lowerP = 0.0;
+	uint middleMask;
+	for(uint i = 0; i<iterations; i++)
+	{
+		uint h = hash(seed); // We assume P(h[i] = 1) = 0.5
+		seed = h;
+		middleMask = h & lowerMask | (~h) & upperMask;
+		float middleP = mix(lowerP, upperP, 0.5);
+		if(middleP > p)
+		{
+			upperMask = middleMask;
+			upperP = middleP;
+		}
+		else
+		{
+			lowerMask = middleMask;
+			lowerP = middleP;
+		}
+	}
+	return middleMask;
+}
+#else
+uint randomBitMask(float p, uint iterations, inout uint seed)
+{
+	uint mask = 0;
+	for(uint i = 0; i<32; i++)
+	{
+		float rng = unormNext(seed);
+		if(rng < p)
+		{
+			mask |= 1 << i;
+		}
+	}
+	return mask;
+}
+#endif
+
+float estimateBitPropability(uint mask)
+{
+	return float(bitCount(mask))/32.0;
+}
 
 #endif

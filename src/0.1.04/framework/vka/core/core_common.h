@@ -1,6 +1,9 @@
 #pragma once
 #include "core_state/CoreState.h"
 #include "core_state/GlfwWindow.h"
+#include "core_state/device_properties.h"
+#include "core_state/ResourceCache.h"
+#include "core_state/ResourcePool.h"
 #include "core_utility/acceleration_structure_utility.h"
 #include "core_utility/buffer_utility.h"
 #include "core_utility/image_utility.h"
@@ -15,5 +18,7 @@
 #include "stateless/utility/setup.h"
 #include "stateless/utility/enum.h"
 #include "core_utility/debug_utility.h"
+#include "core_utility/misc_utility.h"
+#include "resources/cachable/Shader.h"
 
 

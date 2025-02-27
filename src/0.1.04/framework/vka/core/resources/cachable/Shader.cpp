@@ -80,7 +80,7 @@ std::string ShaderDefinition::preprocessedPath() const
 	}
 	else
 	{
-		std::string localPath = path.substr(gAppShaderRoot.size() + 1);
+		std::string localPath = path.substr(gAppShaderRoot.size());
 		if (localPath.find_last_of("/") == std::string::npos)
 		{
 			localPath = "";
@@ -124,14 +124,16 @@ void Shader_R::preprocess(ShaderDefinition const& def)
 	std::string shaderPrefix = "#version 460\n#extension GL_GOOGLE_include_directive : enable\n";
 	uint32_t    linesAdded      = 2;
 	std::string shaderPath = def.preprocessedPath();
-	std::string shaderTargetDir = shaderPath.substr(0, shaderPath.find_last_of("/"));
+	std::string shaderTargetDir = shaderPath.substr(0, shaderPath.find_last_of("/") + 1);
 	std::filesystem::create_directories(shaderTargetDir);
 
 	std::string shaderCode = std::string(readTextFile(def.path).data());
 	for (auto& lib : def.libs)
 	{
 		std::string libPath = ShaderDefinition::preprocessedLibPath(lib);
+		//printVka(("Including lib abs: " + libPath).c_str());
 		std::string relativePath = getRelativePath(shaderTargetDir, libPath);
+		//printVka(("Including lib rel: " + relativePath).c_str());
 		std::string include = "#include \"" + relativePath + "\"\n";
 		linesAdded++;
 		shaderPrefix += include;

@@ -44,6 +44,20 @@ Ray scatterUniform(vec3 albedo, vec3 pos, inout uint seed)
 	return ray;
 }
 
+Ray scatterGreenstein(vec3 albedo, vec3 pos, vec3 dir, float g, inout uint seed)
+{
+	float pdf = 1.0;
+	vec3 dir2 = sampleHeneyGreenstein(-dir, g, vec2(unormNext(seed), unormNext(seed)), pdf);
+	Ray ray;
+	ray.direction = normalize(dir2);
+	ray.origin = pos;
+	ray.tmin = TMIN;
+	ray.tmax = TMAX;
+	ray.weight = albedo;
+	return ray;
+
+}
+
 
 vec3 sampleAreaLight(vec3 pos, VKAAreaLight light, inout uint seed, out float pdf)
 {

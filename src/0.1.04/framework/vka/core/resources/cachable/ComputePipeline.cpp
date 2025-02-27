@@ -16,7 +16,13 @@ DEFINE_EQUALS_OVERLOAD(ComputePipelineDefinition, ResourceIdentifier)
 
 bool ComputePipelineDefinition::operator==(const ComputePipelineDefinition &other) const
 {
-	return shaderDef == other.shaderDef && pipelineLayoutDefinition == other.pipelineLayoutDefinition;
+	// clang-format off
+	return shaderDef == other.shaderDef
+		&& pipelineLayoutDefinition == other.pipelineLayoutDefinition
+		&& cmpVector<uint32_t>(specialisationEntrySizes, other.specialisationEntrySizes)
+		&& cmpVector<uint8_t>(specializationData, other.specializationData);
+	// todo comp VkSpecializationMapEntry
+	// clang-format on
 }
 
 void ComputePipeline_R::free()

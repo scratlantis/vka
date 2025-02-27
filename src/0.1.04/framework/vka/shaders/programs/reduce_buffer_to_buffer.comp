@@ -44,7 +44,7 @@ void main()
 		inputCount = pc.outputSize - segmentSize * (pc.outputSize - 1);
 	}
 
-	#if(REDUCE_OP == AVERAGE)
+	//#if(REDUCE_OP == AVERAGE)
 	float denominator = 1.0/float(inputCount);
 	BUFFER_TYPE sum = 0.0;
 
@@ -54,8 +54,12 @@ void main()
 		sum += val*denominator;
 	}
 
+	//if(sum > 100.0)
+	//{
+	//	sum = 1.0;
+	//}
 	buf_out[gID] = sum;
-	#endif
+	//#endif
 
 
 }

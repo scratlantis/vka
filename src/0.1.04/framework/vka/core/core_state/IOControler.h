@@ -17,10 +17,22 @@ struct Mouse
 	glm::vec2 pos;
 	bool      leftPressed;
 	bool      leftEvent;
+	bool      leftPressedEvent()
+	{
+		return leftEvent && leftPressed;
+	}
 	bool      rightPressed;
 	bool      rightEvent;
+	bool      rightPressedEvent()
+	{
+		return rightEvent && rightPressed;
+	}
 	bool	  middlePressed;
 	bool	  middleEvent;
+	bool      middlePressedEvent()
+	{
+		return middleEvent && middlePressed;
+	}
 	double scrollChange;
 	void   resetEvents()
 	{
@@ -56,6 +68,7 @@ struct IOControlerCI
 	std::vector<VkSurfaceFormatKHR> preferedFormats;
 	std::vector<VkPresentModeKHR>   preferedPresentModes;
 	uint32_t                        preferedSwapchainImageCount;
+	bool menuBar;
 
 	WindowCI getWindowCI();
 };
@@ -92,6 +105,7 @@ class IOController
 	bool    swapchainRecreated();
 	bool    shouldTerminate();
 	void    buildShaderLib();
+	void    requestTerminate();
 	Window *getWindow();
 
 	DELETE_COPY_CONSTRUCTORS(IOController);

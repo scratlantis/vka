@@ -16,7 +16,15 @@ bool ModelCache::loadObj(std::string path, std::vector<ObjVertex> &vertexList, s
 	std::string                      warningString;
 
 	// Parse obj and mtl files
-	std::string mtldir = path.substr(0, path.find_last_of("/"));
+	std::string mtldir;
+	if (path.find_last_of("\\") != std::string::npos)
+	{
+		mtldir = path.substr(0, path.find_last_of("\\"));
+	}
+	else
+	{
+		mtldir = path.substr(0, path.find_last_of("/"));
+	}
 	bool        success = tinyobj::LoadObj(&vertexAttributes, &shapes, &materials, &warningString, &errorString, path.c_str(), mtldir.c_str());
 	if (!success)
 	{
@@ -178,7 +186,7 @@ void ModelCache::findAreaLights(std::vector<AreaLight> &lightList, const std::ve
 	for (size_t i = 0; i < surfaceList.size(); i++)
 	{
 		const WavefrontMaterial &surface  = surfaceList[i];
-		float              emission = surface.emission.x + surface.emission.y + surface.emission.z;
+		float              emission = (surface.emission.x + surface.emission.y + surface.emission.z) / 3.f;
 		if (emission > 0)
 		{
 			for (size_t j = indexOffset; j < indexOffset + indexCountList[i]; j += 3)
@@ -191,6 +199,7 @@ void ModelCache::findAreaLights(std::vector<AreaLight> &lightList, const std::ve
 				light.center     = (light.v0 + light.v1 + light.v2) / 3.0f;
 				light.normal     = glm::normalize(normal);
 				light.intensity  = emission;        // glm::length(emission * normal);
+				light.color 	= surface.emission;
 				lightList.push_back(light);
 			}
 		}

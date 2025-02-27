@@ -26,6 +26,7 @@ class ResourcePool : public IResourcePool
 	ResourcePool(){};
 	~ResourcePool(){};
 	void clear() override;
+	void dump(IResourcePool *otherPool) override;
 	DELETE_COPY_CONSTRUCTORS(ResourcePool);
 };
 

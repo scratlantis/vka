@@ -44,9 +44,8 @@ void Image_R::createHandles()
 	}
 }
 
-Image_R Image_R::recreate()
+bool Image_R::recreate()
 {
-	Image_R imgCopy = *this;
 	// clang-format off
 	if (ci.format == format &&
 		ci.extent.depth == extent.depth && ci.extent.height == extent.height && ci.extent.width == extent.width
@@ -54,7 +53,7 @@ Image_R Image_R::recreate()
 		&& ci.usage == usage)
 	// clang-format on
 	{
-		return imgCopy;
+		return false;
 	}
 	ci.format    = format;
 	ci.extent    = extent;
@@ -62,7 +61,7 @@ Image_R Image_R::recreate()
 	ci.usage     = usage;
 	detachChildResources();
 	createHandles();
-	return imgCopy;
+	return true;
 }
 
 void Image_R::detachChildResources()

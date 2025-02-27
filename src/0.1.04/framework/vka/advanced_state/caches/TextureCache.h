@@ -21,12 +21,11 @@ struct ImageData
 class TextureCache
 {
 	std::unordered_map<std::string, Image> map;
-	std::string                               texturePath;
 	IResourcePool                            *pPool;
 
   public:
-	TextureCache(IResourcePool *pPool, std::string texturePath) :
-	    texturePath(texturePath), pPool(pPool)
+	TextureCache(IResourcePool *pPool) :
+	   pPool(pPool)
 	{}
 
 	void     clear();

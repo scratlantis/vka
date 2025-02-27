@@ -98,4 +98,27 @@ void ResourcePool::clear()
 	}
 	images.clear();
 }
+void ResourcePool::dump(IResourcePool *otherPool)
+{
+	for (auto it = mappables.begin(); it != mappables.end(); ++it)
+	{
+		otherPool->add(*it);
+	}
+	mappables.clear();
+	for (auto it = buffers.begin(); it != buffers.end(); ++it)
+	{
+		otherPool->add(*it);
+	}
+	buffers.clear();
+	for (auto it = resources.begin(); it != resources.end(); ++it)
+	{
+		otherPool->add(*it);
+	}
+	resources.clear();
+	for (auto it = images.begin(); it != images.end(); ++it)
+	{
+		otherPool->add(*it);
+	}
+	images.clear();
+}
 }        // namespace vka

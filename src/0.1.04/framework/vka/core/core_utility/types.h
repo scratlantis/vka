@@ -3,6 +3,7 @@
 #include <vka/core/resources/unique/Buffer.h>
 #include <vka/core/resources/unique/Image.h>
 #include <vka/core/resources/unique/CmdBuffer.h>
+#include <vka/core/resources/unique/misc.h>
 
 typedef vka::Buffer_R              *Buffer;
 typedef const vka::Buffer_R        *BufferRef;

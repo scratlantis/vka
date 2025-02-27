@@ -54,6 +54,7 @@ class CoreState
 	Frame          *frame;
 	MemAllocator    memAlloc;
 	CmdAllocator    cmdAlloc;
+	uint32_t		frameTime; // last frame time in ms
 
 	std::string shaderLog;
 
@@ -67,6 +68,7 @@ class CoreState
   private:
 	void               initFrames();
 	void               destroyFrames();
+	uint32_t           lastTimeStamp;
 
 	DELETE_COPY_CONSTRUCTORS(CoreState);
   protected:

@@ -200,8 +200,7 @@ ComputeCmd getCmdPlot(Buffer src, Image dst, uint32_t offset, glm::vec3 color)
 ComputeCmd getCmdPerlinNoise(Image target, PerlinNoiseArgs args)
 {
 	ComputeCmd cmd(target->getExtent(), cVkaShaderPath + "perlin_noise_3D.comp");
-	VKA_ASSERT(target->getFormat() == VK_FORMAT_R32_SFLOAT)
-	VKA_ASSERT(!args.blend); // Not yet implemented.
+	//VKA_ASSERT(target->getFormat() == VK_FORMAT_R32_SFLOAT)
 	cmd.pushDescriptor(target, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 	struct PushStruct
 	{
@@ -210,8 +209,9 @@ ComputeCmd getCmdPerlinNoise(Image target, PerlinNoiseArgs args)
 		float    minVal;
 		float    maxVal;
 		float    frequency;
-		uint32_t falloffAtEdge;
-		uint32_t blendOp;
+		float	 falloffAtEdge;
+		float    blendCoef;
+		uint32_t blendMode;
 	} pc;
 	pc.seed         = args.seed;
 	pc.scale        = args.scale;
@@ -219,9 +219,30 @@ ComputeCmd getCmdPerlinNoise(Image target, PerlinNoiseArgs args)
 	pc.maxVal       = args.max;
 	pc.frequency     = args.frequency;
 	pc.falloffAtEdge = args.falloffAtEdge ? 1 : 0;
-	pc.blendOp      = static_cast<uint32_t>(args.blendOp) + 1; // 0 is overwrite.
+	pc.blendCoef     = args.blendCoef;
+	pc.blendMode	 = args.blendMode;
 	cmd.pushConstant(&pc, sizeof(PushStruct));
 	return cmd;
+}
+
+void cmdLoadScalarField(CmdBuffer cmdBuf, Buffer src, Image dst, const ScalarFieldInfo &info)
+{
+	// should assert 3d image
+	dst->changeExtent(info.extent);
+	if (dst->recreate())
+	{
+		cmdTransitionLayout(cmdBuf, dst, VK_IMAGE_LAYOUT_GENERAL);
+	}
+	ComputeCmd cmd(dst->getExtent(), cVkaShaderPath + "loadScalarField.comp",
+	               {
+	                   {"FORMAT", getGLSLFormat(dst->getFormat())},
+					   {"SCALAR_FIELD_FORMAT", static_cast<uint32_t>(info.format)},
+	               });
+	float      pc = info.minVal;
+	cmd.pushConstant(&pc, sizeof(float));
+	cmd.pushDescriptor(src, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	cmd.pushDescriptor(dst, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+	cmd.exec(cmdBuf);
 }
 
 }        // namespace vka

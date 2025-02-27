@@ -1,6 +1,7 @@
 #include "misc.h"
 #include <glm/ext/matrix_transform.hpp>
 #include "io.h"
+#include "misc.h"
 namespace vka
 {
 
@@ -311,8 +312,8 @@ std::string getGLSLFormat(VkFormat format)
 			return "rgba32ui";
 		case VK_FORMAT_R32_SFLOAT:
 			return "r32f";
-			break;
-
+		case VK_FORMAT_R16_SFLOAT:
+			return "r16f";
 		default:
 			printVka("getGLSLFormat: Unsupported format!");
 			DEBUG_BREAK;
@@ -320,5 +321,4 @@ std::string getGLSLFormat(VkFormat format)
 	}
 }
 
-
-}
+}        // namespace vka

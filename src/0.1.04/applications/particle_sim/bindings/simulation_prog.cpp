@@ -15,12 +15,13 @@ void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer, GenParticleArgs ar
 	pc.x_range = vec2(args.area.x, args.area.x + args.area.width);
 	pc.y_range = vec2(args.area.y, args.area.y + args.area.height);
 	pc.seed = args.seed;
+	cmd.pushConstant(&pc, sizeof(PCGenerateParticles));
 	cmd.exec(cmdBuf);
 }
 
 
 GVar gvar_particle_generation_seed{"Particle Seed", 42U, GVAR_UINT_RANGE, GUI_CAT_PARTICLES, {0U, 100U}};
-GVar gvar_particle_generation_count{"Particle Count", 1000U, GVAR_UINT_RANGE, GUI_CAT_PARTICLES, {1U, 1000000U}};
+GVar gvar_particle_generation_count{"Particle Count", 10U, GVAR_UINT_RANGE, GUI_CAT_PARTICLES, {1U, 100U}};
 void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer)
 {
 	VkRect2D_OP targetImgSize = getScissorRect(viewDimensions);

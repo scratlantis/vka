@@ -9,7 +9,6 @@ using namespace glm;
 
 #include <shaders/interface_structs.glsl>
 
-GVar gvar_particle_render_size{"Particle Size", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {0.1f, 10.f}};
 
 extern GVar gvar_menu;
 
@@ -23,7 +22,10 @@ int main()
 	gState.init(deviceCI, ioCI, &window, config);
 	enableGui();
 	//// Init swapchain attachments
-	Image img_shaded              = createSwapchainAttachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_GENERAL, viewDimensions.width, viewDimensions.height);
+	Image img_shaded              = createSwapchainAttachment(VK_FORMAT_R32G32B32A32_SFLOAT,
+		VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+		| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_LAYOUT_GENERAL,
+		viewDimensions.width, viewDimensions.height);
 	gState.updateSwapchainAttachments();
 	//// Init other stuff
 	Buffer particleBuffer = createBuffer(gState.heap, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
@@ -53,6 +55,8 @@ int main()
 		if(reset || guiCatChanged(GUI_CAT_PARTICLES, settingsChanged))
 		{
 			cmdGenParticles(cmdBuf, particleBuffer);
+
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 		}
 
 		// Fill swapchain with background color
@@ -61,8 +65,8 @@ int main()
 
 		// Render
 		{
-			getCmdFill(img_shaded, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, vec4(0.8, 0.25, 0.3, 1.0)).exec(cmdBuf);
-
+			img_shaded->setClearValue(ClearValue::black());
+			cmdRenderParticles(cmdBuf, img_shaded, particleBuffer);
 		}
 		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 

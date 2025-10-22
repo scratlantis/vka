@@ -16,9 +16,9 @@ layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
 #endif
 
 #ifdef USE_SPEC_CONST
-layout(constant_id = 0) const uint invCountX = 0;
-layout(constant_id = 1) const uint invCountY = 0;
-layout(constant_id = 2) const uint invCountZ = 0;
+layout(constant_id = 3) const uint invCountX = 0;
+layout(constant_id = 4) const uint invCountY = 0;
+layout(constant_id = 5) const uint invCountZ = 0;
 
 bool validInvocation()
 {

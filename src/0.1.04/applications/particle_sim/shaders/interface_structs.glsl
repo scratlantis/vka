@@ -12,3 +12,10 @@ struct GLSLParticle
 	vec2 pos;
 	vec2 placeholder;
 };
+
+struct PCRenderParticles
+{
+	vec2	viewOffset;
+	vec2	viewScale;
+	float	pointSize;
+};

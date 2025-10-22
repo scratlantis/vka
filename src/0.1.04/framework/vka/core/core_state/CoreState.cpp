@@ -93,6 +93,7 @@ SubmitSynchronizationInfo CoreState::acquireNextSwapchainImage()
 {
 	uint32_t imageIndex;
 	VK_CHECK(vkAcquireNextImageKHR(device.logical, io.swapchain, UINT64_MAX, frame->imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex));
+	VKA_ASSERT(imageIndex == frame->frameIndex);
 	VK_CHECK(vkResetFences(device.logical, 1, &frame->inFlightFence));
 	SubmitSynchronizationInfo syncInfo{};
 	syncInfo.waitSemaphores   = {frame->imageAvailableSemaphore};

@@ -65,9 +65,13 @@ CmdBufferState ComputeCmd::getCmdBufferState() const
 void ComputeCmd::pushBaseModule(glm::uvec3 invocationCount)
 {
 	pipelineDef.shaderDef.libs.push_back(cVkaShaderLibPath + "compute_shader_base.glsl");
-	pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_X", invocationCount.x)});
-	pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_Y", invocationCount.y)});
-	pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_Z", invocationCount.z)});
+	pushSpecializationConst(invocationCount.x);
+	pushSpecializationConst(invocationCount.y);
+	pushSpecializationConst(invocationCount.z);
+	pipelineDef.shaderDef.args.push_back({ShaderArgs("USE_SPEC_CONST", "")});
+	//pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_X", invocationCount.x)});
+	//pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_Y", invocationCount.y)});
+	//pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_Z", invocationCount.z)});
 }
 
 

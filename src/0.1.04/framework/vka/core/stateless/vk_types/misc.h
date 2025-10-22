@@ -28,6 +28,21 @@ struct Rect2D
 	}
 };
 
+template <typename T>
+struct Rect3D
+{
+	T    x;
+	T    y;
+	T    z;
+	T    width;
+	T    height;
+	T    depth;
+	bool operator==(const Rect3D &other) const
+	{
+		return x == other.x && y == other.y && z == other.z && width == other.width && height == other.height && depth == other.depth;
+	}
+};
+
 
 enum ClearValueType
 {

@@ -15,6 +15,26 @@ layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
 #define INVOCATION_COUNT_Z 1
 #endif
 
+#ifdef USE_SPEC_CONST
+layout(constant_id = 0) const uint invCountX = 0;
+layout(constant_id = 1) const uint invCountY = 0;
+layout(constant_id = 2) const uint invCountZ = 0;
+
+bool validInvocation()
+{
+	uvec3 gID = gl_GlobalInvocationID;
+	return gID.x < invCountX && gID.y < invCountY && gID.z < invCountZ;
+}
+uint invocationID()
+{
+	uvec3 gID = gl_GlobalInvocationID;
+	return gID.x + gID.y * invCountX + gID.z * invCountX * invCountY;
+}
+uint invocationCount()
+{
+	return invCountX * invCountY * invCountZ;
+}
+#else
 bool validInvocation()
 {
 	uvec3 gID = gl_GlobalInvocationID;
@@ -31,6 +51,7 @@ uint invocationCount()
 {
 	return INVOCATION_COUNT_X * INVOCATION_COUNT_Y * INVOCATION_COUNT_Z;
 }
+#endif
 
 #ifdef DEBUG
 #define IF_DEBUG( A ) A

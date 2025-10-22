@@ -39,6 +39,7 @@ float rayMarcheMedium(vec3 origin, vec3 direction, float maxLength, inout uint s
 		float density = texture(volSmp, pos).r;
 		if(density >= minDensity && density < maxDensity)
 		{
+			density-= minDensity;
 			density *= densityScale;
 			transmittance *= exp(-density * stepSize);
 		}
@@ -77,6 +78,7 @@ float rayMarcheMedium(vec3 origin, vec3 direction, float maxLength, inout uint s
 		float density = texture(volSmp, pos).r;
 		if(density >= minDensity && density < maxDensity)
 		{
+			density-= minDensity;
 			density*=densityScale;
 			transmittance *= exp(-density * RAY_MARCHE_STEP_SIZE);
 		}

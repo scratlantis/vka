@@ -1,0 +1,24 @@
+#include "interface_structs.glsl"
+#include "../lib/lib/random.glsl"
+
+layout(push_constant) uniform PC {PCGenerateParticles pc;};
+layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { GLSLParticle particles[];};
+
+
+void main()
+{
+	if(!validInvocation())
+	{
+		return;
+	}
+
+	uint id = invocationID();
+	uint seed = invocationCount()*pc.seed + id;
+
+	GLSLParticle elem;
+	vec2 rng = vec2(unormNext(seed), unormNext(seed));
+	vec2 scale = vec2(pc.x_range.y - pc.x_range.x, pc.y_range.y - pc.y_range.x);
+	vec2 offset = vec2(pc.x_range.x, pc.y_range.x);
+	elem.pos = rng * scale + offset;
+	particles[id] = elem;
+}

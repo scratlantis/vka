@@ -90,6 +90,7 @@ float traceGeometryTransmittance(Ray ray, uint cullMask)
 
 void evalHit(HitData hitData, inout MaterialData matData, inout mat4x3 tangentFrame)
 {
+//return;
 	uint instanceOffset = instanceOffsets[hitData.instanceCustomID];
 	VKAModelDataOffset modelOffset = modelOffsets[instanceOffset];
 	uint firstIndex = surfaceIndexOffsets[modelOffset.firstSurface + hitData.geometryID] + hitData.primitiveID * 3;
@@ -97,7 +98,7 @@ void evalHit(HitData hitData, inout MaterialData matData, inout mat4x3 tangentFr
 	GLSLVertex v1 = vertices[indices[firstIndex + 1] + modelOffset.firstVertex];
 	GLSLVertex v2 = vertices[indices[firstIndex + 2] + modelOffset.firstVertex];
 	vec2 uv = mat3x2(v0.uv, v1.uv, v2.uv) * hitData.barycentrics;
-
+	
 	// Material
 	GLSLMaterial mat = materials[modelOffset.firstSurface + hitData.geometryID];
 	// Add texture reads later
@@ -107,7 +108,7 @@ void evalHit(HitData hitData, inout MaterialData matData, inout mat4x3 tangentFr
 	matData.emission = mat.emission;
 	matData.roughness = mat.roughness;
 	matData.f0 = mat.f0;
-
+	
 	// Compute tangent frame
 	vec3 localPos = mat3(v0.pos, v1.pos, v2.pos) * hitData.barycentrics;
 	vec3 localGeometricNormal = normalize(mat3(v0.normal, v1.normal, v2.normal) * hitData.barycentrics);

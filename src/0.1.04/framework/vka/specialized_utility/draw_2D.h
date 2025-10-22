@@ -30,15 +30,15 @@ ComputeCmd getCmdNormalize(Image target, VkImageLayout dstLayout);
 
 struct MapImgArgs
 {
-	bool        normalize;
-	bool        useTonemapping;
-	float       whitePoint;
-	bool        useGammaCorrection;
-	float       exposure;
-	bool        useScissors;
-	VkRect2D_OP srcArea;
-	VkRect2D_OP dstArea;
-	VkImageLayout dstLayout;
+	bool			normalize;
+	bool			useTonemapping;
+	float			whitePoint;
+	bool			useGammaCorrection;
+	float			exposure;
+	bool			useScissors;
+	VkRect2D_OP		srcArea;
+	VkRect2D_OP		dstArea;
+	VkImageLayout	dstLayout;
 };
 
 DrawCmd getCmdMapImg(Image src, Image dst, MapImgArgs args);

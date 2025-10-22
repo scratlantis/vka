@@ -89,7 +89,18 @@ void MemAllocator::createBuffer(
 	bufferInfo.usage              = vkBufferUsageFlags;
 
 	VmaAllocationCreateInfo vmaAllocationCreateInfo = {};
-	vmaAllocationCreateInfo.usage                   = vmaMemoryUsageFlags;
+	if (vmaMemoryUsageFlags == VMA_MEMORY_USAGE_CPU_ONLY)
+	{
+		vmaAllocationCreateInfo.requiredFlags		   = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	}
+	else if( vmaMemoryUsageFlags == VMA_MEMORY_USAGE_GPU_ONLY)
+	{
+		vmaAllocationCreateInfo.requiredFlags           = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+	}
+	else
+	{
+		vmaAllocationCreateInfo.usage                   = vmaMemoryUsageFlags;
+	}
 	VmaAllocationInfo *pAllocationInfo              = {};
 	createBuffer(&bufferInfo, &vmaAllocationCreateInfo, buf, alloc, pAllocationInfo);
 }

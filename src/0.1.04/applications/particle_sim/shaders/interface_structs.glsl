@@ -17,5 +17,6 @@ struct PCRenderParticles
 {
 	vec2	viewOffset;
 	vec2	viewScale;
+	vec2	extent;
 	float	pointSize;
 };

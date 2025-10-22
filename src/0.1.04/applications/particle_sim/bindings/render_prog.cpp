@@ -17,7 +17,7 @@ void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, R
 	ds.vertexLayout = vertex_type<GLSLParticle>{}.data_layout();
 	cmd.setGeometry(ds);
 
-	cmd.pushColorAttachment(target, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	cmd.pushColorAttachment(target, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, BlendOperation::add(), BlendOperation::add());
 	PCRenderParticles pc{};
 	pc.viewOffset = vec2(0.f, 0.f);
 	VkExtent2D extent = target->getExtent2D();
@@ -25,6 +25,7 @@ void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, R
 	pc.viewScale.x = maxDim / float(extent.width);
 	pc.viewScale.y = maxDim / float(extent.height);
 	pc.pointSize = args.particleSize;
+	pc.extent = vec2(static_cast<float>(extent.width),static_cast<float>(extent.height));
 	cmd.pushConstant(&pc, sizeof(PCRenderParticles), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	cmd.exec(cmdBuf);

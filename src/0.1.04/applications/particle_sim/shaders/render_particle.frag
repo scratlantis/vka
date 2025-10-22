@@ -1,8 +1,15 @@
 #include "interface_structs.glsl"
 layout(push_constant) uniform PC {PCRenderParticles pc;};
 layout(location = 0) out vec4 outColor;
+layout(location = 0) in vec2 inPos;
 
 void main()
 {
-	outColor = vec4(1.0, 0.0, 0.0, 1.0);
+	outColor.a = 1.0;
+	vec2 particleCenter = inPos * pc.extent;
+	vec2 pixelCenter = gl_FragCoord.xy;
+	float dist = length(pixelCenter - particleCenter);
+	float normDist = dist / (0.5*pc.pointSize);
+	float crossSection = 1.0 - normDist*normDist;
+	outColor.rgb = vec3(1.0, 0.0, 0.0) * crossSection;
 }

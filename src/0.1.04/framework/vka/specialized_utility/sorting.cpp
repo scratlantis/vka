@@ -4,7 +4,7 @@ namespace vka
 {
 	uint32_t NUMBER_OF_WORKGROUPS = 256;
 
-	ComputeCmd getCmdRadixSort(CmdBuffer cmdBuf, Buffer bufferIn, Buffer bufferOut, Buffer histogramIn, uint32_t shift,
+	ComputeCmd getCmdRadixSort(Buffer bufferIn, Buffer bufferOut, Buffer histogramIn, uint32_t shift,
 		Buffer permutationIn, Buffer permutationOut)
 	{
 		uint32_t elementCount = bufferIn->getSize() / sizeof(uint32_t);
@@ -33,12 +33,12 @@ namespace vka
 		}
 		return cmd;
 	};
-	ComputeCmd getCmdRadixSort(CmdBuffer cmdBuf, Buffer bufferIn, Buffer bufferOut, Buffer histogramIn, uint32_t shift)
+	ComputeCmd getCmdRadixSort(Buffer bufferIn, Buffer bufferOut, Buffer histogramIn, uint32_t shift)
 	{
-		return getCmdRadixSort(cmdBuf, bufferIn, bufferOut, histogramIn, shift, nullptr, nullptr);
+		return getCmdRadixSort(bufferIn, bufferOut, histogramIn, shift, nullptr, nullptr);
 	};
 
-	ComputeCmd getCmdRadixSortHistogram(CmdBuffer cmdBuf, Buffer bufferIn, Buffer histogramIn, uint32_t shift)
+	ComputeCmd getCmdRadixSortHistogram(Buffer bufferIn, Buffer histogramIn, uint32_t shift)
 	{
 		uint32_t elementCount = bufferIn->getSize() / sizeof(uint32_t);
 		ComputeCmd cmd = ComputeCmd(elementCount, 256, cVkaShaderPath + "multi_radixsort_histograms.comp");
@@ -84,11 +84,11 @@ namespace vka
 		for (uint32_t pass = 0; pass < NUM_PASSES; pass++)
 		{
 			uint32_t shift = pass * 8;
-			getCmdRadixSortHistogram(cmdBuf, bufA, histogramBuf, shift).exec(cmdBuf);
+			getCmdRadixSortHistogram(bufA, histogramBuf, shift).exec(cmdBuf);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 
-			getCmdRadixSort(cmdBuf, bufA, bufB, histogramBuf, shift).exec(cmdBuf);
+			getCmdRadixSort(bufA, bufB, histogramBuf, shift).exec(cmdBuf);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 
@@ -139,11 +139,11 @@ namespace vka
 		for (uint32_t pass = 0; pass < NUM_PASSES; pass++)
 		{
 			uint32_t shift = pass * 8;
-			getCmdRadixSortHistogram(cmdBuf, bufA, histogramBuf, shift).exec(cmdBuf);
+			getCmdRadixSortHistogram(bufA, histogramBuf, shift).exec(cmdBuf);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 
-			getCmdRadixSort(cmdBuf, bufA, bufB, histogramBuf, shift, permA, permB).exec(cmdBuf);
+			getCmdRadixSort(bufA, bufB, histogramBuf, shift, permA, permB).exec(cmdBuf);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 

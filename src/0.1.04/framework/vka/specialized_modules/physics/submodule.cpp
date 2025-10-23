@@ -1,0 +1,46 @@
+#include "submodule.h"
+#include <vka/specialized_utility/physics.h>
+#include <vka/specialized_utility/sorting.h>
+#include <vka/globals.h>
+
+
+namespace vka
+{
+	namespace physics
+	{
+		void NeighborhoodIteratorResources::init(IResourcePool* pPool)
+		{
+			cellKeys = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			startIndices = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			permutation = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			pingPongCellKeys = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			pingPongPermutation = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			histogram = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+		}
+		NeighborhoodIteratorResources::NeighborhoodIteratorResources(IResourcePool* pPool)
+		{
+			init(pPool);
+		}
+
+		void cmdUpdateNeighborhoodIterator(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription &desc, NeighborhoodIteratorResources &res)
+		{
+			getCmdComputeCellKeys(particleBuf, res.cellKeys, desc).exec(cmdBuf);
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+			cmdRadixSortPermutation(cmdBuf, res.cellKeys, res.permutation,
+				res.pingPongCellKeys, res.pingPongPermutation, res.histogram);
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+			getCmdComputeStartId(res.cellKeys, res.startIndices).exec(cmdBuf);
+		}
+
+		void bindNeighborhoodIterator(ComputeCmd &cmd, NeighborhoodIteratorResources res)
+		{
+			cmd.pushSubmodule(cVkaShaderModulePath + "physics/particle_neighborhood_iterator.glsl");
+			cmd.pushDescriptor(res.permutation, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+			cmd.pushDescriptor(res.cellKeys, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+			cmd.pushDescriptor(res.startIndices, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+		}
+
+	}
+}

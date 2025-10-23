@@ -1,0 +1,47 @@
+
+struct PCCellKey
+{
+	float radius
+};
+layout(push_constant) uniform PC {PCCellKey pc;};
+
+#ifndef PARTICLE_TYPE
+#ifdef PARTICLE_3D
+struct Particle
+{
+	vec3 pos;
+	uint placeholder;
+};
+#else
+struct Particle
+{
+	vec2 pos;
+};
+#define PARTICLE_TYPE
+#endif
+PARTICLE_TYPE
+
+
+layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLES { Particle particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer CELL_KEYS { uint cellKeys[]; };
+
+
+void main()
+{
+	if(!validInvocation())
+	{
+		return;
+	}
+
+	uint id = invocationID();
+	uint totalCnt = invocationCount().x;
+	Particle p = particles[id];
+	#ifndef PARTICLE_3D
+	ivec2 cellOffset = ivec2(0xFFFFF) + floor(p.pos / (2*radius) )));
+	uint key = (cellOffset.x * 37 + cellOffset.y * 89) % totalCnt;
+	#else
+	ivec3 cellOffset = ivec3(0xFFFFF) + floor(p.pos / (2*radius) )));
+	uint key = (cellOffset.x * 37 + cellOffset.y * 89 + cellOffset.z * 101) % totalCnt;
+	#endif
+	cellKeys[id] = key;
+}

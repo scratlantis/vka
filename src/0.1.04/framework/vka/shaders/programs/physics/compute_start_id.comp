@@ -1,0 +1,22 @@
+
+layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer CELL_KEYS { uint cellKeys[]; };
+layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer START_INCICES { uint startIndices[]; };
+
+void main()
+{
+	if(!validInvocation())
+	{
+		return;
+	}
+
+	uint id = invocationID();
+	uint key = cellKeys[id];
+	if (id == 0 || key != cellKeys[id - 1])
+	{
+		startIndices[key] = id;
+	}
+	else
+	{
+		startIndices[key] = 0xFFFFFFFF
+	}
+}

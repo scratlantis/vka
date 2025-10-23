@@ -31,10 +31,51 @@ int main()
 	//// Init other stuff
 	Buffer particleBuffer = createBuffer(gState.heap, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
-	//// Load stuff:
-	//CmdBuffer cmdBuf = createCmdBuffer(gState.frame->stack);
-	//executeImmediat(cmdBuf);
 
+#if 0
+	// Load stuff:
+	const uint32_t test_size = 10;
+	uint32_t seed = 12345;
+	std::hash<uint32_t> h;
+	std::vector<uint32_t> randomNumbers(test_size);
+	std::vector<uint32_t> sortedRandomNumbers(test_size);
+	std::vector<uint32_t> permutations(test_size);
+	for (size_t i = 0; i < randomNumbers.size(); i++)
+	{
+		randomNumbers[i] = seed;
+		seed = h(seed);
+	}
+	Buffer randomBuf = createBuffer(gState.heap, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	Buffer permBuf = createBuffer(gState.heap, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	CmdBuffer cmdBuf = createCmdBuffer(gState.heap);
+	cmdWriteCopy(cmdBuf, randomBuf, randomNumbers.data(), randomNumbers.size() * sizeof(uint32_t));
+	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+	cmdRadixSortPermutation(cmdBuf, randomBuf, permBuf);
+	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+		VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+	Buffer localBuf = createBuffer(gState.heap, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_CPU_ONLY, randomNumbers.size() * sizeof(uint32_t));
+	Buffer localPermBuf = createBuffer(gState.heap, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_CPU_ONLY, randomNumbers.size() * sizeof(uint32_t));
+	cmdCopyBuffer(cmdBuf, randomBuf, localBuf);
+	cmdCopyBuffer(cmdBuf, permBuf, localPermBuf);
+	executeImmediat(cmdBuf);
+	void* pData = localBuf->map();
+	memcpy(sortedRandomNumbers.data(), pData, sortedRandomNumbers.size() * sizeof(uint32_t));
+	pData = localPermBuf->map();
+	memcpy(permutations.data(), pData, permutations.size() * sizeof(uint32_t));
+
+	for (size_t i = 0; i < randomNumbers.size(); i++)
+	{
+		std::cout << randomNumbers[i] << ", ";
+	}
+	std::cout << std::endl;
+
+	for (size_t i = 0; i < sortedRandomNumbers.size(); i++)
+	{
+		std::cout << "(" << sortedRandomNumbers[i] << ", " << permutations[i] << "), ";
+	}
+	std::cout << std::endl;
+#endif
 	// Main Loop
 	uint32_t frameCount = 0;
 	while (!gState.io.shouldTerminate())

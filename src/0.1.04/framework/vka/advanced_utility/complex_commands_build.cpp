@@ -87,6 +87,17 @@ ComputeCmd::ComputeCmd(uint32_t taskSize, const std::string path, std::vector<Sh
 	pushBaseModule(resolution);
 }
 
+ComputeCmd::ComputeCmd(uint32_t taskSize, uint32_t workgroupSize, const std::string path, std::vector<ShaderArgs> args)
+{
+	glm::uvec3 workGroupSize = { workgroupSize, 1, 1 };
+	glm::uvec3 resolution = { taskSize, 1, 1 };
+	workGroupCount = getWorkGroupCount(workGroupSize, resolution);
+	pipelineDef.specialisationEntrySizes = glm3VectorSizes();
+	pipelineDef.specializationData = getByteVector(workGroupSize);
+	pipelineDef.shaderDef = ShaderDefinition(path, args);
+	pushBaseModule(resolution);
+}
+
 ComputeCmd::ComputeCmd(glm::uvec2 taskSize, std::string path, std::vector<ShaderArgs> args)
 {
 	glm::uvec3 workGroupSize                        = {16, 16, 1};

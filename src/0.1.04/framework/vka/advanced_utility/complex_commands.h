@@ -110,6 +110,7 @@ class ComputeCmd
   public:
 	ComputeCmd() = default;
 	ComputeCmd(uint32_t taskSize, const std::string path, std::vector<ShaderArgs> args = {});
+	ComputeCmd(uint32_t taskSize, uint32_t workgroupSize, const std::string path, std::vector<ShaderArgs> args = {});
 	ComputeCmd(glm::uvec2 taskSize, std::string path, std::vector<ShaderArgs> args = {});
 	ComputeCmd(VkExtent2D taskSize, std::string path, std::vector<ShaderArgs> args = {});
 	ComputeCmd(VkExtent3D taskSize, std::string path, std::vector<ShaderArgs> args = {});
@@ -140,9 +141,9 @@ class ComputeCmd
 	std::vector<uint8_t>      pushConstantsData;
 	std::vector<uint32_t>     pushConstantsSizes;
 	ComputePipelineDefinition pipelineDef;
+	glm::uvec3     workGroupCount;
 
   private:
-	glm::uvec3     workGroupCount;
 	CmdBufferState getCmdBufferState() const;
 	void           pushBaseModule(glm::uvec3 invocationCount);
 };

@@ -36,14 +36,17 @@ enum GuiGroupDefault
 {
 	GUI_CAT_GENERAL = 0x00000,
 	GUI_CAT_RENDER = 0x00001,
-	GUI_CAT_PARTICLES = 0x00002,
+	GUI_CAT_PARTICLE_GEN = 0x00002,
+	GUI_CAT_PARTICLE_UPDATE = 0x00003,
 };
 const std::vector<std::string> GuiGroupDefault_names =
 {
 	"General",
 	"Render",
-	"Particles",
+	"Particle Generation",
+	"Particle Update",
+
 };
 
 MASKED_ENUM_ADD_STRING_VALUES(GuiGroupDefault, GuiGroupDefault_names, GUI_INDEX_MASK)
-ENUM_ADD_ITERATOR(GuiGroupDefault, GUI_CAT_GENERAL, GUI_CAT_PARTICLES)
+ENUM_ADD_ITERATOR(GuiGroupDefault, GUI_CAT_GENERAL, GUI_CAT_PARTICLE_UPDATE)

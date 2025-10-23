@@ -10,6 +10,6 @@ void main()
 	vec2 pixelCenter = gl_FragCoord.xy;
 	float dist = length(pixelCenter - particleCenter);
 	float normDist = dist / (0.5*pc.pointSize);
-	float crossSection = 1.0 - normDist*normDist;
-	outColor.rgb = vec3(1.0, 0.0, 0.0) * crossSection;
+	float crossSection = clamp(1.0 - normDist*normDist, 0.0,1.0);
+	outColor.rgb = vec3(1.0, 0.0, 0.0) * crossSection * crossSection * crossSection*pc.intensity;
 }

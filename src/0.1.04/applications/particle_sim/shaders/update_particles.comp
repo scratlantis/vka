@@ -1,0 +1,50 @@
+#include "interface_structs.glsl"
+#include "../lib/lib/random.glsl"
+
+layout(push_constant) uniform PC {PCUpdateParticles pc;};
+layout(binding = LOCAL_BINDING_OFFSET + 0) buffer PARTICLES { GLSLParticle particles[];};
+
+
+void resolve_border_collision(inout GLSLParticle particle)
+{
+	float radius = 0.5 * pc.pointSize;
+	vec2 deltaLow = particle.pos - (vec2(pc.x_range.x, pc.y_range.x) + vec2(radius));
+	vec2 deltaHigh = (vec2(pc.x_range.y, pc.y_range.y) - vec2(radius)) - particle.pos;
+
+	if(deltaLow.x < 0.0)
+	{
+		particle.pos.x -= 2.0 * deltaLow.x;
+		particle.vel.x *= -pc.damping;
+	}
+	else if(deltaHigh.x < 0.0)
+	{
+		particle.pos.x += 2.0 * deltaHigh.x;
+		particle.vel.x *= -pc.damping;
+	}
+	if(deltaLow.y < 0.0)
+	{
+		particle.pos.y -= 2.0 * deltaLow.y;
+		particle.vel.y *= -pc.damping;
+	}
+	else if(deltaHigh.y < 0.0)
+	{
+		particle.pos.y += 2.0 * deltaHigh.y;
+		particle.vel.y *= -pc.damping;
+	}
+}
+
+void main()
+{
+	if(!validInvocation())
+	{
+		return;
+	}
+
+	uint id = invocationID();
+	GLSLParticle elem = particles[id];
+	float time = pc.dt * 0.001;
+	elem.vel.y += pc.gravity * time;
+	elem.pos += elem.vel * time;
+	resolve_border_collision(elem);
+	particles[id] = elem;
+}

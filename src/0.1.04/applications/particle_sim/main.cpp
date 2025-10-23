@@ -14,6 +14,7 @@ extern GVar gvar_menu;
 
 int main()
 {
+	GVar::loadAll("particle_sim_last_session.json");
 	//// Global State Initialization. See config.h for more details.
 	DeviceCI            deviceCI = DefaultDeviceCI(APP_NAME);
 	IOControlerCI       ioCI     = DefaultIOControlerCI(APP_NAME, 1000, 700, true);
@@ -52,12 +53,14 @@ int main()
 		std::vector<bool> settingsChanged = buildGui();
 
 		CmdBuffer cmdBuf       = createCmdBuffer(gState.frame->stack);
-		if(reset || guiCatChanged(GUI_CAT_PARTICLES, settingsChanged))
+		if(reset || guiCatChanged(GUI_CAT_PARTICLE_GEN, settingsChanged))
 		{
 			cmdGenParticles(cmdBuf, particleBuffer);
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_READ_BIT);
 
-			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 		}
+		cmdUpdateParticles(cmdBuf, particleBuffer);
+		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 
 		// Fill swapchain with background color
 		Image     swapchainImg = getSwapchainImage();
@@ -87,4 +90,5 @@ int main()
 		frameCount++;
 	}
 	gState.destroy();
+	GVar::storeAll("particle_sim_last_session.json");
 }

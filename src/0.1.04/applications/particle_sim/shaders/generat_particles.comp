@@ -20,5 +20,6 @@ void main()
 	vec2 scale = vec2(pc.x_range.y - pc.x_range.x, pc.y_range.y - pc.y_range.x);
 	vec2 offset = vec2(pc.x_range.x, pc.y_range.x);
 	elem.pos = rng * scale + offset;
+	elem.vel = vec2(0.0);
 	particles[id] = elem;
 }

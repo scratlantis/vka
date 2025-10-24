@@ -21,3 +21,20 @@ struct vertex_type<GLSLParticle>
 		return layout;
 	}
 };
+
+template <typename Particle>
+struct particle_type;
+
+template <>
+struct particle_type<GLSLParticle>
+{
+	static physics::ParticleDescription get_description(float radius)
+	{
+		physics::ParticleDescription desc{};
+		desc.radius = radius;
+		desc.dimensions = physics::PD_2D;
+		desc.structureSize = sizeof(GLSLParticle);
+		desc.posAttributeOffset = offsetof(GLSLParticle, pos);
+		return desc;
+	}
+};

@@ -2,7 +2,7 @@
 #include "../shader_interface.h"
 #include "ui.h"
 
-void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, RenderParticleArgs args)
+void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, Buffer densityBuffer, RenderParticleArgs args)
 {
 	DrawCmd cmd = DrawCmd();
 	cmd.renderArea = VkRect2D_OP(target->getExtent2D());
@@ -28,6 +28,7 @@ void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, R
 	pc.intensity = args.particleIntensity;
 	pc.extent = vec2(static_cast<float>(extent.width),static_cast<float>(extent.height));
 	cmd.pushConstant(&pc, sizeof(PCRenderParticles), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+	cmd.pushDescriptor(densityBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
 	cmd.exec(cmdBuf);
 }
@@ -36,10 +37,10 @@ extern GVar gvar_particle_size;
 GVar gvar_particle_rel_render_size{"Particle Render Size", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {1.0f, 100.f}};
 GVar gvar_particle_render_brightness{"Particle Render Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {0.0f, 10.f}};
 
-void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer)
+void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, Buffer densityBuffer)
 {
 	RenderParticleArgs args{};
 	args.particleSize = gvar_particle_rel_render_size.val.v_float * gvar_particle_size.val.v_float;
 	args.particleIntensity = gvar_particle_render_brightness.val.v_float;
-	cmdRenderParticles(cmdBuf, target, particleBuffer, args);
+	cmdRenderParticles(cmdBuf, target, particleBuffer, densityBuffer, args);
 }

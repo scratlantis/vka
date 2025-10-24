@@ -26,6 +26,6 @@ namespace vka
 			NeighborhoodIteratorResources(IResourcePool* pPool);
 		};
 		void cmdUpdateNeighborhoodIterator(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription& desc, NeighborhoodIteratorResources& res);
-		void bindNeighborhoodIterator(ComputeCmd& cmd, NeighborhoodIteratorResources res);
+		void bindNeighborhoodIterator(ComputeCmd& cmd, const ParticleDescription& desc, NeighborhoodIteratorResources res);
 	}
 }

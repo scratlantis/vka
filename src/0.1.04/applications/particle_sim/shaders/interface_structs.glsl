@@ -1,4 +1,5 @@
-
+#ifndef PARTICLE_INTERFACE_STRUCTS
+#define PARTICLE_INTERFACE_STRUCTS
 
 struct PCGenerateParticles
 {
@@ -31,3 +32,5 @@ struct PCUpdateParticles
 	float damping;
 	float gravity;
 };
+
+#endif

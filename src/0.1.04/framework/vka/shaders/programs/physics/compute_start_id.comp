@@ -1,6 +1,6 @@
 
 layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer CELL_KEYS { uint cellKeys[]; };
-layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer START_INCICES { uint startIndices[]; };
+layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer START_INDICES { uint startIndices[]; };
 
 void main()
 {
@@ -17,6 +17,6 @@ void main()
 	}
 	else
 	{
-		startIndices[key] = 0xFFFFFFFF
+		startIndices[key] = 0xFFFFFFFF;
 	}
 }

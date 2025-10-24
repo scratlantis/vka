@@ -16,8 +16,18 @@ namespace vka
 			uint32_t structureSize;
 			uint32_t posAttributeOffset;
 
+			std::string getStructDef() const;
+
 		};
 		ComputeCmd getCmdComputeCellKeys(Buffer particle, Buffer cellKeys, ParticleDescription desc);
 		ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices);
+
+		enum SmoothingKernel
+		{
+			SK_SQUARE_CUBED,
+		};
+		struct NeighborhoodIteratorResources;
+		void cmdComputeParticleDensity(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription& desc,
+			NeighborhoodIteratorResources& res, SmoothingKernel kernel, float densityCoef, Buffer densityBuf);
 	}
 }

@@ -1,0 +1,75 @@
+#include "grid_hash.glsl"
+#include "../../lib/math.glsl"
+struct PCDensity
+{
+	float radius;
+	uint structureSize;
+	uint structureOffset;
+	float densityCoef;
+};
+layout(push_constant) uniform PC {PCDensity pc;};
+
+#ifdef PARTICLE_3D
+#define PARTICLE_TYPE vec3
+#define PARTICLE_TYPE_ALIGNED_SIZE 16
+#else
+#define PARTICLE_TYPE vec2
+#define PARTICLE_TYPE_ALIGNED_SIZE 8
+#endif
+
+#ifndef MAX_PARTICLES_PER_CELL
+#define MAX_PARTICLES_PER_CELL 32
+#endif
+
+float smoothingKernel(float d)
+{
+	float weight = max(0, pc.radius * pc.radius - d*d);
+	return weight * weight * weight;
+}
+float smoothingKernelWeight()
+{
+	float radSQ = pc.radius * pc.radius;
+	float radPOW4 = radSQ * radSQ;
+	return 4.0 / (PI * radPOW4 * radPOW4);
+}
+
+layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { PARTICLE_TYPE particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer DENSITY { float particle_densities[];};
+
+
+
+void main()
+{
+	if(!validInvocation())
+	{
+		return;
+	}
+
+	uint id = invocationID();
+	uint index = id * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
+
+	PARTICLE_TYPE p = particles[id];
+	uint range = invocationCount();
+	
+	float density = 0.0;
+
+	uint cellID = calcCellKey(p, pc.radius, range);
+	[[ unroll ]]
+	for(uint i = 0; i<27; i++)
+	{
+		uint startID = getStartID(p, i);
+		for(uint j = 0; j<MAX_PARTICLES_PER_CELL; j++)
+		{
+			ParticleID pID = getParticleID(startID, j);
+			if(pID.cellID != cellID)
+			{
+				break;
+			}
+			PARTICLE_TYPE otherParticle = particles[pID.id];
+			density += smoothingKernel(distance(p, otherParticle));
+		}
+	}
+	density *= smoothingKernelWeight()*pc.densityCoef * 0.000001;
+	particle_densities[index] = density;
+	//particle_densities[index] = 0.0005f;
+}

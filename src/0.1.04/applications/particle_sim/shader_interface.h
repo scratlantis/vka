@@ -17,8 +17,8 @@ struct RenderParticleArgs
 	float    particleIntensity;
 };
 
-void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, RenderParticleArgs args);
-void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer);
+void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, Buffer densityBuffer, RenderParticleArgs args);
+void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, Buffer densityBuffer);
 
 
 struct UpdateParticleArgs
@@ -32,3 +32,4 @@ struct UpdateParticleArgs
 
 void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, UpdateParticleArgs args);
 void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer);
+void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer);

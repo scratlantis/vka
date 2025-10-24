@@ -1,28 +1,22 @@
-
+#include "grid_hash.glsl"
 struct PCCellKey
 {
-	float radius
+	float radius;
+	uint structureSize;
+	uint structureOffset;
 };
 layout(push_constant) uniform PC {PCCellKey pc;};
 
-#ifndef PARTICLE_TYPE
 #ifdef PARTICLE_3D
-struct Particle
-{
-	vec3 pos;
-	uint placeholder;
-};
+#define PARTICLE_TYPE vec3
+#define PARTICLE_TYPE_ALIGNED_SIZE 16
 #else
-struct Particle
-{
-	vec2 pos;
-};
-#define PARTICLE_TYPE
+#define PARTICLE_TYPE vec2
+#define PARTICLE_TYPE_ALIGNED_SIZE 8
 #endif
-PARTICLE_TYPE
 
 
-layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLES { Particle particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { PARTICLE_TYPE particles[];};
 layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer CELL_KEYS { uint cellKeys[]; };
 
 
@@ -35,13 +29,7 @@ void main()
 
 	uint id = invocationID();
 	uint totalCnt = invocationCount().x;
-	Particle p = particles[id];
-	#ifndef PARTICLE_3D
-	ivec2 cellOffset = ivec2(0xFFFFF) + floor(p.pos / (2*radius) )));
-	uint key = (cellOffset.x * 37 + cellOffset.y * 89) % totalCnt;
-	#else
-	ivec3 cellOffset = ivec3(0xFFFFF) + floor(p.pos / (2*radius) )));
-	uint key = (cellOffset.x * 37 + cellOffset.y * 89 + cellOffset.z * 101) % totalCnt;
-	#endif
-	cellKeys[id] = key;
+	uint index = id * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
+	PARTICLE_TYPE p = particles[index];
+	cellKeys[index] = calcCellKey(p, pc.radius, totalCnt);
 }

@@ -5,9 +5,11 @@ AdvancedState     gState;
 const std::string gShaderOutputDir = SHADER_OUTPUT_DIR;
 const std::string gAppShaderRoot   = std::string(APP_SRC_DIR) + "/shaders/";
 using namespace glm;
+using namespace vka::physics;
 
 
 #include <shaders/interface_structs.glsl>
+#include <bindings/interface_structs.h>
 
 
 extern GVar gvar_menu;
@@ -30,6 +32,9 @@ int main()
 	gState.updateSwapchainAttachments();
 	//// Init other stuff
 	Buffer particleBuffer = createBuffer(gState.heap, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+	Buffer particleDensityBuffer = createBuffer(gState.heap, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	NeighborhoodIteratorResources neighborhoodItRes{};
+	neighborhoodItRes.init(gState.heap);
 
 
 #if 0
@@ -100,8 +105,19 @@ int main()
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_READ_BIT);
 
 		}
-		cmdUpdateParticles(cmdBuf, particleBuffer);
-		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+
+		// Simulate
+		{
+
+			//particleDensityBuffer->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+			//uint32_t particleCount = particleBuffer->getSize() / particle_type<GLSLParticle>::get_description(0.f).structureSize;
+			//particleDensityBuffer->changeSize(particleCount * sizeof(float));
+			//particleDensityBuffer->recreate();
+			//cmdFillBuffer(cmdBuf, particleDensityBuffer, 1.0f);
+			cmdUpdateParticleDensity(cmdBuf, particleBuffer, neighborhoodItRes, particleDensityBuffer);
+			cmdUpdateParticles(cmdBuf, particleBuffer);
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+		}
 
 		// Fill swapchain with background color
 		Image     swapchainImg = getSwapchainImage();
@@ -110,7 +126,7 @@ int main()
 		// Render
 		{
 			img_shaded->setClearValue(ClearValue::black());
-			cmdRenderParticles(cmdBuf, img_shaded, particleBuffer);
+			cmdRenderParticles(cmdBuf, img_shaded, particleBuffer, particleDensityBuffer);
 		}
 		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 

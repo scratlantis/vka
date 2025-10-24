@@ -76,3 +76,12 @@ void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer)
 	args.gravity      = gvar_particle_update_gravity.val.v_float;
 	cmdUpdateParticles(cmdBuf, particleBuffer, args);
 }
+
+GVar gvar_particle_density_coef{"Particle Density Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
+
+void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer)
+{
+	physics::ParticleDescription desc = particle_type<GLSLParticle>::get_description(gvar_particle_size.val.v_float);
+	physics::cmdComputeParticleDensity(cmdBuf, particleBuffer, desc, res, physics::SK_SQUARE_CUBED,
+		gvar_particle_density_coef.val.v_float, densityBuffer);
+}

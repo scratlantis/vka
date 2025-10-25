@@ -38,3 +38,17 @@ struct particle_type<GLSLParticle>
 		return desc;
 	}
 };
+
+template <>
+struct particle_type<vec2>
+{
+	static physics::ParticleDescription get_description(float radius)
+	{
+		physics::ParticleDescription desc{};
+		desc.radius = radius;
+		desc.dimensions = physics::PD_2D;
+		desc.structureSize = sizeof(vec2);
+		desc.posAttributeOffset = 0;
+		return desc;
+	}
+};

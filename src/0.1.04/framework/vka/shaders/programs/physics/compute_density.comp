@@ -6,6 +6,7 @@ struct PCDensity
 	uint structureSize;
 	uint structureOffset;
 	float densityCoef;
+	vec2 mouseCoord;
 };
 layout(push_constant) uniform PC {PCDensity pc;};
 
@@ -36,7 +37,10 @@ float smoothingKernelWeight()
 layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { PARTICLE_TYPE particles[];};
 layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer DENSITY { float particle_densities[];};
 
-
+uint getParticleIndex(uint id)
+{
+	return id * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
+}
 
 void main()
 {
@@ -46,30 +50,97 @@ void main()
 	}
 
 	uint id = invocationID();
-	uint index = id * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
+	uint index = getParticleIndex(id);
 
-	PARTICLE_TYPE p = particles[id];
+	PARTICLE_TYPE p = particles[index];
 	uint range = invocationCount();
 	
 	float density = 0.0;
 
-	uint cellID = calcCellKey(p, pc.radius, range);
+	uint cellKey = calcCellKey(p, pc.radius, range);
+	uint cellKeyOther = cellKey;
+	uint cellIDMouse = calcCellKey(pc.mouseCoord, pc.radius, range);
+
+
 	[[ unroll ]]
-	for(uint i = 0; i<27; i++)
+	for(uint i = 0; i<9; i++)
 	{
 		uint startID = getStartID(p, i);
 		for(uint j = 0; j<MAX_PARTICLES_PER_CELL; j++)
 		{
 			ParticleID pID = getParticleID(startID, j);
-			if(pID.cellID != cellID)
+
+			if(j!= 0 && pID.cellID != cellKeyOther)
 			{
 				break;
 			}
-			PARTICLE_TYPE otherParticle = particles[pID.id];
+			cellKeyOther = pID.cellID;
+			uint otherIndex = getParticleIndex(pID.id);
+			PARTICLE_TYPE otherParticle = particles[otherIndex];
 			density += smoothingKernel(distance(p, otherParticle));
 		}
 	}
+
 	density *= smoothingKernelWeight()*pc.densityCoef * 0.000001;
-	particle_densities[index] = density;
-	//particle_densities[index] = 0.0005f;
+	particle_densities[id] = density;
 }
+//uint sID = pni_start_id[cellKey];
+	//density = 0.0;
+	//if(sID != 0xFFFFFFFF)
+	//{
+	//	for(uint i = sID; i<range; i++)
+	//	{
+	//		if(pni_cell_keys[i] != cellKey)
+	//		{
+	//			break;
+	//		}
+	//		if(pni_permutation[i] == id)
+	//		{
+	//			density = 1.0;
+	//			break;
+	//		}
+	//	}
+	//}
+	//for(int i = 0; i<range; i++)
+	//{
+	//	uint otherIndex = i * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
+	//	PARTICLE_TYPE otherParticle = particles[otherIndex];
+	//	float dist = distance(p, otherParticle);
+	//	 dist = distance(pc.mouseCoord,p);
+	//	if(dist < pc.radius)
+	//	{
+	//		//density += smoothingKernel(dist);
+	//		//density += smoothingKernel(distance(pc.mouseCoord,p));
+	//	}
+	//	if(otherIndex == id)
+	//	{
+	//		//density = 1.0;
+	//     
+	//	}
+	//}
+	//for(int i = 0; i<range; i++)
+	//{
+	//	uint otherIndex = pni_permutation[i];
+	//	uint otherCellKey = pni_cell_keys[i];
+	//	PARTICLE_TYPE otherParticle = particles[otherIndex];
+	//	if(otherIndex == id && otherCellKey == cellKey)
+	//	{
+	//		density = 1.0;
+	//     
+	//	}
+	//}
+	//density = 1.0;
+	//uint lastKey = 0;
+	//for(int i = 0; i<range; i++)
+	//{
+	//	//uint otherIndex = pni_permutation[i];
+	//	uint otherCellKey = pni_cell_keys[i];
+	//
+	//	//if(i!= 0 && (lastKey < otherCellKey && pni_start_id[otherCellKey] == 0xFFFFFFFF))
+	//	if(i!= 0 && (lastKey < otherCellKey && pni_start_id[otherCellKey] != i))
+	//	{
+	//		density = 0.0;
+	//		break;
+	//	}
+	//	lastKey = otherCellKey;
+	//}

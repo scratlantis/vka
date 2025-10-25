@@ -28,6 +28,6 @@ namespace vka
 		};
 		struct NeighborhoodIteratorResources;
 		void cmdComputeParticleDensity(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription& desc,
-			NeighborhoodIteratorResources& res, SmoothingKernel kernel, float densityCoef, Buffer densityBuf);
+			NeighborhoodIteratorResources& res, SmoothingKernel kernel, float densityCoef, glm::vec2 mouseCoord, Buffer densityBuf);
 	}
 }

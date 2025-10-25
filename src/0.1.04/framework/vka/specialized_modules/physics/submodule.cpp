@@ -31,6 +31,10 @@ namespace vka
 				res.pingPongCellKeys, res.pingPongPermutation, res.histogram);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+			res.startIndices->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+			cmdInitBuffer(cmdBuf, res.startIndices, 0xFFFFFFFF, sizeof(uint32_t)*(particleBuf->getSize() / desc.structureSize));
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+				VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 			getCmdComputeStartId(res.cellKeys, res.startIndices).exec(cmdBuf);
 		}
 

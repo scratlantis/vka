@@ -70,10 +70,6 @@ namespace vka
 
 		ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices)
 		{
-			startIndices->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-			startIndices->changeSize(cellKeys->getSize());
-			startIndices->recreate();
-
 			ComputeCmd cmd = ComputeCmd(cellKeys->getSize() / sizeof(uint32_t), cVkaShaderPath + "physics/compute_start_id.comp");
 			cmd.pushLocal();
 			cmd.pushDescriptor(cellKeys, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
@@ -82,7 +78,7 @@ namespace vka
 		}
 
 		void cmdComputeParticleDensity(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription& desc,
-			NeighborhoodIteratorResources& res, SmoothingKernel kernel, float densityCoef, Buffer densityBuf)
+			NeighborhoodIteratorResources& res, SmoothingKernel kernel, float densityCoef, glm::vec2 mouseCoord, Buffer densityBuf)
 		{
 			densityBuf->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 			uint32_t particleCount = particleBuf->getSize() / desc.structureSize;
@@ -103,11 +99,13 @@ namespace vka
 				uint32_t structureSize;
 				uint32_t structureOffset;
 				float densityCoef;
+				glm::vec2 mouseCoord;
 			} pc;
 			pc.radius = desc.radius;
 			pc.structureSize = desc.structureSize;
 			pc.structureOffset = desc.posAttributeOffset;
 			pc.densityCoef = densityCoef;
+			pc.mouseCoord = mouseCoord;
 			cmd.pushConstant(&pc, sizeof(PCDensity));
 			if (kernel == SK_SQUARE_CUBED)
 			{

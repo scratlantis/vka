@@ -82,6 +82,16 @@ GVar gvar_particle_density_coef{"Particle Density Coefficient", 1.0f, GVAR_FLOAT
 void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer)
 {
 	physics::ParticleDescription desc = particle_type<GLSLParticle>::get_description(gvar_particle_size.val.v_float);
+	vec2 correctedMousePos = mouseViewCoord(viewDimensions);
+	vec2 imgDim = vec2(float(viewDimensions.width * gState.io.extent.width), float(viewDimensions.height* gState.io.extent.height));
+	if (imgDim.x <= imgDim.y)
+	{
+		correctedMousePos.x *= float(imgDim.x) / float(imgDim.y);
+	}
+	else
+	{
+		correctedMousePos.y *= float(imgDim.x) / float(imgDim.y);
+	}
 	physics::cmdComputeParticleDensity(cmdBuf, particleBuffer, desc, res, physics::SK_SQUARE_CUBED,
-		gvar_particle_density_coef.val.v_float, densityBuffer);
+		gvar_particle_density_coef.val.v_float, correctedMousePos, densityBuffer);
 }

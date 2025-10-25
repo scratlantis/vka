@@ -15,8 +15,4 @@ void main()
 	{
 		startIndices[key] = id;
 	}
-	else
-	{
-		startIndices[key] = 0xFFFFFFFF;
-	}
 }

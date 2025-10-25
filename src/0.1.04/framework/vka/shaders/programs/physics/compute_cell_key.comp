@@ -19,6 +19,10 @@ layout(push_constant) uniform PC {PCCellKey pc;};
 layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { PARTICLE_TYPE particles[];};
 layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer CELL_KEYS { uint cellKeys[]; };
 
+uint getParticleIndex(uint id)
+{
+	return id * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
+}
 
 void main()
 {
@@ -29,7 +33,7 @@ void main()
 
 	uint id = invocationID();
 	uint totalCnt = invocationCount().x;
-	uint index = id * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
+	uint index = getParticleIndex(id);
 	PARTICLE_TYPE p = particles[index];
-	cellKeys[index] = calcCellKey(p, pc.radius, totalCnt);
+	cellKeys[id] = calcCellKey(p, pc.radius, totalCnt);
 }

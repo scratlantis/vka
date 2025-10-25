@@ -18,7 +18,7 @@ void main()
     gl_Position.xy = (pos.xy-pc.viewOffset)*pc.viewScale;
 	gl_PointSize = pc.pointSize;
     outPos = gl_Position.xy;
-    outColor = densities[gl_VertexIndex] * vec3(1.0,0.0,0.0);
+    outColor = vec3(densities[gl_VertexIndex],0.0,0.0);
     // Map to Vulkan NDC
 	gl_Position.zw = vec2(1.0);
     gl_Position.xy*=2.0;

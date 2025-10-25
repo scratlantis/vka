@@ -3,6 +3,7 @@
 
 layout(push_constant) uniform PC {PCGenerateParticles pc;};
 layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { GLSLParticle particles[];};
+//layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { vec2 particles[];};
 
 
 void main()
@@ -22,4 +23,5 @@ void main()
 	elem.pos = rng * scale + offset;
 	elem.vel = vec2(0.0);
 	particles[id] = elem;
+	//particles[id] = rng * scale + offset;
 }

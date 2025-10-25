@@ -26,6 +26,7 @@ uint getStartID(vec2 pos, uint cellID)
 	ivec2 centerCellPos = ivec2(floor(pos / (2.0 * pni_radius)));
 	ivec2 cellOffset = ivec2(cellID%3, (cellID/3)%3) - ivec2(1);
 	uint cellKey = hash(centerCellPos + cellOffset) % pni_range;
+	//cellKey = hash(centerCellPos) % pni_range;
 	return pni_start_id[cellKey];
 }
 

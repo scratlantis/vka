@@ -13,6 +13,10 @@ using namespace vka::physics;
 
 
 extern GVar gvar_menu;
+extern GVar gvar_particle_size;
+extern GVar gvar_particle_generation_count;
+
+
 
 int main()
 {
@@ -37,9 +41,9 @@ int main()
 	neighborhoodItRes.init(gState.heap);
 
 
-#if 0
+#if 1
 	// Load stuff:
-	const uint32_t test_size = 10;
+	const uint32_t test_size = 10000;
 	uint32_t seed = 12345;
 	std::hash<uint32_t> h;
 	std::vector<uint32_t> randomNumbers(test_size);
@@ -71,13 +75,21 @@ int main()
 
 	for (size_t i = 0; i < randomNumbers.size(); i++)
 	{
-		std::cout << randomNumbers[i] << ", ";
+		//std::cout << randomNumbers[i] << ", ";
 	}
 	std::cout << std::endl;
 
 	for (size_t i = 0; i < sortedRandomNumbers.size(); i++)
 	{
-		std::cout << "(" << sortedRandomNumbers[i] << ", " << permutations[i] << "), ";
+		if (i > 0 && sortedRandomNumbers[i] < sortedRandomNumbers[i - 1])
+		{
+			__debugbreak();
+		}
+		if(randomNumbers[permutations[i]] != sortedRandomNumbers[i])
+		{
+			__debugbreak();
+		}
+		//std::cout << "(" << sortedRandomNumbers[i] << ", " << permutations[i] << "), ";
 	}
 	std::cout << std::endl;
 #endif
@@ -107,16 +119,12 @@ int main()
 		}
 
 		// Simulate
-		{
 
-			//particleDensityBuffer->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-			//uint32_t particleCount = particleBuffer->getSize() / particle_type<GLSLParticle>::get_description(0.f).structureSize;
-			//particleDensityBuffer->changeSize(particleCount * sizeof(float));
-			//particleDensityBuffer->recreate();
-			//cmdFillBuffer(cmdBuf, particleDensityBuffer, 1.0f);
+		{
 			cmdUpdateParticleDensity(cmdBuf, particleBuffer, neighborhoodItRes, particleDensityBuffer);
 			cmdUpdateParticles(cmdBuf, particleBuffer);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 		}
 
 		// Fill swapchain with background color

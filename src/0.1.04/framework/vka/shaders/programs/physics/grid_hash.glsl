@@ -4,13 +4,13 @@
 
 uint calcCellKey(vec2 pos, float radius, uint range)
 {
-	uvec2 cellOffset = uvec2(floor(pos / (2.0 * radius)));
+	ivec2 cellOffset = ivec2(floor(pos / (2.0 * radius)));
 	return hash(cellOffset)%range;
 }
 
 uint calcCellKey(vec3 pos, float radius, uint range)
 {
-	uvec3 cellOffset = uvec3(floor(pos / (2.0 * radius)));
+	ivec3 cellOffset = ivec3(floor(pos / (2.0 * radius)));
 	return hash(cellOffset)%range;
 }
 #endif // GRID_HASH_H

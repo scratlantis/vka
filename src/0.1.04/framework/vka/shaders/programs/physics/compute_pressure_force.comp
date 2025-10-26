@@ -1,11 +1,7 @@
-#include "grid_hash.glsl"
-#include "../../lib/math.glsl"
-#include "../../lib/random.glsl"
 #include "../../lib/kernels.glsl"
 #include "../../lib/misc.glsl"
 struct PushStruct
 {
-	vec2 mouseCoord;
 	float radius;
 	uint structureSize;
 	uint structureOffset;
@@ -36,63 +32,41 @@ void main()
 	{
 		return;
 	}
+	vecN force = vecN(0.0);
+
 
 	AttributeDescriptor attrDesc;
 	attrDesc.stride = pc.structureSize;
 	attrDesc.offset = pc.structureOffset;
 	attrDesc.alignedSize = ALIGNED_SIZE(vecN);
 
-	uint id = invocationID();
-	uint attrID = attributeID(id, attrDesc);
-	vecN localPos = particles[attrID];
-	float localDensity = particle_densities[id];
+	uint id				= invocationID();
+	uint range			= invocationCount();
+	uint attrID			= attributeID(id, attrDesc);
 
-	uint range = invocationCount();
-	vecN force = vecN(0.0);
+	vecN localPos		= particles[attrID];
+	float localDensity	= particle_densities[id];
+	uint localCellKey	= calcCellKey(localPos, pc.radius, range);
 
-	uint localCellKey = calcCellKey(localPos, pc.radius, range);
-	
-	uint cellIDMouse = calcCellKey(pc.mouseCoord, pc.radius, range); // Todo remove
 
-	#if VECN_DIM == 2
-	const uint neighboorCellCount = 9;
-	#else
-	const uint neighboorCellCount = 27;
-	#endif
+	ITERATE_START
 
-	[[ unroll ]]
-	for(uint i = 0; i<neighboorCellCount; i++)
+	lastCellKey = pID.cellID;
+	vecN otherPos = particles[attributeID(pID.id, attrDesc)];
+	float otherDensity = particle_densities[pID.id];
+	vecN dir = otherPos - localPos;
+	float dist = length(dir);
+	if(dist == 0.0)
 	{
-		uint startID = getStartID(localPos, i);
-		uint lastCellKey = 0xFFFFFFFF;
-
-		[[ unroll ]]
-		for(uint j = 0; j<MAX_PARTICLES_PER_CELL; j++)
-		{
-			ParticleID pID = getParticleID(startID, j);
-			if(j!= 0 && pID.cellID != lastCellKey)
-			{
-				break;
-			}
-			if(pID.id == id)
-			{
-				continue;
-			}
-			lastCellKey = pID.cellID;
-			vecN otherPos = particles[attributeID(pID.id, attrDesc)];
-			float otherDensity = particle_densities[pID.id];
-			vecN dir = otherPos - localPos;
-			float dist = length(dir);
-			if(dist == 0.0)
-			{
-				dir = randomND(localPos) - vecN(0.5);
-			}
-			dir = normalize(dir);
-			float slope = KERNEL_DERIVATIVE(dist, pc.radius);
-			float sharedPressure = 0.5*(convertDensityToPressure(localDensity) + convertDensityToPressure(otherDensity));
-			force += sharedPressure * dir * slope * 1.0 / otherDensity;
-		}
+		dir = randomND(localPos) - vecN(0.5);
 	}
+	dir = normalize(dir);
+	float slope = KERNEL_DERIVATIVE(dist, pc.radius);
+	float sharedPressure = 0.5*(convertDensityToPressure(localDensity) + convertDensityToPressure(otherDensity));
+	force += sharedPressure * dir * slope * 1.0 / otherDensity;
+
+	ITERATE_END
+
 	pressure_forces[id] = force * pc.forceCoef * 0.01;
 }
 

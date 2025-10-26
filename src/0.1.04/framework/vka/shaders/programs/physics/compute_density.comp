@@ -1,58 +1,22 @@
-#include "grid_hash.glsl"
-#include "../../lib/math.glsl"
-struct PCDensity
+
+#include "../../lib/kernels.glsl"
+#include "../../lib/misc.glsl"
+struct PushStruct
 {
 	float radius;
 	uint structureSize;
 	uint structureOffset;
 	float densityCoef;
-	vec2 mouseCoord;
 };
-layout(push_constant) uniform PC {PCDensity pc;};
-
-#ifdef PARTICLE_3D
-#define PARTICLE_TYPE vec3
-#define PARTICLE_TYPE_ALIGNED_SIZE 16
-#else
-#define PARTICLE_TYPE vec2
-#define PARTICLE_TYPE_ALIGNED_SIZE 8
-#endif
+layout(push_constant) uniform PC {PushStruct pc;};
 
 #ifndef MAX_PARTICLES_PER_CELL
 #define MAX_PARTICLES_PER_CELL 32
 #endif
 
-#if 1
-float smoothingKernel(float d)
-{
-	float weight = max(0, pc.radius - d);
-	return weight * weight;
-}
-float smoothingKernelWeight()
-{
-	return 6.0/(PI * pow(pc.radius,4));
-}
-#else
-float smoothingKernel(float d)
-{
-	float weight = max(0, pc.radius * pc.radius - d*d);
-	return weight * weight * weight;
-}
-float smoothingKernelWeight()
-{
-	float radSQ = pc.radius * pc.radius;
-	float radPOW4 = radSQ * radSQ;
-	return 4.0 / (PI * radPOW4 * radPOW4);
-}
-#endif
-
-layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { PARTICLE_TYPE particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { vecN particles[];};
 layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer DENSITY { float particle_densities[];};
 
-uint getParticleIndex(uint id)
-{
-	return id * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
-}
 
 void main()
 {
@@ -60,99 +24,30 @@ void main()
 	{
 		return;
 	}
+	float density = 0.0f;
 
-	uint id = invocationID();
-	uint index = getParticleIndex(id);
 
-	PARTICLE_TYPE p = particles[index];
-	uint range = invocationCount();
+	AttributeDescriptor attrDesc;
+	attrDesc.stride = pc.structureSize;
+	attrDesc.offset = pc.structureOffset;
+	attrDesc.alignedSize = ALIGNED_SIZE(vecN);
+
+	uint id				= invocationID();
+	uint range			= invocationCount();
+	uint attrID			= attributeID(id, attrDesc);
+
+	vecN localPos		= particles[attrID];
+	uint localCellKey	= calcCellKey(localPos, pc.radius, range);
+
+	ITERATE_START
 	
-	float density = 0.0;
+	vecN otherPos = particles[attributeID(pID.id, attrDesc)];
+	density += KERNEL_WEIGHT(distance(localPos, otherPos), pc.radius);
+	
+	ITERATE_END
 
-	uint cellKey = calcCellKey(p, pc.radius, range);
-	uint cellKeyOther = cellKey;
-	uint cellIDMouse = calcCellKey(pc.mouseCoord, pc.radius, range);
+	density += KERNEL_WEIGHT(0, pc.radius);
 
-
-	[[ unroll ]]
-	for(uint i = 0; i<9; i++)
-	{
-		uint startID = getStartID(p, i);
-		for(uint j = 0; j<MAX_PARTICLES_PER_CELL; j++)
-		{
-			ParticleID pID = getParticleID(startID, j);
-
-			if(j!= 0 && pID.cellID != cellKeyOther)
-			{
-				break;
-			}
-			cellKeyOther = pID.cellID;
-			uint otherIndex = getParticleIndex(pID.id);
-			PARTICLE_TYPE otherParticle = particles[otherIndex];
-			density += smoothingKernel(distance(p, otherParticle));
-		}
-	}
-
-	density *= smoothingKernelWeight()*pc.densityCoef * 0.000001;
+	density *= KERNEL_NORMALIZATION(pc.radius)*pc.densityCoef * 0.000001;
 	particle_densities[id] = density;
 }
-//uint sID = pni_start_id[cellKey];
-	//density = 0.0;
-	//if(sID != 0xFFFFFFFF)
-	//{
-	//	for(uint i = sID; i<range; i++)
-	//	{
-	//		if(pni_cell_keys[i] != cellKey)
-	//		{
-	//			break;
-	//		}
-	//		if(pni_permutation[i] == id)
-	//		{
-	//			density = 1.0;
-	//			break;
-	//		}
-	//	}
-	//}
-	//for(int i = 0; i<range; i++)
-	//{
-	//	uint otherIndex = i * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
-	//	PARTICLE_TYPE otherParticle = particles[otherIndex];
-	//	float dist = distance(p, otherParticle);
-	//	 dist = distance(pc.mouseCoord,p);
-	//	if(dist < pc.radius)
-	//	{
-	//		//density += smoothingKernel(dist);
-	//		//density += smoothingKernel(distance(pc.mouseCoord,p));
-	//	}
-	//	if(otherIndex == id)
-	//	{
-	//		//density = 1.0;
-	//     
-	//	}
-	//}
-	//for(int i = 0; i<range; i++)
-	//{
-	//	uint otherIndex = pni_permutation[i];
-	//	uint otherCellKey = pni_cell_keys[i];
-	//	PARTICLE_TYPE otherParticle = particles[otherIndex];
-	//	if(otherIndex == id && otherCellKey == cellKey)
-	//	{
-	//		density = 1.0;
-	//     
-	//	}
-	//}
-	//density = 1.0;
-	//uint lastKey = 0;
-	//for(int i = 0; i<range; i++)
-	//{
-	//	//uint otherIndex = pni_permutation[i];
-	//	uint otherCellKey = pni_cell_keys[i];
-	//
-	//	//if(i!= 0 && (lastKey < otherCellKey && pni_start_id[otherCellKey] == 0xFFFFFFFF))
-	//	if(i!= 0 && (lastKey < otherCellKey && pni_start_id[otherCellKey] != i))
-	//	{
-	//		density = 0.0;
-	//		break;
-	//	}
-	//	lastKey = otherCellKey;
-	//}

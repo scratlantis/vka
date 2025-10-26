@@ -96,23 +96,19 @@ namespace vka
 				cmd.pushLocal();
 				cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 				cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-				struct PCDensity {
+				struct PC {
 					float radius;
 					uint32_t structureSize;
 					uint32_t structureOffset;
 					float densityCoef;
-					glm::vec2 mouseCoord;
 				} pc;
 				pc.radius = desc.radius;
 				pc.structureSize = desc.structureSize;
 				pc.structureOffset = desc.posAttributeOffset;
 				pc.densityCoef = densityCoef;
-				pc.mouseCoord = mouseCoord;
-				cmd.pushConstant(&pc, sizeof(PCDensity));
-				if (kernel == SK_QUADRATIC)
-				{
-					cmd.pipelineDef.shaderDef.args.push_back({ "SMOOTHING_KERNEL_SQUARE_CUBED","" });
-				}
+				cmd.pushConstant(&pc, sizeof(PC));
+				cmd.pipelineDef.shaderDef.args.push_back({ "SELECT_KERNEL_TYPE", std::to_string(kernel) });
+				cmd.pipelineDef.shaderDef.args.push_back({ "VECN_DIM", "2" });
 				cmd.exec(cmdBuf);
 			}
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
@@ -130,7 +126,6 @@ namespace vka
 				cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 				cmd.pushDescriptor(pressureForce, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 				struct PC{
-					glm::vec2 mouseCoord;
 					float radius;
 					uint32_t structureSize;
 					uint32_t structureOffset;
@@ -141,7 +136,6 @@ namespace vka
 				pc.structureSize = desc.structureSize;
 				pc.structureOffset = desc.posAttributeOffset;
 				pc.forceCoef = forceCoef;
-				pc.mouseCoord = mouseCoord;
 				pc.targetDensity = targetDensity;
 				cmd.pushConstant(&pc, sizeof(PC));
 				cmd.pipelineDef.shaderDef.args.push_back({ "SELECT_KERNEL_TYPE", std::to_string(kernel)});

@@ -1,10 +1,8 @@
 #ifndef PARTICLE_NEIGHBORHOOD_ITERATOR_H
 #define PARTICLE_NEIGHBORHOOD_ITERATOR_H
 
-#define PARTICLE_NEIGHBORHOOD_ITERATOR_H_BINDING_COUNT 3
-
 #include "../../programs/physics/grid_hash.glsl"
-
+#define PARTICLE_NEIGHBORHOOD_ITERATOR_H_BINDING_COUNT 3
 layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 0) readonly buffer PNI_PERMUTATION { uint pni_permutation[]; };
 layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 1) readonly buffer PNI_CELL_KEYS { uint pni_cell_keys[]; };
 layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 2) readonly buffer PNI_START_ID { uint pni_start_id[]; };
@@ -43,5 +41,39 @@ ParticleID getParticleID(uint startID, uint entryID)
 	pID.id = pni_permutation[startID + entryID];
 	return pID;
 }
+
+
+#if VECN_DIM == 2
+#define NEIGHBORHOOD_CELL_COUNT 9
+#else
+#define NEIGHBORHOOD_CELL_COUNT 27
+#endif
+
+#define ITERATE_START									\
+	[[ unroll ]]										\
+	for(uint i = 0; i<NEIGHBORHOOD_CELL_COUNT; i++)		\
+	{													\
+		uint startID = getStartID(localPos, i);			\
+		uint lastCellKey = 0xFFFFFFFF;					\
+		[[ unroll ]]									\
+		for(uint j = 0; j<MAX_PARTICLES_PER_CELL; j++)	\
+		{												\
+			ParticleID pID = getParticleID(startID, j);	\
+			if(j!= 0 && pID.cellID != lastCellKey)		\
+			{											\
+				break;									\
+			}											\
+			lastCellKey = pID.cellID;					\
+			if(pID.id != id)							\
+			{
+				// CODE(pID)
+#define ITERATE_END \
+			}		\
+		}		    \
+	}
+
+
+
+
 
 #endif

@@ -21,7 +21,7 @@ void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer, GenParticleArgs ar
 
 
 GVar gvar_particle_generation_seed{"Particle Seed", 42U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {0U, 100U}};
-GVar gvar_particle_generation_count{"Particle Count", 100U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {1U, 1000U}};
+GVar gvar_particle_generation_count{"Particle Count", 1000U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {1U, 10000U}};
 void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer)
 {
 	VkRect2D_OP targetImgSize = getScissorRect(viewDimensions);
@@ -38,12 +38,13 @@ void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer)
 	cmdGenParticles(cmdBuf, particleBuffer, args);
 }
 
-void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, UpdateParticleArgs args)
+void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer forceBuffer, UpdateParticleArgs args)
 {
 	uint32_t particleCount = particleBuffer->getSize() / sizeof(GLSLParticle);
 	ComputeCmd cmd(particleCount, shaderPath + "update_particles.comp", {});
 	cmd.pushLocal();
 	cmd.pushDescriptor(particleBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	cmd.pushDescriptor(forceBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	PCUpdateParticles pc{};
 	pc.x_range = vec2(args.bounds.x, args.bounds.x + args.bounds.width);
 	pc.y_range = vec2(args.bounds.y, args.bounds.y + args.bounds.height);
@@ -59,7 +60,7 @@ GVar gvar_particle_update_damping{"Particle Damping", 0.98f, GVAR_FLOAT_RANGE, G
 GVar gvar_particle_update_gravity{"Particle Gravity", 0.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
 GVar gvar_particle_size{"Particle Size", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.001f, 0.5f}};
 
-void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer)
+void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer forceBuffer)
 {
 	VkRect2D_OP targetImgSize = getScissorRect(viewDimensions);
 	float maxDim = float(max(targetImgSize.extent.width, targetImgSize.extent.height));
@@ -74,12 +75,14 @@ void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer)
 	args.dt           = gState.frameTime;
 	args.damping      = gvar_particle_update_damping.val.v_float;
 	args.gravity      = gvar_particle_update_gravity.val.v_float;
-	cmdUpdateParticles(cmdBuf, particleBuffer, args);
+	cmdUpdateParticles(cmdBuf, particleBuffer, forceBuffer, args);
 }
 
 GVar gvar_particle_density_coef{"Particle Density Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
+GVar gvar_particle_pressure_force_coef{"Particle Pressure Force Coefficient", 0.1f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
+GVar gvar_particle_target_density{"Particle Target Density", 10.f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.f}};
 
-void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer)
+void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer, Buffer forceBuffer)
 {
 	physics::ParticleDescription desc = particle_type<GLSLParticle>::get_description(gvar_particle_size.val.v_float);
 	vec2 correctedMousePos = mouseViewCoord(viewDimensions);
@@ -92,6 +95,7 @@ void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::
 	{
 		correctedMousePos.y *= float(imgDim.x) / float(imgDim.y);
 	}
-	physics::cmdComputeParticleDensity(cmdBuf, particleBuffer, desc, res, physics::SK_SQUARE_CUBED,
-		gvar_particle_density_coef.val.v_float, correctedMousePos, densityBuffer);
+	physics::cmdComputeParticleDensity(cmdBuf, particleBuffer, desc, res, physics::SK_QUADRATIC,
+		gvar_particle_density_coef.val.v_float, gvar_particle_pressure_force_coef.val.v_float, gvar_particle_target_density.val.v_float, correctedMousePos,
+		densityBuffer, forceBuffer);
 }

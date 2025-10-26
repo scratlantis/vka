@@ -1,6 +1,8 @@
 #ifndef COMPUTE_SHADER_BASE_H
 #define COMPUTE_SHADER_BASE_H
 
+#include "shader_base.glsl"
+
 layout(local_size_x_id = 0, local_size_y_id = 1, local_size_z_id = 2) in;
 
 #ifndef INVOCATION_COUNT_X
@@ -53,11 +55,7 @@ uint invocationCount()
 }
 #endif
 
-#ifdef DEBUG
-#define IF_DEBUG( A ) A
-#else
-#define IF_DEBUG( A )
-#endif
+
 
 
 #endif

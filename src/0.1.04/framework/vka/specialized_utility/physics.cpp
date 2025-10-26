@@ -78,7 +78,8 @@ namespace vka
 		}
 
 		void cmdComputeParticleDensity(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription& desc,
-			NeighborhoodIteratorResources& res, SmoothingKernel kernel, float densityCoef, glm::vec2 mouseCoord, Buffer densityBuf)
+			NeighborhoodIteratorResources& res, ShaderKernelType kernel, float densityCoef, float forceCoef, float targetDensity, glm::vec2 mouseCoord,
+			Buffer densityBuf, Buffer pressureForce)
 		{
 			densityBuf->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 			uint32_t particleCount = particleBuf->getSize() / desc.structureSize;
@@ -89,29 +90,65 @@ namespace vka
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 
-			ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_density.comp");
-			bindNeighborhoodIterator(cmd, desc, res);
-			cmd.pushLocal();
-			cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-			cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-			struct PCDensity {
-				float radius;
-				uint32_t structureSize;
-				uint32_t structureOffset;
-				float densityCoef;
-				glm::vec2 mouseCoord;
-			} pc;
-			pc.radius = desc.radius;
-			pc.structureSize = desc.structureSize;
-			pc.structureOffset = desc.posAttributeOffset;
-			pc.densityCoef = densityCoef;
-			pc.mouseCoord = mouseCoord;
-			cmd.pushConstant(&pc, sizeof(PCDensity));
-			if (kernel == SK_SQUARE_CUBED)
 			{
-				cmd.pipelineDef.shaderDef.args.push_back({ "SMOOTHING_KERNEL_SQUARE_CUBED","" });
+				ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_density.comp");
+				bindNeighborhoodIterator(cmd, desc, res);
+				cmd.pushLocal();
+				cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+				cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+				struct PCDensity {
+					float radius;
+					uint32_t structureSize;
+					uint32_t structureOffset;
+					float densityCoef;
+					glm::vec2 mouseCoord;
+				} pc;
+				pc.radius = desc.radius;
+				pc.structureSize = desc.structureSize;
+				pc.structureOffset = desc.posAttributeOffset;
+				pc.densityCoef = densityCoef;
+				pc.mouseCoord = mouseCoord;
+				cmd.pushConstant(&pc, sizeof(PCDensity));
+				if (kernel == SK_QUADRATIC)
+				{
+					cmd.pipelineDef.shaderDef.args.push_back({ "SMOOTHING_KERNEL_SQUARE_CUBED","" });
+				}
+				cmd.exec(cmdBuf);
 			}
-			cmd.exec(cmdBuf);
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+
+			pressureForce->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			pressureForce->changeSize(particleCount * sizeof(glm::vec2));
+			pressureForce->recreate();
+
+			{
+				ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_pressure_force.comp");
+				bindNeighborhoodIterator(cmd, desc, res);
+				cmd.pushLocal();
+				cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+				cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+				cmd.pushDescriptor(pressureForce, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+				struct PC{
+					glm::vec2 mouseCoord;
+					float radius;
+					uint32_t structureSize;
+					uint32_t structureOffset;
+					float forceCoef;
+					float targetDensity;
+				} pc;
+				pc.radius = desc.radius;
+				pc.structureSize = desc.structureSize;
+				pc.structureOffset = desc.posAttributeOffset;
+				pc.forceCoef = forceCoef;
+				pc.mouseCoord = mouseCoord;
+				pc.targetDensity = targetDensity;
+				cmd.pushConstant(&pc, sizeof(PC));
+				cmd.pipelineDef.shaderDef.args.push_back({ "SELECT_KERNEL_TYPE", std::to_string(kernel)});
+				cmd.pipelineDef.shaderDef.args.push_back({ "VECN_DIM", "2"});
+				cmd.exec(cmdBuf);
+			}
+
 		}
 		
 	}

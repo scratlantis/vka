@@ -54,6 +54,8 @@ float random( vec2  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 float random( vec3  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 float random( vec4  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 
+
+// Remove soon start
 vec3 random3D( vec3  v ) {
     return vec3(
         floatConstruct(hash(floatBitsToUint(v+vec3(32.2345,9382.918,851.38)))),
@@ -61,6 +63,32 @@ vec3 random3D( vec3  v ) {
         floatConstruct(hash(floatBitsToUint(v+vec3(491.2302,391.0191,39.39102))))
     );
 }
+
+vec2 random2D( vec2  v ) {
+    return vec2(
+        floatConstruct(hash(floatBitsToUint(v+vec2(32.2345,9382.918)))),
+        floatConstruct(hash(floatBitsToUint(v+vec2(304.23,304.8310))))
+    );
+}
+// Remove soon end
+
+
+vec3 randomND( vec3  v ) {
+    return vec3(
+        floatConstruct(hash(floatBitsToUint(v+vec3(32.2345,9382.918,851.38)))),
+        floatConstruct(hash(floatBitsToUint(v+vec3(304.23,304.8310,21.13901)))),
+        floatConstruct(hash(floatBitsToUint(v+vec3(491.2302,391.0191,39.39102))))
+    );
+}
+
+vec2 randomND( vec2  v ) {
+    return vec2(
+        floatConstruct(hash(floatBitsToUint(v+vec2(32.2345,9382.918)))),
+        floatConstruct(hash(floatBitsToUint(v+vec2(304.23,304.8310))))
+    );
+}
+
+
 
 uint hash3f(vec3 v)
 {

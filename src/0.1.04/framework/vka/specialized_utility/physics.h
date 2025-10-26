@@ -22,12 +22,14 @@ namespace vka
 		ComputeCmd getCmdComputeCellKeys(Buffer particle, Buffer cellKeys, ParticleDescription desc);
 		ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices);
 
-		enum SmoothingKernel
+		enum ShaderKernelType
 		{
-			SK_SQUARE_CUBED,
+			SK_QUADRATIC,
 		};
 		struct NeighborhoodIteratorResources;
+
 		void cmdComputeParticleDensity(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription& desc,
-			NeighborhoodIteratorResources& res, SmoothingKernel kernel, float densityCoef, glm::vec2 mouseCoord, Buffer densityBuf);
+			NeighborhoodIteratorResources& res, ShaderKernelType kernel, float densityCoef, float forceCoef, float targetDensity, glm::vec2 mouseCoord,
+			Buffer densityBuf, Buffer pressureForce);
 	}
 }

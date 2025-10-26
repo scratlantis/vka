@@ -3,6 +3,8 @@
 
 layout(push_constant) uniform PC {PCUpdateParticles pc;};
 layout(binding = LOCAL_BINDING_OFFSET + 0) buffer PARTICLES { GLSLParticle particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) buffer FORCE { vec2 particle_force[];};
+
 
 
 void resolve_border_collision(inout GLSLParticle particle)
@@ -44,7 +46,10 @@ void main()
 	GLSLParticle elem = particles[id];
 	float time = pc.dt * 0.001;
 	elem.vel.y += pc.gravity * time;
+	elem.vel += particle_force[id] * time;
 	elem.pos += elem.vel * time;
 	resolve_border_collision(elem);
+
+	elem.vel *= 0.90;
 	particles[id] = elem;
 }

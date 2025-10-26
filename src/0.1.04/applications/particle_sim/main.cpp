@@ -37,6 +37,7 @@ int main()
 	//// Init other stuff
 	Buffer particleBuffer = createBuffer(gState.heap, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	Buffer particleDensityBuffer = createBuffer(gState.heap, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	Buffer particleForceBuffer = createBuffer(gState.heap, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 	NeighborhoodIteratorResources neighborhoodItRes{};
 	neighborhoodItRes.init(gState.heap);
 
@@ -121,8 +122,8 @@ int main()
 		// Simulate
 
 		{
-			cmdUpdateParticleDensity(cmdBuf, particleBuffer, neighborhoodItRes, particleDensityBuffer);
-			cmdUpdateParticles(cmdBuf, particleBuffer);
+			cmdUpdateParticleDensity(cmdBuf, particleBuffer, neighborhoodItRes, particleDensityBuffer, particleForceBuffer);
+			cmdUpdateParticles(cmdBuf, particleBuffer, particleForceBuffer);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 		}

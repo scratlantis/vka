@@ -30,6 +30,6 @@ struct UpdateParticleArgs
 	float gravity;
 };
 
-void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, UpdateParticleArgs args);
-void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer);
-void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer);
+void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer forceBuffer, UpdateParticleArgs args);
+void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer forceBuffer);
+void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer, Buffer forceBuffer);

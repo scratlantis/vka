@@ -22,6 +22,17 @@ layout(push_constant) uniform PC {PCDensity pc;};
 #define MAX_PARTICLES_PER_CELL 32
 #endif
 
+#if 1
+float smoothingKernel(float d)
+{
+	float weight = max(0, pc.radius - d);
+	return weight * weight;
+}
+float smoothingKernelWeight()
+{
+	return 6.0/(PI * pow(pc.radius,4));
+}
+#else
 float smoothingKernel(float d)
 {
 	float weight = max(0, pc.radius * pc.radius - d*d);
@@ -33,6 +44,7 @@ float smoothingKernelWeight()
 	float radPOW4 = radSQ * radSQ;
 	return 4.0 / (PI * radPOW4 * radPOW4);
 }
+#endif
 
 layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { PARTICLE_TYPE particles[];};
 layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer DENSITY { float particle_densities[];};

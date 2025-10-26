@@ -24,12 +24,32 @@ void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, B
 struct UpdateParticleArgs
 {
 	Rect2D<float> bounds;
-	float particleSize;
-	float dt;
-	float damping;
-	float gravity;
+	float         particleSize;
+	float         dt;
+	float         damping;
+	float         dampingBorderCollision;
+	float         gravity;
 };
 
-void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer forceBuffer, UpdateParticleArgs args);
-void cmdUpdateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer forceBuffer);
-void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer, Buffer forceBuffer);
+ComputeCmd getCmdUpdateParticles(Buffer particleBuffer, Buffer forceBuffer, UpdateParticleArgs args);
+
+struct SimulationResources
+{
+	physics::NeighborhoodIterator it;
+	Buffer                        densityBuffer = nullptr;
+	Buffer                        pressureForceBuffer = nullptr;
+	void                          init(IResourcePool *pPool, uint32_t preallocCount = 0);
+	bool                          isInitialized() const;
+};
+
+void cmdSimulateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, const physics::ParticleDescription &desc, SimulationResources &res, float timeStep);
+
+template<typename T>
+void cmdSimulateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, SimulationResources& res, float timeStep)
+{
+	ParticleDescription desc = particle_type<T>::get_description(gvar_particle_size.val.v_float);
+	cmdSimulateParticles(cmdBuf, particleBuffer, desc, res, timeStep);
+}
+
+
+//void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer, Buffer forceBuffer);

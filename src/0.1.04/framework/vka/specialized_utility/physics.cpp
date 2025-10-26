@@ -43,7 +43,7 @@ namespace vka
 			cellKeys->changeSize(particleCount * sizeof(uint32_t));
 			cellKeys->recreate();
 
-			ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_cell_key.comp");
+			ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_cell_key.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
 			cmd.pushLocal();
 			if (desc.dimensions == PD_3D)
 			{
@@ -54,10 +54,12 @@ namespace vka
 			//cmd.pipelineDef.shaderDef.args.push_back({ "PARTICLE_TYPE", structDef });
 
 			struct PushConstants {
+		        uint32_t taskSize;
 				float radius;
 				uint32_t structureSize;
 				uint32_t structureOffset;
 			} pc;
+	        pc.taskSize        = particleCount;
 			pc.radius = desc.radius;
 			pc.structureSize = desc.structureSize;
 			pc.structureOffset = desc.posAttributeOffset;
@@ -68,82 +70,82 @@ namespace vka
 			return cmd;
 		};
 
-		ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices)
+		ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices, uint32_t count)
 		{
-			ComputeCmd cmd = ComputeCmd(cellKeys->getSize() / sizeof(uint32_t), cVkaShaderPath + "physics/compute_start_id.comp");
+	        ComputeCmd cmd = ComputeCmd(count, cVkaShaderPath + "physics/compute_start_id.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
 			cmd.pushLocal();
+			struct PushConstants {
+		        uint32_t taskSize;
+	        } pc;
+	        pc.taskSize = count;
+	        cmd.pushConstant(&pc, sizeof(PushConstants));
 			cmd.pushDescriptor(cellKeys, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-			cmd.pushDescriptor(startIndices, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-			return cmd;
-		}
+	        cmd.pushDescriptor(startIndices, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        return cmd;
+        }
 
-		void cmdComputeParticleDensity(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription& desc,
-			NeighborhoodIteratorResources& res, ShaderKernelType kernel, float densityCoef, float forceCoef, float targetDensity, glm::vec2 mouseCoord,
-			Buffer densityBuf, Buffer pressureForce)
+		ComputeCmd getCmdComputeDensity(Buffer particleBuf, const NeighborhoodIterator& it, const DensityComputeInfo& densityCI, Buffer densityBuf)
 		{
-			densityBuf->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-			uint32_t particleCount = particleBuf->getSize() / desc.structureSize;
-			densityBuf->changeSize(particleCount * sizeof(float));
-			densityBuf->recreate();
-
-			cmdUpdateNeighborhoodIterator(cmdBuf, particleBuf, desc, res);
-			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-
-			{
-				ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_density.comp");
-				bindNeighborhoodIterator(cmd, desc, res);
-				cmd.pushLocal();
-				cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-				cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-				struct PC {
-					float radius;
-					uint32_t structureSize;
-					uint32_t structureOffset;
-					float densityCoef;
-				} pc;
-				pc.radius = desc.radius;
-				pc.structureSize = desc.structureSize;
-				pc.structureOffset = desc.posAttributeOffset;
-				pc.densityCoef = densityCoef;
-				cmd.pushConstant(&pc, sizeof(PC));
-				cmd.pipelineDef.shaderDef.args.push_back({ "SELECT_KERNEL_TYPE", std::to_string(kernel) });
-				cmd.pipelineDef.shaderDef.args.push_back({ "VECN_DIM", "2" });
-				cmd.exec(cmdBuf);
-			}
-			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-
-			pressureForce->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-			pressureForce->changeSize(particleCount * sizeof(glm::vec2));
-			pressureForce->recreate();
-
-			{
-				ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_pressure_force.comp");
-				bindNeighborhoodIterator(cmd, desc, res);
-				cmd.pushLocal();
-				cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-				cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-				cmd.pushDescriptor(pressureForce, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-				struct PC{
-					float radius;
-					uint32_t structureSize;
-					uint32_t structureOffset;
-					float forceCoef;
-					float targetDensity;
-				} pc;
-				pc.radius = desc.radius;
-				pc.structureSize = desc.structureSize;
-				pc.structureOffset = desc.posAttributeOffset;
-				pc.forceCoef = forceCoef;
-				pc.targetDensity = targetDensity;
-				cmd.pushConstant(&pc, sizeof(PC));
-				cmd.pipelineDef.shaderDef.args.push_back({ "SELECT_KERNEL_TYPE", std::to_string(kernel)});
-				cmd.pipelineDef.shaderDef.args.push_back({ "VECN_DIM", "2"});
-				cmd.exec(cmdBuf);
-			}
-
+	        densityBuf->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	        uint32_t particleCount = particleBuf->getSize() / densityCI.particleDesc.structureSize;
+	        densityBuf->changeSize(particleCount * sizeof(float));
+	        densityBuf->recreate();
+	        ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_density.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
+	        it.bind(cmd, densityCI.particleDesc);
+	        cmd.pushLocal();
+	        cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        struct PC
+	        {
+		        uint32_t taskSize;
+		        float    radius;
+		        uint32_t structureSize;
+		        uint32_t structureOffset;
+		        float    densityCoef;
+	        } pc;
+	        pc.taskSize        = particleCount;
+	        pc.radius          = densityCI.particleDesc.radius;
+	        pc.structureSize   = densityCI.particleDesc.structureSize;
+	        pc.structureOffset = densityCI.particleDesc.posAttributeOffset;
+	        pc.densityCoef     = densityCI.densityCoef;
+	        cmd.pushConstant(&pc, sizeof(PC));
+	        cmd.pipelineDef.shaderDef.args.push_back({"SELECT_KERNEL_TYPE", std::to_string(densityCI.kernelType)});
+	        cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", densityCI.particleDesc.dimensions == PD_2D ? "2" : "3"});
+	        return cmd;
 		}
-		
+
+		ComputeCmd getCmdComputePressureForce(Buffer particleBuf, Buffer densityBuf, const NeighborhoodIterator& it, const PressureComputeInfo& pressureCI, Buffer pressureForceBuf)
+		{
+	        pressureForceBuf->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	        uint32_t particleCount = particleBuf->getSize() / pressureCI.particleDesc.structureSize;
+	        pressureForceBuf->changeSize(particleCount * (pressureCI.particleDesc.dimensions == PD_2D ? sizeof(glm::vec2) : sizeof(glm::vec3)));
+	        pressureForceBuf->recreate();
+	        ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_pressure_force.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
+	        it.bind(cmd, pressureCI.particleDesc);
+	        cmd.pushLocal();
+	        cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(pressureForceBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        struct PC
+	        {
+				uint32_t taskSize;
+		        float    radius;
+		        uint32_t structureSize;
+		        uint32_t structureOffset;
+		        float    forceCoef;
+		        float    targetDensity;
+	        } pc;
+			pc.taskSize        = particleCount;
+	        pc.radius          = pressureCI.particleDesc.radius;
+	        pc.structureSize   = pressureCI.particleDesc.structureSize;
+	        pc.structureOffset = pressureCI.particleDesc.posAttributeOffset;
+	        pc.forceCoef       = pressureCI.forceCoef;
+	        pc.targetDensity   = pressureCI.targetDensity;
+	        cmd.pushConstant(&pc, sizeof(PC));
+	        cmd.pipelineDef.shaderDef.args.push_back({"SELECT_KERNEL_TYPE", std::to_string(pressureCI.kernelType)});
+	        cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", pressureCI.particleDesc.dimensions == PD_2D ? "2" : "3"});
+	        return cmd;
+        }
+
 	}
 }

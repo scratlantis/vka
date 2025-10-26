@@ -81,13 +81,19 @@ class BufferMapping_R : public Resource_T<void *>
 	const Mappable_T *m_mappable;
 };
 
+enum BufferFlags
+{
+	BUFFER_FLAG_DONT_REDUCE = 1 << 0,
+};
+
 class Buffer_R : public Resource_T<VkBuffer>
 {
   protected:
-	Mappable_T   *res                = nullptr;
-	BufferView_R *viewRes            = nullptr;
-	bool          isMapped           = false;
-	Buffer_R(const Buffer_R &rhs)    = default;
+	Mappable_T   *res             = nullptr;
+	BufferView_R *viewRes         = nullptr;
+	bool          isMapped        = false;
+	uint32_t      flags           = 0;
+	Buffer_R(const Buffer_R &rhs) = default;
   public:
 	VkBufferView viewHandle = VK_NULL_HANDLE;
 
@@ -112,10 +118,11 @@ class Buffer_R : public Resource_T<VkBuffer>
 	Buffer_R() :
 	    Buffer_R(nullptr){};
 
-	Buffer_R(IResourcePool *pPool, VkBufferUsageFlags usage) :
+	Buffer_R(IResourcePool *pPool, VkBufferUsageFlags usage, uint32_t flags = 0) :
 	    Buffer_R(pPool)
 	{
 		newState.usage = usage;
+		this->flags     = flags;
 	};
 	ResourceType type() const override
 	{
@@ -139,6 +146,8 @@ class Buffer_R : public Resource_T<VkBuffer>
 
 	void changeSize(VkDeviceSize size);
 	void addUsage(VkBufferUsageFlags usage);
+	void addFlags(uint32_t flags);
+	void changeFlags(uint32_t flags);
 	void changeUsage(VkBufferUsageFlags usage);
 	void changeMemoryType(VmaMemoryUsage memProperty);
 

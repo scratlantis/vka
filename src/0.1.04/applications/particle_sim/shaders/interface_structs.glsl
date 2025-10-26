@@ -6,6 +6,7 @@ struct PCGenerateParticles
 	vec2 x_range;
 	vec2 y_range;
 	uint seed;
+	uint taskSize;
 };
 
 struct GLSLParticle
@@ -31,6 +32,7 @@ struct PCUpdateParticles
 	float dt;
 	float damping;
 	float gravity;
+	uint taskSize;
 };
 
 #endif

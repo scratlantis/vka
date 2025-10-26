@@ -2,17 +2,15 @@
 #include "../../lib/misc.glsl"
 struct PushStruct
 {
+	uint taskSize;
 	float radius;
 	uint structureSize;
 	uint structureOffset;
 	float forceCoef;
 	float targetDensity;
 };
-layout(push_constant) uniform PC {PushStruct pc;};
 
-#ifndef MAX_PARTICLES_PER_CELL
-#define MAX_PARTICLES_PER_CELL 32
-#endif
+layout(push_constant) uniform PC {PushStruct pc;};
 
 layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { vecN particles[];};
 layout(binding = LOCAL_BINDING_OFFSET + 1) readonly buffer DENSITY { float particle_densities[];};
@@ -28,7 +26,7 @@ float convertDensityToPressure(float density)
 
 void main()
 {
-	if(!validInvocation())
+	if(gl_GlobalInvocationID.x >= pc.taskSize)
 	{
 		return;
 	}
@@ -40,8 +38,8 @@ void main()
 	attrDesc.offset = pc.structureOffset;
 	attrDesc.alignedSize = ALIGNED_SIZE(vecN);
 
-	uint id				= invocationID();
-	uint range			= invocationCount();
+	uint id				= gl_GlobalInvocationID.x;
+	uint range			= pc.taskSize;
 	uint attrID			= attributeID(id, attrDesc);
 
 	vecN localPos		= particles[attrID];

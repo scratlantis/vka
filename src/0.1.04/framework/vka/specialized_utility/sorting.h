@@ -3,5 +3,5 @@
 namespace vka
 {
 	void cmdRadixSort(CmdBuffer cmdBuf, Buffer buffer, Buffer pingPongBuf = nullptr, Buffer histogramBuf = nullptr);
-	void cmdRadixSortPermutation(CmdBuffer cmdBuf, Buffer buffer, Buffer permutationBuffer, Buffer pingPongBuf = nullptr, Buffer permutationPingPongBuf = nullptr, Buffer histogramBuf = nullptr);
+void cmdRadixSortPermutation(CmdBuffer cmdBuf, Buffer buffer, Buffer permutationBuffer, uint32_t count, Buffer pingPongBuf = nullptr, Buffer permutationPingPongBuf = nullptr, Buffer histogramBuf = nullptr);
 }

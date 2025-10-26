@@ -105,12 +105,21 @@ class DrawCmd
 	CmdBufferState getCmdBufferState(const CmdBufferState oldState) const;
 };
 
+enum MyEnum
+{
+	COMPUTE_CMD_FLAG_BIT_DYNAMIC = 1 << 0
+};
+
 class ComputeCmd
 {
   public:
 	ComputeCmd() = default;
 	ComputeCmd(uint32_t taskSize, const std::string path, std::vector<ShaderArgs> args = {});
 	ComputeCmd(uint32_t taskSize, uint32_t workgroupSize, const std::string path, std::vector<ShaderArgs> args = {});
+
+	ComputeCmd(uint32_t taskSize, const std::string path, uint32_t flags, std::vector<ShaderArgs> args = {});
+	ComputeCmd(uint32_t taskSize, uint32_t workgroupSize, const std::string path, uint32_t flags, std::vector<ShaderArgs> args = {});
+
 	ComputeCmd(glm::uvec2 taskSize, std::string path, std::vector<ShaderArgs> args = {});
 	ComputeCmd(VkExtent2D taskSize, std::string path, std::vector<ShaderArgs> args = {});
 	ComputeCmd(VkExtent3D taskSize, std::string path, std::vector<ShaderArgs> args = {});
@@ -145,7 +154,7 @@ class ComputeCmd
 
   private:
 	CmdBufferState getCmdBufferState() const;
-	void           pushBaseModule(glm::uvec3 invocationCount);
+	void           pushBaseModule(glm::uvec3 invocationCount, uint32_t flags = 0);
 };
 
 }        // namespace vka

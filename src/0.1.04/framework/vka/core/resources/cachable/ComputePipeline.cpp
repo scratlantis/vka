@@ -53,6 +53,7 @@ ComputePipeline_R::ComputePipeline_R(IResourceCache *pCache, ComputePipelineDefi
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 	ci.basePipelineIndex  = -1;
 	VK_CHECK(vkCreateComputePipelines(gState.device.logical, VK_NULL_HANDLE, 1, &ci, nullptr, &handle));
+	printVka("Created Compute Pipeline: %p\n", this);
 }
 
 }        // namespace vka

@@ -62,13 +62,16 @@ CmdBufferState ComputeCmd::getCmdBufferState() const
 }
 
 
-void ComputeCmd::pushBaseModule(glm::uvec3 invocationCount)
+void ComputeCmd::pushBaseModule(glm::uvec3 invocationCount, uint32_t flags)
 {
 	pipelineDef.shaderDef.libs.push_back(cVkaShaderLibPath + "compute_shader_base.glsl");
-	pushSpecializationConst(invocationCount.x);
-	pushSpecializationConst(invocationCount.y);
-	pushSpecializationConst(invocationCount.z);
-	pipelineDef.shaderDef.args.push_back({ShaderArgs("USE_SPEC_CONST", "")});
+	if ( !(flags & COMPUTE_CMD_FLAG_BIT_DYNAMIC))
+	{
+		pushSpecializationConst(invocationCount.x);
+		pushSpecializationConst(invocationCount.y);
+		pushSpecializationConst(invocationCount.z);
+		pipelineDef.shaderDef.args.push_back({ShaderArgs("USE_SPEC_CONST", "")});
+	}
 	//pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_X", invocationCount.x)});
 	//pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_Y", invocationCount.y)});
 	//pipelineDef.shaderDef.args.push_back({ShaderArgs("INVOCATION_COUNT_Z", invocationCount.z)});
@@ -97,6 +100,29 @@ ComputeCmd::ComputeCmd(uint32_t taskSize, uint32_t workgroupSize, const std::str
 	pipelineDef.shaderDef = ShaderDefinition(path, args);
 	pushBaseModule(resolution);
 }
+
+// Constructors
+ComputeCmd::ComputeCmd(uint32_t taskSize, const std::string path, uint32_t flags, std::vector<ShaderArgs> args)
+{
+	glm::uvec3 workGroupSize             = {128, 1, 1};
+	glm::uvec3 resolution                = {taskSize, 1, 1};
+	workGroupCount                       = getWorkGroupCount(workGroupSize, resolution);
+	pipelineDef.specialisationEntrySizes = glm3VectorSizes();
+	pipelineDef.specializationData       = getByteVector(workGroupSize);
+	pipelineDef.shaderDef                = ShaderDefinition(path, args);
+	pushBaseModule(resolution, flags);
+}
+ComputeCmd::ComputeCmd(uint32_t taskSize, uint32_t workgroupSize, const std::string path, uint32_t flags, std::vector<ShaderArgs> args)
+{
+	glm::uvec3 workGroupSize             = {workgroupSize, 1, 1};
+	glm::uvec3 resolution                = {taskSize, 1, 1};
+	workGroupCount                       = getWorkGroupCount(workGroupSize, resolution);
+	pipelineDef.specialisationEntrySizes = glm3VectorSizes();
+	pipelineDef.specializationData       = getByteVector(workGroupSize);
+	pipelineDef.shaderDef                = ShaderDefinition(path, args);
+	pushBaseModule(resolution, flags);
+}
+
 
 ComputeCmd::ComputeCmd(glm::uvec2 taskSize, std::string path, std::vector<ShaderArgs> args)
 {

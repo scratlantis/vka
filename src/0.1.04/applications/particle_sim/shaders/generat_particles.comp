@@ -6,15 +6,16 @@ layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { GLSLPart
 //layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { vec2 particles[];};
 
 
+
 void main()
 {
-	if(!validInvocation())
+	if(gl_GlobalInvocationID.x >= pc.taskSize)
 	{
 		return;
 	}
 
-	uint id = invocationID();
-	uint seed = invocationCount()*pc.seed + id;
+	uint id = gl_GlobalInvocationID.x;
+	uint seed = pc.taskSize*pc.seed + id;
 
 	GLSLParticle elem;
 	vec2 rng = vec2(unormNext(seed), unormNext(seed));

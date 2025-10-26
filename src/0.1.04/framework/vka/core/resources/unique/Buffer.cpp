@@ -101,12 +101,29 @@ void* Buffer_R::map(uint32_t offset, VkDeviceSize size) const
 
 void Buffer_R::changeSize(VkDeviceSize size)
 {
-	newState.size = size;
+	if (flags & BUFFER_FLAG_DONT_REDUCE)
+	{
+		newState.size = std::max(size, newState.size);
+	}
+	else
+	{
+		newState.size = size;
+	}
 }
 
 void Buffer_R::addUsage(VkBufferUsageFlags usage)
 {
 	newState.usage |= usage;
+}
+
+void Buffer_R::addFlags(uint32_t flags)
+{
+	this->flags |= flags;
+}
+
+void Buffer_R::changeFlags(uint32_t flags)
+{
+	this->flags = flags;
 }
 
 void Buffer_R::changeUsage(VkBufferUsageFlags usage)

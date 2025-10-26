@@ -2,14 +2,24 @@
 layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer CELL_KEYS { uint cellKeys[]; };
 layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer START_INDICES { uint startIndices[]; };
 
+struct PushStruct
+{
+	uint taskSize;
+};
+
+layout(push_constant) uniform PC {PushStruct pc;};
+
+
+
+
 void main()
 {
-	if(!validInvocation())
+	if(gl_GlobalInvocationID.x >= pc.taskSize)
 	{
 		return;
 	}
 
-	uint id = invocationID();
+	uint id = gl_GlobalInvocationID.x;
 	uint key = cellKeys[id];
 	if (id == 0 || key != cellKeys[id - 1])
 	{

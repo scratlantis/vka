@@ -1,6 +1,7 @@
 #include "grid_hash.glsl"
 struct PCCellKey
 {
+	uint taskSize;
 	float radius;
 	uint structureSize;
 	uint structureOffset;
@@ -26,13 +27,13 @@ uint getParticleIndex(uint id)
 
 void main()
 {
-	if(!validInvocation())
+	if(gl_GlobalInvocationID.x >= pc.taskSize)
 	{
 		return;
 	}
 
-	uint id = invocationID();
-	uint totalCnt = invocationCount().x;
+	uint id = gl_GlobalInvocationID.x;
+	uint totalCnt = pc.taskSize;
 	uint index = getParticleIndex(id);
 	PARTICLE_TYPE p = particles[index];
 	cellKeys[id] = calcCellKey(p, pc.radius, totalCnt);

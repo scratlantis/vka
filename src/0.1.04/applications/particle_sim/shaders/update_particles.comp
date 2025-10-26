@@ -37,12 +37,12 @@ void resolve_border_collision(inout GLSLParticle particle)
 
 void main()
 {
-	if(!validInvocation())
+	if(gl_GlobalInvocationID.x >= pc.taskSize)
 	{
 		return;
 	}
 
-	uint id = invocationID();
+	uint id = gl_GlobalInvocationID.x;
 	GLSLParticle elem = particles[id];
 	float time = pc.dt * 0.001;
 	elem.vel.y += pc.gravity * time;

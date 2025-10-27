@@ -1,5 +1,7 @@
 #include "config.h"
 
+static const float cParticle_size_scale = 0.01f;
+
 struct GenParticleArgs
 {
 	uint32_t      particleCount;
@@ -8,17 +10,16 @@ struct GenParticleArgs
 	float         radius;
 };
 
-void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer, GenParticleArgs args);
-void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer);
+void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer predictedPosBuffer);
 
 
 struct RenderParticleArgs
 {
 	float    particleSize;
 	float    particleIntensity;
+	float	 velocityIntensity;
 };
 
-void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, Buffer densityBuffer, RenderParticleArgs args);
 void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, Buffer densityBuffer);
 
 
@@ -32,7 +33,6 @@ struct UpdateParticleArgs
 	float         gravity;
 };
 
-ComputeCmd getCmdUpdateParticles(Buffer particleBuffer, Buffer forceBuffer, UpdateParticleArgs args);
 
 struct SimulationResources
 {
@@ -43,14 +43,7 @@ struct SimulationResources
 	bool                          isInitialized() const;
 };
 
-void cmdSimulateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, const physics::ParticleDescription &desc, SimulationResources &res, float timeStep);
 
-template<typename T>
-void cmdSimulateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, SimulationResources& res, float timeStep)
-{
-	ParticleDescription desc = particle_type<T>::get_description(gvar_particle_size.val.v_float);
-	cmdSimulateParticles(cmdBuf, particleBuffer, desc, res, timeStep);
-}
-
+void cmdSimulateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer predictedPosBuffer, SimulationResources &res, float timeStep);
 
 //void cmdUpdateParticleDensity(CmdBuffer cmdBuf, Buffer particleBuffer, physics::NeighborhoodIteratorResources res, Buffer densityBuffer, Buffer forceBuffer);

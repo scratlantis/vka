@@ -61,5 +61,5 @@ void main()
 		force += sharedPressure * dir * slope * 1.0 / otherDensity;
 	ITERATE_END
 
-	pressure_forces[id] = force * pc.forceCoef * 0.01;
+	pressure_forces[id] = force * pc.forceCoef * 0.001;
 }

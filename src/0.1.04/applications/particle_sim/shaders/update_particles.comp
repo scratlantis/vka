@@ -3,7 +3,8 @@
 
 layout(push_constant) uniform PC {PCUpdateParticles pc;};
 layout(binding = LOCAL_BINDING_OFFSET + 0) buffer PARTICLES { GLSLParticle particles[];};
-layout(binding = LOCAL_BINDING_OFFSET + 1) buffer FORCE { vec2 particle_force[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) readonly buffer FORCE { vec2 particle_force[];};
+layout(binding = LOCAL_BINDING_OFFSET + 2) writeonly buffer PREDICTED_POS { vec2 pred_pos[];};
 
 
 
@@ -52,4 +53,5 @@ void main()
 
 	elem.vel *= pc.damping;
 	particles[id] = elem;
+	pred_pos[id] = elem.pos + elem.vel * time;
 }

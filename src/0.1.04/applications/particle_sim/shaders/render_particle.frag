@@ -18,13 +18,4 @@ void main()
 	float normDist = dist / (0.5*pc.pointSize);
 	float crossSection = clamp(1.0 - normDist*normDist, 0.0,1.0);
 	outColor.rgb = inColor * crossSection * crossSection * crossSection*pc.intensity;
-	if(dist < 1.0)
-	{
-	//#ifdef ENABLE_DEBUG_COLOR
-	//	outColor.rgb = inColorDebug;
-	//#else
-	//	outColor.rgb = vec3(0.0,1.0,0.0);
-	//#endif
-	outColor.rgb = vec3(0.0,1.0,0.0);
-	}
 }

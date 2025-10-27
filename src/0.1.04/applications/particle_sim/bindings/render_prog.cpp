@@ -26,6 +26,7 @@ void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, B
 	pc.viewScale.y = maxDim / float(extent.height);
 	pc.pointSize = args.particleSize * maxDim;
 	pc.intensity = args.particleIntensity;
+	pc.velIntensity   = args.velocityIntensity;
 	pc.extent = vec2(static_cast<float>(extent.width),static_cast<float>(extent.height));
 	cmd.pushConstant(&pc, sizeof(PCRenderParticles), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	cmd.pushDescriptor(densityBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
@@ -43,13 +44,15 @@ void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, B
 }
 
 extern GVar gvar_particle_size;
-GVar gvar_particle_rel_render_size{"Particle Render Size", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {1.0f, 100.f}};
-GVar gvar_particle_render_brightness{"Particle Render Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {0.0f, 10.f}};
+GVar gvar_particle_rel_render_size{"Particle Render Size", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {1.0f, 10.f}};
+GVar gvar_particle_render_brightness{"Particle Render Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {0.0f, 1.f}};
+GVar gvar_particle_render_vel_brightness{"Particle Velocity Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {0.0f, 100.f}};
 
 void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, Buffer densityBuffer)
 {
 	RenderParticleArgs args{};
-	args.particleSize = gvar_particle_rel_render_size.val.v_float * gvar_particle_size.val.v_float;
+	args.particleSize      = gvar_particle_rel_render_size.val.v_float * gvar_particle_size.val.v_float * cParticle_size_scale;
 	args.particleIntensity = gvar_particle_render_brightness.val.v_float;
+	args.velocityIntensity = gvar_particle_render_vel_brightness.val.v_float;
 	cmdRenderParticles(cmdBuf, target, particleBuffer, densityBuffer, args);
 }

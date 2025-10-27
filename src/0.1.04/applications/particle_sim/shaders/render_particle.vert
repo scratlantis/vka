@@ -1,6 +1,7 @@
 #include "interface_structs.glsl"
 layout(push_constant) uniform PC {PCRenderParticles pc;};
 layout(location = 0) in vec2 pos;
+layout(location = 1) in vec2 vel;
 layout(location = 0) out vec2 outPos;
 layout(location = 1) out vec3 outColor;
 
@@ -23,7 +24,8 @@ void main()
     gl_Position.xy = (pos.xy-pc.viewOffset)*pc.viewScale;
 	gl_PointSize = pc.pointSize;
     outPos = gl_Position.xy;
-    outColor = vec3(densities[gl_VertexIndex],0.0,0.0);
+    float density  = densities[gl_VertexIndex]; 
+    outColor = vec3(abs(vel*pc.velIntensity),density);
     // Map to Vulkan NDC
 	gl_Position.zw = vec2(1.0);
     gl_Position.xy*=2.0;

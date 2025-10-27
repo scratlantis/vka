@@ -16,7 +16,7 @@ extern GVar gvar_menu;
 extern GVar gvar_particle_size;
 extern GVar gvar_particle_generation_count;
 
-GVar gvar_simulation_step_count{"Simulation Steps Per Frame", 1U, GVAR_UINT_RANGE, GUI_CAT_GENERAL, {1U, 4U}};
+GVar gvar_simulation_step_count{"Simulation Steps Per Frame", 1U, GVAR_UINT_RANGE, GUI_CAT_GENERAL, {1U, 10U}};
 GVar gvar_display_frame_time{"Frame Time: %.4f ms", 1.f, GVAR_DISPLAY_FLOAT, GUI_CAT_GENERAL};
 
 int main()
@@ -36,11 +36,17 @@ int main()
 		viewDimensions.width, viewDimensions.height);
 	gState.updateSwapchainAttachments();
 	//// Init other stuff
+	// 
+	// Preallocate stuff
 	Buffer particleMemory = createBuffer(gState.heap, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-
-	// Preallocate particle buffer
 	particleMemory->changeSize(gvar_particle_generation_count.set.range.max.v_uint * sizeof(GLSLParticle));
 	particleMemory->recreate();
+
+	Buffer predictedPosMemory = createBuffer(gState.heap, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	predictedPosMemory->changeSize(gvar_particle_generation_count.set.range.max.v_uint * sizeof(glm::vec2));
+	predictedPosMemory->recreate();
+
+
 
 	SimulationResources simResources{};
 	simResources.init(gState.heap, gvar_particle_generation_count.set.range.max.v_uint);
@@ -49,7 +55,7 @@ int main()
 	uint32_t frameCount = 0;
 	while (!gState.io.shouldTerminate())
 	{
-		gvar_display_frame_time.val.v_float = static_cast<float>(gState.frameTime) * 0.001f;
+		gvar_display_frame_time.val.v_float = static_cast<float>(gState.frameTime);
 
 		bool shaderRecompiled = false;
 		if (gState.io.keyPressedEvent[GLFW_KEY_R])
@@ -65,17 +71,20 @@ int main()
 		std::vector<bool> settingsChanged = buildGui();
 
 		const Buffer    particleBuffer = particleMemory->getSubBuffer({0, gvar_particle_generation_count.val.v_uint * sizeof(GLSLParticle)});
+		const Buffer    predictedPosBuffer = predictedPosMemory->getSubBuffer({0, gvar_particle_generation_count.val.v_uint * sizeof(glm::vec2)});
 		CmdBuffer cmdBuf       = createCmdBuffer(gState.frame->stack);
 		if(reset || guiCatChanged(GUI_CAT_PARTICLE_GEN, settingsChanged))
 		{
-			cmdGenParticles(cmdBuf, particleBuffer);
+			cmdGenParticles(cmdBuf, particleBuffer, predictedPosBuffer);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
 
 		}
 		// Simulate
 		for (uint32_t step = 0; step < gvar_simulation_step_count.val.v_uint; step++)
 		{
-			cmdSimulateParticles<GLSLParticle>(cmdBuf, particleBuffer, simResources, gState.frameTime * (1.f / static_cast<float>(gvar_simulation_step_count.val.v_uint)));
+			// in ms
+			float timeStep =  min(static_cast<float>(gState.frameTime), 20.0f) * (1.f / static_cast<float>(gvar_simulation_step_count.val.v_uint));
+			cmdSimulateParticles(cmdBuf, particleBuffer, predictedPosBuffer, simResources, timeStep);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
 		}
 

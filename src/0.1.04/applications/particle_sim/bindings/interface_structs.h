@@ -12,10 +12,12 @@ struct vertex_type<GLSLParticle>
 		layout.formats =
 		{
 			VK_FORMAT_R32G32_SFLOAT,
+			VK_FORMAT_R32G32_SFLOAT
 		};
 		layout.offsets =
 		{
-			offsetof(GLSLParticle, pos)
+			offsetof(GLSLParticle, pos),
+			offsetof(GLSLParticle, vel)
 		};
 		layout.stride = sizeof(GLSLParticle);
 		return layout;

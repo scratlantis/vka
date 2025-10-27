@@ -23,6 +23,7 @@ struct PCRenderParticles
 	vec2	extent;
 	float	pointSize;
 	float	intensity;
+	float	velIntensity;
 };
 
 struct PCUpdateParticles

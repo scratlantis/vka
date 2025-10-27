@@ -114,16 +114,13 @@ namespace vka
 	        return cmd;
 		}
 
-		ComputeCmd getCmdComputePressureForce(Buffer particleBuf, Buffer densityBuf, const NeighborhoodIterator& it, const PressureComputeInfo& pressureCI, Buffer pressureForceBuf)
+		ComputeCmd getCmdAddPressureForce(Buffer posBuf, Buffer densityBuf, const NeighborhoodIterator& it, const PressureComputeInfo& pressureCI, Buffer pressureForceBuf)
 		{
-	        pressureForceBuf->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	        uint32_t particleCount = particleBuf->getSize() / pressureCI.particleDesc.structureSize;
-	        pressureForceBuf->changeSize(particleCount * (pressureCI.particleDesc.dimensions == PD_2D ? sizeof(glm::vec2) : sizeof(glm::vec3)));
-	        pressureForceBuf->recreate();
+	        uint32_t particleCount = posBuf->getSize() / pressureCI.particleDesc.structureSize;
 	        ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_pressure_force.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
 	        it.bind(cmd, pressureCI.particleDesc);
 	        cmd.pushLocal();
-	        cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(posBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	        cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	        cmd.pushDescriptor(pressureForceBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	        struct PC
@@ -144,6 +141,37 @@ namespace vka
 	        cmd.pushConstant(&pc, sizeof(PC));
 	        cmd.pipelineDef.shaderDef.args.push_back({"SELECT_KERNEL_TYPE", std::to_string(pressureCI.kernelType)});
 	        cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", pressureCI.particleDesc.dimensions == PD_2D ? "2" : "3"});
+	        return cmd;
+        }
+
+
+		ComputeCmd getCmdAddViscosityForce(Buffer posBuf, Buffer densityBuf, Buffer velocityBuf, const NeighborhoodIterator &it, const ViscosityComputeInfo &ci, Buffer forceBuf)
+        {
+	        uint32_t   particleCount = posBuf->getSize() / ci.particleDesc.structureSize;
+	        ComputeCmd cmd           = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_viscosity_force.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
+	        it.bind(cmd, ci.particleDesc);
+	        cmd.pushLocal();
+	        cmd.pushDescriptor(posBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(velocityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(forceBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+
+	        struct PC
+	        {
+		        uint32_t taskSize;
+		        float    radius;
+		        uint32_t structureSize;
+		        uint32_t structureOffset;
+		        float    forceCoef;
+	        } pc;
+	        pc.taskSize        = particleCount;
+	        pc.radius          = ci.particleDesc.radius;
+	        pc.structureSize   = ci.particleDesc.structureSize;
+	        pc.structureOffset = ci.particleDesc.posAttributeOffset;
+	        pc.forceCoef       = ci.forceCoef;
+	        cmd.pushConstant(&pc, sizeof(PC));
+	        cmd.pipelineDef.shaderDef.args.push_back({"SELECT_KERNEL_TYPE", std::to_string(ci.kernelType)});
+	        cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", ci.particleDesc.dimensions == PD_2D ? "2" : "3"});
 	        return cmd;
         }
 

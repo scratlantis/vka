@@ -30,6 +30,10 @@ struct PCUpdateParticles
 {
 	vec2 x_range;
 	vec2 y_range;
+	vec2 mouse_pos;
+	uvec2 mouse_buttons;
+	float mouse_radius;
+	float mouse_influence;
 	float pointSize;
 	float dt;
 	float damping;

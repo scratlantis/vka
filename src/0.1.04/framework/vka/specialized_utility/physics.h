@@ -25,6 +25,7 @@ namespace vka
 		enum ShaderKernelType
 		{
 			SK_QUADRATIC,
+			SK_SMOOTH,
 		};
 		class NeighborhoodIterator;
         struct DensityComputeInfo
@@ -42,6 +43,17 @@ namespace vka
 			float               forceCoef;
 			float               targetDensity;
 		};
-        ComputeCmd getCmdComputePressureForce(Buffer particleBuf, Buffer densityBuf, const NeighborhoodIterator &it, const PressureComputeInfo &pressureCI, Buffer pressureForceBuf);
+
+        ComputeCmd getCmdAddPressureForce(Buffer particleBuf, Buffer densityBuf, const NeighborhoodIterator &it, const PressureComputeInfo &pressureCI, Buffer pressureForceBuf);
+
+		struct ViscosityComputeInfo
+        {
+	        ParticleDescription particleDesc;
+	        ShaderKernelType    kernelType;
+	        float               forceCoef;
+        };
+
+		ComputeCmd getCmdAddViscosityForce(Buffer posBuf, Buffer densityBuf, Buffer velocityBuf, const NeighborhoodIterator &it, const ViscosityComputeInfo &ci, Buffer forceBuf);
+
 	}
 }

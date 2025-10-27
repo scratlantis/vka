@@ -7,22 +7,15 @@ struct PushStruct
 	uint structureSize;
 	uint structureOffset;
 	float forceCoef;
-	float targetDensity;
 };
 
 layout(push_constant) uniform PC {PushStruct pc;};
 
 layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { vecN particles[];};
 layout(binding = LOCAL_BINDING_OFFSET + 1) readonly buffer DENSITY { float particle_densities[];};
-layout(binding = LOCAL_BINDING_OFFSET + 2) buffer FORCE { vecN pressure_forces[];};
+layout(binding = LOCAL_BINDING_OFFSET + 2) readonly buffer VEL { vecN velocity[];};
+layout(binding = LOCAL_BINDING_OFFSET + 3) buffer FORCE { vecN pressure_forces[];};
 
-
-float convertDensityToPressure(float density)
-{
-	float densityError = density - pc.targetDensity;
-	float pressure = densityError * pc.forceCoef;
-	return pressure;
-}
 
 void main()
 {
@@ -54,19 +47,15 @@ void main()
 		float otherDensity = particle_densities[otherId];
 		vecN dir = otherPos - localPos;
 		float dist = length(dir);
-		if(dist == 0.0)
-		{
-			dir = randomND(localPos) - vecN(0.5);
-		}
 		if(dist > pc.radius)
 		{
 			continue;
 		}
-		dir = normalize(dir);
-		float slope = KERNEL_DERIVATIVE(dist, pc.radius);
-		float sharedPressure = 0.5*(convertDensityToPressure(localDensity) + convertDensityToPressure(otherDensity));
-		force += sharedPressure * dir * slope * 1.0 / otherDensity;
+		float slope = KERNEL_WEIGHT(dist, pc.radius);
+		force +=  (velocity[otherId]-velocity[id])*slope;
 	ITERATE_END
 
-	pressure_forces[id] += force * pc.forceCoef * 0.001;
+	force*= KERNEL_NORMALIZATION(pc.radius);
+
+	pressure_forces[id] += force * pc.forceCoef * 0.0001;
 }

@@ -37,7 +37,12 @@ void main()
 
 	ITERATE_START(localPos,id)
 		vecN otherPos = particles[attributeID(otherId, attrDesc)];
-		density += KERNEL_WEIGHT(distance(localPos, otherPos), pc.radius);
+		float dist = distance(localPos, otherPos);
+		if(dist > pc.radius)
+		{
+			continue;
+		}
+		density += KERNEL_WEIGHT(dist, pc.radius);
 	ITERATE_END
 
 	density += KERNEL_WEIGHT(0, pc.radius);

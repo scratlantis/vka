@@ -46,6 +46,9 @@ int main()
 	predictedPosMemory->changeSize(gvar_particle_generation_count.set.range.max.v_uint * sizeof(glm::vec2));
 	predictedPosMemory->recreate();
 
+	Buffer velocityMemory = createBuffer(gState.heap, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	velocityMemory->changeSize(gvar_particle_generation_count.set.range.max.v_uint * sizeof(glm::vec2));
+	velocityMemory->recreate();
 
 
 	SimulationResources simResources{};
@@ -72,10 +75,12 @@ int main()
 
 		const Buffer    particleBuffer = particleMemory->getSubBuffer({0, gvar_particle_generation_count.val.v_uint * sizeof(GLSLParticle)});
 		const Buffer    predictedPosBuffer = predictedPosMemory->getSubBuffer({0, gvar_particle_generation_count.val.v_uint * sizeof(glm::vec2)});
+		const Buffer	velocityBuffer = velocityMemory->getSubBuffer({0, gvar_particle_generation_count.val.v_uint * sizeof(glm::vec2)});
+
 		CmdBuffer cmdBuf       = createCmdBuffer(gState.frame->stack);
 		if(reset || guiCatChanged(GUI_CAT_PARTICLE_GEN, settingsChanged))
 		{
-			cmdGenParticles(cmdBuf, particleBuffer, predictedPosBuffer);
+			cmdGenParticles(cmdBuf, particleBuffer, predictedPosBuffer, velocityBuffer);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
 
 		}
@@ -84,7 +89,7 @@ int main()
 		{
 			// in ms
 			float timeStep =  min(static_cast<float>(gState.frameTime), 20.0f) * (1.f / static_cast<float>(gvar_simulation_step_count.val.v_uint));
-			cmdSimulateParticles(cmdBuf, particleBuffer, predictedPosBuffer, simResources, timeStep);
+			cmdSimulateParticles(cmdBuf, particleBuffer, predictedPosBuffer, velocityBuffer, simResources, timeStep);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
 		}
 

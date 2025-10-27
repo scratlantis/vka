@@ -48,42 +48,42 @@ void main()
 
 	//ITERATE_START
 
-		ivec2 originCell = GetCell2D(localPos, pni_uniform.radius);
-		//originCell.xy = ivec2(0,0);
-		//uint hash = HashCell2D(originCell + offsets2D[4]);
-		uint hash = HashCell2D(originCell);
-		uint key = KeyFromHash(hash, pni_uniform.range);
-
-		uint startID = pni_start_id[id];
-
-		uint lastCellKey = 0xFFFFFFFF;					
-		if(startID != 0xFFFFFFFF)						
-		{																			
-			for(uint j = 0; j<MAX_PARTICLES_PER_CELL; j++)	
-			{												
-				ParticleID pID = getParticleID(startID, j);
-				if(j!= 0 && pID.cellID != lastCellKey)		
-				{											
-					break;									
-				}											
-				lastCellKey = pID.cellID;					
-				if(pID.id != id)							
-				{
-	// ----------------------
-
-		if(j==0)
-		{
-			vecN otherPos = particles[pID.id].pos;
-			assignedColor.xy = randomND(vec2(63455.0) * vec2(otherPos.x, otherPos.y));
-		}
-	//assignedColor.xy = vec2(1.0);
-		colors[pID.id] = vec4(assignedColor, 1.0);
+		//ivec2 originCell = GetCell2D(localPos, pni_uniform.radius);
+		////originCell.xy = ivec2(0,0);
+		////uint hash = HashCell2D(originCell + offsets2D[4]);
+		//uint hash = HashCell2D(originCell);
+		//uint key = KeyFromHash(hash, pni_uniform.range);
+		//
+		//uint startID = pni_start_id[id];
+		//
+		//uint lastCellKey = 0xFFFFFFFF;					
+		//if(startID != 0xFFFFFFFF)						
+		//{																			
+		//	for(uint j = 0; j<MAX_PARTICLES_PER_CELL; j++)	
+		//	{												
+		//		ParticleID pID = getParticleID(startID, j);
+		//		if(j!= 0 && pID.cellID != lastCellKey)		
+		//		{											
+		//			break;									
+		//		}											
+		//		lastCellKey = pID.cellID;					
+		//		if(pID.id != id)							
+		//		{
+		//// ----------------------
+		//
+		//if(j==0)
+		//{
+		//	vecN otherPos = particles[pID.id].pos;
+		//	assignedColor.xy = randomND(vec2(63455.0) * vec2(otherPos.x, otherPos.y));
+		//}
+		////assignedColor.xy = vec2(1.0);
+		//colors[pID.id] = vec4(assignedColor, 1.0);
 
 
 	// ----------------------
 
 	//ITERATE_END
-	}}}
+	//}}}
 
 
 	//for(uint i = 0; i<range; i++)

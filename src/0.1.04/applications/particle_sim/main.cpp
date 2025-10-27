@@ -72,15 +72,6 @@ int main()
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
 
 		}
-
-		std::hash<std::string> h;
-		Buffer                 debugColorBuffer = nullptr;
-		if (gState.dataCache->fetch(debugColorBuffer, h("debug_color_buf")) && debugColorBuffer->getSize() != 0)
-		{
-			cmdFillBuffer(cmdBuf, debugColorBuffer, 1.f);
-		}
-
-
 		// Simulate
 		for (uint32_t step = 0; step < gvar_simulation_step_count.val.v_uint; step++)
 		{

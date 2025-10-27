@@ -1,4 +1,6 @@
 #include "grid_hash.glsl"
+#include "../../lib/misc.glsl"
+
 struct PCCellKey
 {
 	uint taskSize;
@@ -8,22 +10,10 @@ struct PCCellKey
 };
 layout(push_constant) uniform PC {PCCellKey pc;};
 
-#ifdef PARTICLE_3D
-#define PARTICLE_TYPE vec3
-#define PARTICLE_TYPE_ALIGNED_SIZE 16
-#else
-#define PARTICLE_TYPE vec2
-#define PARTICLE_TYPE_ALIGNED_SIZE 8
-#endif
 
-
-layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { PARTICLE_TYPE particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLE_DATA { vecN particles[];};
 layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer CELL_KEYS { uint cellKeys[]; };
 
-uint getParticleIndex(uint id)
-{
-	return id * pc.structureSize/PARTICLE_TYPE_ALIGNED_SIZE + pc.structureOffset/PARTICLE_TYPE_ALIGNED_SIZE;
-}
 
 void main()
 {
@@ -32,10 +22,13 @@ void main()
 		return;
 	}
 
+	AttributeDescriptor attrDesc;
+	attrDesc.stride = pc.structureSize;
+	attrDesc.offset = pc.structureOffset;
+	attrDesc.alignedSize = ALIGNED_SIZE(vecN);
+
 	uint id = gl_GlobalInvocationID.x;
-	uint totalCnt = pc.taskSize;
-	uint index = getParticleIndex(id);
-	PARTICLE_TYPE p = particles[index];
-	//cellKeys[id] = calcCellKey(p, pc.radius, totalCnt);
-	cellKeys[id] = KeyFromPosition(p, pc.radius, totalCnt);
+	uint attrID			= attributeID(id, attrDesc);
+	vecN pos = particles[attrID];
+	cellKeys[id] = keyFromPosition(pos, pc.radius, pc.taskSize);
 }

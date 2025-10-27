@@ -2,21 +2,20 @@
 #define GRID_HASH_H
 #include "../../lib/random.glsl"
 
-//uint calcCellKey(vec2 pos, float radius, uint range)
-//{
-//	ivec2 cellOffset = ivec2(floor(pos / (2.0 * radius)));
-//	//cellOffset += ivec2(10000); // avoid negative values
-//	return hash(cellOffset)%range;
-//}
-//
-//uint calcCellKey(vec3 pos, float radius, uint range)
-//{
-//	ivec3 cellOffset = ivec3(floor(pos / (2.0 * radius)));
-//	return hash(cellOffset)%range;
-//}
+// https://github.com/SebLague/Fluid-Sim/tree/Episode-01
+
+uint keyFromHash(uint hash, uint tableSize)
+{
+	return hash % tableSize;
+}
+
+// Constants used for hashing
+const uint hashK1 = 15823;
+const uint hashK2 = 9737333;
+const uint hashK3 = 541523;
 
 
-
+// 2D
 const ivec2 offsets2D[9] =
 {
 	ivec2(-1, 1),
@@ -30,18 +29,20 @@ const ivec2 offsets2D[9] =
 	ivec2(1, -1),
 };
 
-// Constants used for hashing
-const uint hashK1 = 15823;
-const uint hashK2 = 9737333;
+ivec2 applyOffset(ivec2 cell, uint index)
+{
+	return cell + offsets2D[index];
+}
+
 
 // Convert floating point position into an integer cell coordinate
-ivec2 GetCell2D(vec2 position, float radius)
+ivec2 getCell(vec2 position, float radius)
 {
 	return ivec2(floor(position / radius));
 }
 
 // Hash cell coordinate to a single unsigned integer
-uint HashCell2D(ivec2 cell)
+uint hashCell(ivec2 cell)
 {
 	cell = ivec2(uvec2(cell));
 	uint a = cell.x * hashK1;
@@ -49,16 +50,73 @@ uint HashCell2D(ivec2 cell)
 	return (a + b);
 }
 
-uint KeyFromHash(uint hash, uint tableSize)
+
+uint keyFromPosition(vec2 position, float radius, uint tableSize)
 {
-	return hash % tableSize;
+	ivec2 cell = getCell(position, radius);
+	uint hash = hashCell(cell);
+	return keyFromHash(hash, tableSize);
 }
 
-uint KeyFromPosition(vec2 position, float radius, uint tableSize)
+// 3D
+const ivec3 offsets3D[27] =
 {
-	ivec2 cell = GetCell2D(position, radius);
-	uint hash = HashCell2D(cell);
-	return KeyFromHash(hash, tableSize);
+	ivec3(-1, 1, -1),
+	ivec3(0, 1, -1),
+	ivec3(1, 1, -1),
+	ivec3(-1, 0, -1),
+	ivec3(0, 0, -1),
+	ivec3(1, 0, -1),
+	ivec3(-1, -1, -1),
+	ivec3(0, -1, -1),
+	ivec3(1, -1, -1),
+
+	ivec3(-1, 1, 0),
+	ivec3(0, 1, 0),
+	ivec3(1, 1, 0),
+	ivec3(-1, 0, 0),
+	ivec3(0, 0, 0),
+	ivec3(1, 0, 0),
+	ivec3(-1, -1, 0),
+	ivec3(0, -1, 0),
+	ivec3(1, -1, 0),
+
+	ivec3(-1, 1, 1),
+	ivec3(0, 1, 1),
+	ivec3(1, 1, 1),
+	ivec3(-1, 0, 1),
+	ivec3(0, 0, 1),
+	ivec3(1, 0, 1),
+	ivec3(-1, -1, 1),
+	ivec3(0, -1, 1),
+	ivec3(1, -1, 1),
+};
+
+ivec3 applyOffset(ivec3 cell, uint index)
+{
+	return cell + offsets3D[index];
 }
+
+ivec3 getCell(vec3 position, float radius)
+{
+	return ivec3(floor(position / radius));
+}
+
+uint hashCell(ivec3 cell)
+{
+	cell = ivec3(uvec3(cell));
+	uint a = cell.x * hashK1;
+	uint b = cell.y * hashK2;
+	uint c = cell.z * hashK3;
+	return (a + b + c);
+}
+
+uint keyFromPosition(vec3 position, float radius, uint tableSize)
+{
+	ivec3 cell = getCell(position, radius);
+	uint hash = hashCell(cell);
+	return keyFromHash(hash, tableSize);
+}
+
 
 #endif // GRID_HASH_H

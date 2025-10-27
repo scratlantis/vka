@@ -44,25 +44,22 @@ void main()
 
 	vecN localPos		= particles[attrID];
 	float localDensity	= particle_densities[id];
-	uint localCellKey	= calcCellKey(localPos, pc.radius, range);
 
 
 	ITERATE_START
-
-	lastCellKey = pID.cellID;
-	vecN otherPos = particles[attributeID(pID.id, attrDesc)];
-	float otherDensity = particle_densities[pID.id];
-	vecN dir = otherPos - localPos;
-	float dist = length(dir);
-	if(dist == 0.0)
-	{
-		dir = randomND(localPos) - vecN(0.5);
-	}
-	dir = normalize(dir);
-	float slope = KERNEL_DERIVATIVE(dist, pc.radius);
-	float sharedPressure = 0.5*(convertDensityToPressure(localDensity) + convertDensityToPressure(otherDensity));
-	force += sharedPressure * dir * slope * 1.0 / otherDensity;
-
+		vecN otherPos = particles[attributeID(pID.id, attrDesc)];
+		float otherDensity = particle_densities[pID.id];
+		vecN dir = otherPos - localPos;
+		float dist = length(dir);
+		if(dist == 0.0)
+		{
+			dir = randomND(localPos) - vecN(0.5);
+		}
+		dir = normalize(dir);
+		float slope = KERNEL_DERIVATIVE(dist, pc.radius);
+		float sharedPressure = 0.5*(convertDensityToPressure(localDensity) + convertDensityToPressure(otherDensity));
+		force += sharedPressure * dir * slope * 1.0 / otherDensity;
+	
 	ITERATE_END
 
 	pressure_forces[id] = force * pc.forceCoef * 0.01;

@@ -15,22 +15,22 @@ void resolve_border_collision(inout GLSLParticle particle)
 
 	if(deltaLow.x < 0.0)
 	{
-		particle.pos.x -= 2.0 * deltaLow.x;
+		particle.pos.x -= deltaLow.x;
 		particle.vel.x *= -pc.damping;
 	}
 	else if(deltaHigh.x < 0.0)
 	{
-		particle.pos.x += 2.0 * deltaHigh.x;
+		particle.pos.x += deltaHigh.x;
 		particle.vel.x *= -pc.damping;
 	}
 	if(deltaLow.y < 0.0)
 	{
-		particle.pos.y -= 2.0 * deltaLow.y;
+		particle.pos.y -= deltaLow.y;
 		particle.vel.y *= -pc.damping;
 	}
 	else if(deltaHigh.y < 0.0)
 	{
-		particle.pos.y += 2.0 * deltaHigh.y;
+		particle.pos.y += deltaHigh.y;
 		particle.vel.y *= -pc.damping;
 	}
 }
@@ -50,6 +50,6 @@ void main()
 	elem.pos += elem.vel * time;
 	resolve_border_collision(elem);
 
-	elem.vel *= 0.90;
+	elem.vel *= pc.damping;
 	particles[id] = elem;
 }

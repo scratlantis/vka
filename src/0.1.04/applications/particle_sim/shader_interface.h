@@ -2,9 +2,10 @@
 
 struct GenParticleArgs
 {
-	uint32_t particleCount;
+	uint32_t      particleCount;
 	Rect2D<float> area;
-	uint32_t seed;
+	uint32_t      seed;
+	float         radius;
 };
 
 void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer, GenParticleArgs args);

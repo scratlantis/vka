@@ -7,6 +7,11 @@ layout(location = 1) out vec3 outColor;
 
 layout(binding = 0) readonly buffer PARTICLE_DENSITIES { float densities[];};
 
+#ifdef ENABLE_DEBUG_COLOR
+layout(binding = 1) readonly buffer DEBUG_COLORS { vec4 debug_colors[];};
+layout(location = 2) out vec3 outColorDebug;
+#endif
+
 out gl_PerVertex {
         vec4 gl_Position;
         float gl_PointSize;
@@ -23,4 +28,8 @@ void main()
 	gl_Position.zw = vec2(1.0);
     gl_Position.xy*=2.0;
     gl_Position.xy-=1.0;
+
+    #ifdef ENABLE_DEBUG_COLOR
+    outColorDebug = debug_colors[gl_VertexIndex].rgb;
+    #endif
 }

@@ -19,6 +19,7 @@ void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer, GenParticleArgs ar
 	pc.y_range = vec2(args.area.y, args.area.y + args.area.height);
 	pc.seed = args.seed;
 	pc.taskSize = args.particleCount;
+	pc.radius = args.radius;
 	cmd.pushConstant(&pc, sizeof(PCGenerateParticles));
 	cmd.exec(cmdBuf);
 }
@@ -26,6 +27,8 @@ void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer, GenParticleArgs ar
 
 GVar gvar_particle_generation_seed{"Particle Seed", 42U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {0U, 100U}};
 GVar gvar_particle_generation_count{"Particle Count", 1000U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {1U, 10000U}};
+GVar gvar_particle_size{"Particle Size", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.001f, 0.5f}};
+
 void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer)
 {
 	VkRect2D_OP targetImgSize = getScissorRect(viewDimensions);
@@ -39,6 +42,7 @@ void cmdGenParticles(CmdBuffer cmdBuf, Buffer particleBuffer)
 	args.particleCount = gvar_particle_generation_count.val.v_uint;
 	args.area          = area;
 	args.seed          = gvar_particle_generation_seed.val.v_uint;
+	args.radius        = gvar_particle_size.val.v_float;
 	cmdGenParticles(cmdBuf, particleBuffer, args);
 }
 
@@ -64,11 +68,10 @@ ComputeCmd getCmdUpdateParticles(Buffer particleBuffer, Buffer forceBuffer, Upda
 GVar gvar_particle_update_damping{"Particle Damping", 0.98f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
 GVar gvar_particle_update_damping_border{"Particle Damping Border", 0.98f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
 
-GVar gvar_particle_update_gravity{"Particle Gravity", 0.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
-GVar gvar_particle_size{"Particle Size", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.001f, 0.5f}};
+GVar gvar_particle_update_gravity{"Particle Gravity", 0.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.0f}};
 
 GVar gvar_particle_density_coef{"Particle Density Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
-GVar gvar_particle_pressure_force_coef{"Particle Pressure Force Coefficient", 0.1f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.f}};
+GVar gvar_particle_pressure_force_coef{"Particle Pressure Force Coefficient", 0.1f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.f}};
 GVar gvar_particle_target_density{"Particle Target Density", 10.f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.f}};
 
 
@@ -94,6 +97,8 @@ bool SimulationResources::isInitialized() const
 	return it.isInitialized()
 		&& densityBuffer && pressureForceBuffer;
 }
+
+ComputeCmd getCmdTestIterator(Buffer particleBuf, const NeighborhoodIterator &it, Buffer colorBuffer);
 
 void cmdSimulateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, const ParticleDescription &desc, SimulationResources &res, float timeStep)
 {
@@ -123,6 +128,15 @@ void cmdSimulateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, const Particl
 		getCmdComputePressureForce(particleBuffer, res.densityBuffer, res.it, pressureCI, res.pressureForceBuffer).exec(cmdBuf);
 	}
 
+	if (1)
+	{
+		std::hash<std::string> h;
+		Buffer debugColorBuffer = nullptr;
+		gState.dataCache->fetch(debugColorBuffer, h("debug_color_buf"));
+		debugColorBuffer->changeFlags(BUFFER_FLAG_DONT_REDUCE);
+	    getCmdTestIterator(particleBuffer, res.it, debugColorBuffer).exec(cmdBuf);
+	}
+
 	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 	           VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 
@@ -146,6 +160,35 @@ void cmdSimulateParticles(CmdBuffer cmdBuf, Buffer particleBuffer, const Particl
 		getCmdUpdateParticles(particleBuffer, res.pressureForceBuffer, updateArgs).exec(cmdBuf);
 	}
 }
+
+ComputeCmd getCmdTestIterator(Buffer particleBuf, const NeighborhoodIterator &it, Buffer colorBuffer)
+{
+	colorBuffer->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+	ParticleDescription desc = particle_type<GLSLParticle>::get_description(gvar_particle_size.val.v_float);
+	uint32_t            particleCount = particleBuf->getSize() / desc.structureSize;
+	colorBuffer->changeSize(particleCount * sizeof(glm::vec4));
+	colorBuffer->recreate();
+	ComputeCmd cmd = ComputeCmd(particleCount, shaderPath + "test_iterator.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
+	it.bind(cmd, desc);
+	cmd.pushLocal();
+	cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	cmd.pushDescriptor(colorBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	struct PC
+	{
+		uint  taskSize;
+		float radius;
+		uint32_t  structureSize;
+		uint32_t  structureOffset;
+	} pc;
+	pc.taskSize        = particleCount;
+	pc.radius          = desc.radius;
+	pc.structureSize   = desc.structureSize;
+	pc.structureOffset = desc.posAttributeOffset;
+	cmd.pushConstant(&pc, sizeof(PC));
+	cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", "2"});
+	return cmd;
+}
+
 
 
 

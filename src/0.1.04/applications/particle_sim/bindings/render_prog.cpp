@@ -30,6 +30,15 @@ void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, B
 	cmd.pushConstant(&pc, sizeof(PCRenderParticles), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	cmd.pushDescriptor(densityBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
+	std::hash<std::string> h;
+	Buffer                 debugColorBuffer = nullptr;
+	if (gState.dataCache->fetch(debugColorBuffer, h("debug_color_buf")) && debugColorBuffer->getSize() != 0)
+	{
+		cmd.pushDescriptor(debugColorBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		cmd.pipelineDef.shaderDefinitions[0].args.push_back({"ENABLE_DEBUG_COLOR", ""});
+		cmd.pipelineDef.shaderDefinitions[1].args.push_back({"ENABLE_DEBUG_COLOR", ""});
+	}
+
 	cmd.exec(cmdBuf);
 }
 

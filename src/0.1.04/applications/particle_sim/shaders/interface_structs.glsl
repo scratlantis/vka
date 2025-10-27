@@ -7,6 +7,7 @@ struct PCGenerateParticles
 	vec2 y_range;
 	uint seed;
 	uint taskSize;
+	float radius;
 };
 
 struct GLSLParticle

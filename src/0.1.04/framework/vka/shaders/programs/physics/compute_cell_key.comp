@@ -36,5 +36,6 @@ void main()
 	uint totalCnt = pc.taskSize;
 	uint index = getParticleIndex(id);
 	PARTICLE_TYPE p = particles[index];
-	cellKeys[id] = calcCellKey(p, pc.radius, totalCnt);
+	//cellKeys[id] = calcCellKey(p, pc.radius, totalCnt);
+	cellKeys[id] = KeyFromPosition(p, pc.radius, totalCnt);
 }

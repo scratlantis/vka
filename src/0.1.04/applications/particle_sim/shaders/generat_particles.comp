@@ -15,13 +15,18 @@ void main()
 	}
 
 	uint id = gl_GlobalInvocationID.x;
-	uint seed = pc.taskSize*pc.seed + id;
+	uint seed = pc.taskSize*pc.seed + id + 46732468;
 
 	GLSLParticle elem;
+	uint xSize = uint(sqrt(float(pc.taskSize)));
+	//vec2 rng = vec2(float(id%xSize)/float(xSize), float(id/xSize));
 	vec2 rng = vec2(unormNext(seed), unormNext(seed));
 	vec2 scale = vec2(pc.x_range.y - pc.x_range.x, pc.y_range.y - pc.y_range.x);
+	scale -= vec2(2.0*pc.radius);
 	vec2 offset = vec2(pc.x_range.x, pc.y_range.x);
-	elem.pos = rng * scale + offset;
+	offset += vec2(pc.radius);
+	elem.pos = rng * scale * 0.5f + scale * 0.25f + offset;
+	//elem.pos = rng * scale + offset;
 	elem.vel = vec2(0.0);
 	particles[id] = elem;
 	//particles[id] = rng * scale + offset;

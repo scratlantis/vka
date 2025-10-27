@@ -21,7 +21,6 @@ void main()
 	{
 		return;
 	}
-	float density = 0.0f;
 
 
 	AttributeDescriptor attrDesc;
@@ -34,17 +33,27 @@ void main()
 	uint attrID			= attributeID(id, attrDesc);
 
 	vecN localPos		= particles[attrID];
-	uint localCellKey	= calcCellKey(localPos, pc.radius, range);
+	//uint localCellKey	= calcCellKey(localPos, pc.radius, range);
+	float density = 0.0f;
 
 	ITERATE_START
 	
 	vecN otherPos = particles[attributeID(pID.id, attrDesc)];
 	density += KERNEL_WEIGHT(distance(localPos, otherPos), pc.radius);
-	
 	ITERATE_END
-
 	density += KERNEL_WEIGHT(0, pc.radius);
 
-	density *= KERNEL_NORMALIZATION(pc.radius)*pc.densityCoef * 0.000001;
+	//float densityB = 0.0f;
+	//for(uint i = 0; i<range; i++)
+	//{
+	//	vecN otherPos = particles[attributeID(i, attrDesc)];
+	//	densityB += KERNEL_WEIGHT(distance(localPos, otherPos), pc.radius);
+	//}
+
+	//density = abs(density-densityB);
+
+	density *= KERNEL_NORMALIZATION(pc.radius)*pc.densityCoef * 0.0001;
+
 	particle_densities[id] = density;
+	//particle_densities[id] = densityB;
 }

@@ -44,7 +44,7 @@ void cmdRenderParticles(CmdBuffer cmdBuf, Image target, Buffer particleBuffer, B
 }
 
 extern GVar gvar_particle_size;
-GVar gvar_particle_rel_render_size{"Particle Render Size", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {1.0f, 10.f}};
+GVar gvar_particle_rel_render_size{"Particle Render Size", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {0.1f, 10.f}};
 GVar gvar_particle_render_brightness{"Particle Render Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {0.0f, 1.f}};
 GVar gvar_particle_render_vel_brightness{"Particle Velocity Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER, {0.0f, 100.f}};
 

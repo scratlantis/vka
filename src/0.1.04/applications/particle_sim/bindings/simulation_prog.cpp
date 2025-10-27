@@ -90,7 +90,7 @@ GVar gvar_particle_update_gravity{"Particle Gravity", 0.0f, GVAR_FLOAT_RANGE, GU
 
 GVar gvar_particle_density_coef{"Particle Density Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
 GVar gvar_particle_pressure_force_coef{"Particle pressure force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 0.1f}};
-GVar gvar_particle_viscosity_force_coef{"Particle viscosity force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
+GVar gvar_particle_viscosity_force_coef{"Particle viscosity force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.0f}};
 GVar gvar_particle_target_density{"Particle Target Density", 10.f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.f}};
 
 
@@ -117,6 +117,7 @@ bool SimulationResources::isInitialized() const
 		&& densityBuffer && forceBuffer;
 }
 
+GVar gvar_simulation_time_scale{"Simulation Time Scale", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_GENERAL, {0.1f, 10.f}};
 void cmdApplyTimeStep(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer forceBuffer, float timeStep, Buffer predictedPos, Buffer velocityBuffer)
 {
 	VkRect2D_OP   targetImgSize = getScissorRect(viewDimensions);
@@ -130,7 +131,7 @@ void cmdApplyTimeStep(CmdBuffer cmdBuf, Buffer particleBuffer, Buffer forceBuffe
 	UpdateParticleArgs updateArgs{};
 	updateArgs.bounds                 = area;
 	updateArgs.particleSize           = gvar_particle_size.val.v_float * cParticle_size_scale;
-	updateArgs.dt                     = timeStep;
+	updateArgs.dt                     = timeStep * gvar_simulation_time_scale.val.v_float;
 	updateArgs.damping                = gvar_particle_update_damping.val.v_float;
 	updateArgs.dampingBorderCollision = gvar_particle_update_damping_border.val.v_float;
 	updateArgs.gravity                = gvar_particle_update_gravity.val.v_float;

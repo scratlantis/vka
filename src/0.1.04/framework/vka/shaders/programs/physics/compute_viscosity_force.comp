@@ -44,7 +44,6 @@ void main()
 
 	ITERATE_START(localPos, id)
 		vecN otherPos = particles[attributeID(otherId, attrDesc)];
-		float otherDensity = particle_densities[otherId];
 		vecN dir = otherPos - localPos;
 		float dist = length(dir);
 		if(dist > pc.radius)

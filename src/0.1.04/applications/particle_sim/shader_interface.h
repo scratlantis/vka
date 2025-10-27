@@ -1,6 +1,6 @@
 #include "config.h"
 
-static const float cParticle_size_scale = 0.01f;
+static const float cParticle_size_scale = 0.1f;
 
 struct GenParticleArgs
 {

@@ -30,7 +30,7 @@ DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer dens
 		vec2  viewOffset;
 		vec2  viewScale;
 		vec2  extent;
-		float pointSize;
+		float radius;
 		float intensity;
 		float velIntensity;
 	} pc;
@@ -39,7 +39,7 @@ DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer dens
 	float maxDim = float(max(extent.width, extent.height));
 	pc.viewScale.x = maxDim / float(extent.width);
 	pc.viewScale.y = maxDim / float(extent.height);
-	pc.pointSize      = gvar_particle_rel_render_size.val.v_float * gvar_particle_size.val.v_float * cParticle_size_scale;
+	pc.radius         = gvar_particle_rel_render_size.val.v_float * gvar_particle_size.val.v_float * cParticle_size_scale * maxDim;
 	pc.intensity      = gvar_particle_render_brightness.val.v_float;
 	pc.velIntensity   = gvar_particle_render_vel_brightness.val.v_float;
 	pc.extent = vec2(static_cast<float>(extent.width),static_cast<float>(extent.height));

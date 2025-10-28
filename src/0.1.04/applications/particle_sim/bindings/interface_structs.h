@@ -89,3 +89,17 @@ struct particle_type<vec2>
 		return desc;
 	}
 };
+
+template <>
+struct particle_type<vec4>
+{
+	static physics::ParticleDescription get_description(float radius)
+	{
+		physics::ParticleDescription desc{};
+		desc.radius             = radius;
+		desc.dimensions         = physics::PD_3D;
+		desc.structureSize      = sizeof(vec4); // align to vec4
+		desc.posAttributeOffset = 0;
+		return desc;
+	}
+};

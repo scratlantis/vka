@@ -31,8 +31,8 @@ struct PushStruct
 	uint pad4;
 #endif
 	uvec2 mouseButtons;
-	float mouseRadius;
-	float mouseStrength;
+	float cursorRadius;
+	float cursorStrength;
 
 	float radius;
 	float dt;
@@ -68,13 +68,13 @@ void main()
 	force.y += pc.gravity;
 	vecN cursorForce;
 #if VECN_DIM == 3
-	cursorForce = getCursorForce(pc.cursorPos, elem.pos, pc.radius);
+	cursorForce = getCursorForce(pc.cursorPos, elem.pos, pc.cursor);
 #else
 	vec2 localMouseCoord = (pc.cursorPos-pc.minRange)*(pc.maxRange - pc.minRange);
-	cursorForce = getCursorForce(localMouseCoord, elem.pos, pc.radius);
+	cursorForce = getCursorForce(localMouseCoord, elem.pos, pc.cursorRadius);
 #endif
-	if(pc.mouseButtons.x == 1) force += cursorForce * pc.mouseStrength;
-	if(pc.mouseButtons.y == 1) force -= cursorForce * pc.mouseStrength;
+	if(pc.mouseButtons.x == 1) force += cursorForce * pc.cursorStrength;
+	if(pc.mouseButtons.y == 1) force -= cursorForce * pc.cursorStrength;
 
 	// Apply forces
 	float time = pc.dt * 0.001;
@@ -95,35 +95,4 @@ void main()
 	predElem.vel.y += pc.gravity * time;
 	predElem.pos += predElem.vel * time;
 	pred_pos[id] = predElem.pos;
-
-
-	//vec2 dir = localMouseCoord - elem.pos;
-	//float dist = length(dir);
-	//dir = normalize(dir);
-	//if(dist < pc.mouse_radius)
-	//{
-	//	float weight = kernelWeight_smooth(dist, pc.mouse_radius) * kernelNormalization_smooth(pc.mouse_radius)*0.001;
-	//	if(pc.mouse_buttons.x == 1)
-	//	{
-	//		force += dir * weight * pc.mouse_influence * 100.0;
-	//	}
-	//	else if(pc.mouse_buttons.y == 1)
-	//	{
-	//		force -= dir * weight * pc.mouse_influence  * 100.0;
-	//	}
-	//}
-
-	//resolve_border_collision(elem);
-	//
-	//particles[id] = elem;
-	//
-	//vel[id] = elem.vel;
-	//
-	//GLSLParticle predElem = elem;
-	//predElem.vel.y += pc.gravity * time;
-	////predElem.vel += force * time;
-	//predElem.pos += predElem.vel * time;
-	////resolve_border_collision(predElem);
-	//pred_pos[id] = predElem.pos;
-
 }

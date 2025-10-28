@@ -10,9 +10,9 @@ namespace vka
 			PD_3D
 		};
 
-		constexpr uint32_t vec_size(ParticleDimensions dim)
+		constexpr uint32_t vec_size_aligned(ParticleDimensions dim)
 		{
-			return (dim == PD_3D) ? sizeof(glm::vec3) : sizeof(glm::vec2);
+			return (dim == PD_3D) ? sizeof(glm::vec4) : sizeof(glm::vec2);
 		}
 
 		struct ParticleDescription

@@ -20,7 +20,6 @@ struct SimulationResources
 	Buffer                        forceBuffer = nullptr;
 	void                          init(IResourcePool *pPool, uint32_t preallocCount = 0);
 	bool                          isInitialized() const;
-	void                          SimulationResources::cmdReset(CmdBuffer cmdBuf, uint32_t particleCount, physics::ParticleDimensions dim);
 };
 
 void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes);

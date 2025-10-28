@@ -110,7 +110,7 @@ class Buffer_R : public Resource_T<VkBuffer>
 		track(pPool);
 		state.type            = BufferType::NONE;
 		state.usage           = 0;
-		state.memProperty.vma = VMA_MEMORY_USAGE_CPU_ONLY;
+		state.memProperty.vma = VMA_MEMORY_USAGE_GPU_ONLY;        // VMA_MEMORY_USAGE_CPU_ONLY;
 		state.size            = 0;
 		newState              = state;
 	};

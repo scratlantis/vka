@@ -7,8 +7,8 @@ using namespace physics;
 void ParticleResources::createTemporaryBuffers()
 {
 	tmpParticleBuffer = particleMemory->getSubBuffer({0, *pParticleCount * desc.structureSize});
-	tmpPredPosBuffer  = predPosMemory->getSubBuffer({0, *pParticleCount * vec_size(desc.dimensions)});
-	tmpVelocityBuffer = velocityMemory->getSubBuffer({0, *pParticleCount * vec_size(desc.dimensions)});
+	tmpPredPosBuffer  = predPosMemory->getSubBuffer({0, *pParticleCount * vec_size_aligned(desc.dimensions)});
+	tmpVelocityBuffer = velocityMemory->getSubBuffer({0, *pParticleCount * vec_size_aligned(desc.dimensions)});
 }
 
 void ParticleResources::refreshTemporaryBuffers()
@@ -43,15 +43,29 @@ void ParticleResources::init(uint32_t maxParticleCount, const ParticleDescriptio
 	particleMemory->recreate();
 
 	predPosMemory = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	predPosMemory->changeSize(maxParticleCount * vec_size(desc.dimensions));
+	predPosMemory->changeSize(maxParticleCount * vec_size_aligned(desc.dimensions));
 	predPosMemory->recreate();
 
 	velocityMemory = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	velocityMemory->changeSize(maxParticleCount * vec_size(desc.dimensions));
+	velocityMemory->changeSize(maxParticleCount * vec_size_aligned(desc.dimensions));
 	velocityMemory->recreate();
 
 	this->desc            = desc;
 	this->pCurrentFrameID = pFrameID;
 	this->pParticleCount  = pParticleCount;
+
+	descAttr = desc;
+	descAttr.posAttributeOffset = 0;
+	descAttr.velAttributeOffset = 0;
+	if (desc.dimensions == PD_3D)
+	{
+		descAttr.structureSize = vec_size_aligned(PD_3D);
+	}
+	else
+	{
+		descAttr.structureSize = vec_size_aligned(PD_2D);
+	}
+
+
 	simRes.init(pPool, maxParticleCount);
 }

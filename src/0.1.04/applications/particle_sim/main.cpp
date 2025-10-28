@@ -55,6 +55,19 @@ int main()
 	{
 		gvar_display_frame_time.val.v_float = static_cast<float>(gState.frameTime);
 
+		bool shaderRecompiled = false;
+		if (gState.io.keyPressedEvent[GLFW_KEY_R])
+		{
+			clearShaderCache();
+			gState.io.buildShaderLib();
+			shaderRecompiled = true;
+		}
+		bool reset = shaderRecompiled
+			|| gState.io.keyPressedEvent[GLFW_KEY_Q]
+			|| curFrameCount == 0;
+
+		std::vector<bool> settingsChanged = buildGui();
+
 		if (curFrameCount == 0 || curAppMode != static_cast<ApplicationMode>(gvar_application_mode.val.v_uint))
 		{
 			curAppMode = static_cast<ApplicationMode>(gvar_application_mode.val.v_uint);
@@ -68,22 +81,9 @@ int main()
 					particleDesc = particle_type<GLSLParticle3D>::get_description(gvar_particle_size.val.v_float * cParticle_size_scale);
 					break;
 			}
-
 			particleRes.init(gvar_particle_generation_count.set.range.max.v_uint, particleDesc, gState.heap, &curFrameCount, &gvar_particle_generation_count.val.v_uint);
+			reset = true;
 		}
-
-		bool shaderRecompiled = false;
-		if (gState.io.keyPressedEvent[GLFW_KEY_R])
-		{
-			clearShaderCache();
-			gState.io.buildShaderLib();
-			shaderRecompiled = true;
-		}
-		bool reset = gState.io.keyPressedEvent[GLFW_KEY_R]
-			|| gState.io.keyPressedEvent[GLFW_KEY_Q]
-			|| curFrameCount == 0;
-
-		std::vector<bool> settingsChanged = buildGui();
 
 		CmdBuffer cmdBuf       = createCmdBuffer(gState.frame->stack);
 		if(reset || guiCatChanged(GUI_CAT_PARTICLE_GEN, settingsChanged))
@@ -91,6 +91,7 @@ int main()
 			getCmdGenParticles(&particleRes).exec(cmdBuf);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
 		}
+
 		// Simulate
 		for (uint32_t step = 0; step < gvar_simulation_step_count.val.v_uint; step++)
 		{
@@ -104,10 +105,13 @@ int main()
 		Image     swapchainImg = getSwapchainImage();
 		getCmdFill(swapchainImg, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, vec4(0.25, 0.25, 0.3, 1.0)).exec(cmdBuf);
 
+
+		
+
 		// Render
 		{
 			img_shaded->setClearValue(ClearValue::black());
-			getCmdRenderParticles2D(img_shaded, particleRes.getParticleBuf(), particleRes.simRes.densityBuffer);
+			getCmdRenderParticles2D(img_shaded, particleRes.getParticleBuf(), particleRes.simRes.densityBuffer).exec(cmdBuf);
 		}
 		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 

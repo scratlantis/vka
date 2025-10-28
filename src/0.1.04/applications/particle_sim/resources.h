@@ -24,6 +24,7 @@ class ParticleResources
   public:
 	SimulationResources simRes;
 	physics::ParticleDescription desc;
+	physics::ParticleDescription descAttr;
 
 	bool isInitialized() const
 	{

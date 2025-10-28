@@ -19,7 +19,7 @@ struct PushStruct
 	vec2	viewOffset;
 	vec2	viewScale;
 	vec2	extent;
-	float	pointSize;
+	float	radius;
 	float	intensity;
 	float	velIntensity;
 };
@@ -29,7 +29,7 @@ layout(push_constant) uniform PC {PushStruct pc;};
 void main()
 {
     gl_Position.xy = (pos.xy-pc.viewOffset)*pc.viewScale;
-	gl_PointSize = pc.pointSize;
+	gl_PointSize = pc.radius;
     outPos = gl_Position.xy;
     float density  = densities[gl_VertexIndex]; 
     outColor = vec3(abs(vel*pc.velIntensity),density);

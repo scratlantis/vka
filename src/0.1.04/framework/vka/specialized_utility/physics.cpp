@@ -84,16 +84,16 @@ namespace vka
 	        return cmd;
         }
 
-		ComputeCmd getCmdComputeDensity(Buffer particleBuf, const NeighborhoodIterator& it, const DensityComputeInfo& densityCI, Buffer densityBuf)
+		ComputeCmd getCmdComputeDensity(Buffer posBuf, const NeighborhoodIterator &it, const DensityComputeInfo &densityCI, Buffer densityBuf)
 		{
 	        densityBuf->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	        uint32_t particleCount = particleBuf->getSize() / densityCI.particleDesc.structureSize;
+	        uint32_t particleCount = posBuf->getSize() / densityCI.particleDesc.structureSize;
 	        densityBuf->changeSize(particleCount * sizeof(float));
 	        densityBuf->recreate();
 	        ComputeCmd cmd = ComputeCmd(particleCount, cVkaShaderPath + "physics/compute_density.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
 	        it.bind(cmd, densityCI.particleDesc);
 	        cmd.pushLocal();
-	        cmd.pushDescriptor(particleBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(posBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	        cmd.pushDescriptor(densityBuf, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	        struct PC
 	        {

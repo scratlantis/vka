@@ -2,41 +2,55 @@
 #include "../lib/lib/random.glsl"
 #include "../lib/lib/kernels.glsl"
 
-layout(push_constant) uniform PC {PCUpdateParticles pc;};
-layout(binding = LOCAL_BINDING_OFFSET + 0) buffer PARTICLES { GLSLParticle particles[];};
-layout(binding = LOCAL_BINDING_OFFSET + 1) readonly buffer FORCE { vec2 particle_force[];};
-layout(binding = LOCAL_BINDING_OFFSET + 2) writeonly buffer PREDICTED_POS { vec2 pred_pos[];};
-layout(binding = LOCAL_BINDING_OFFSET + 3) writeonly buffer VELOCITY { vec2 vel[];};
+#if VECN_DIM == 3
+#define PARTICLE_TYPE GLSLParticle3D
+#else
+#define PARTICLE_TYPE GLSLParticle
+#endif
+
+#include "particle_interaction.glsl"
 
 
-
-void resolve_border_collision(inout GLSLParticle particle)
+struct PushStruct
 {
-	float radius = 0.5 * pc.pointSize;
-	vec2 deltaLow = particle.pos - (vec2(pc.x_range.x, pc.y_range.x) + vec2(radius));
-	vec2 deltaHigh = (vec2(pc.x_range.y, pc.y_range.y) - vec2(radius)) - particle.pos;
+#if VECN_DIM == 3
+	vec3 minRange;
+	uint pad0;
 
-	if(deltaLow.x < 0.0)
-	{
-		particle.pos.x -= deltaLow.x;
-		particle.vel.x *= -pc.damping;
-	}
-	else if(deltaHigh.x < 0.0)
-	{
-		particle.pos.x += deltaHigh.x;
-		particle.vel.x *= -pc.damping;
-	}
-	if(deltaLow.y < 0.0)
-	{
-		particle.pos.y -= deltaLow.y;
-		particle.vel.y *= -pc.damping;
-	}
-	else if(deltaHigh.y < 0.0)
-	{
-		particle.pos.y += deltaHigh.y;
-		particle.vel.y *= -pc.damping;
-	}
-}
+	vec3 maxRange;
+	uint pad1;
+
+	vec3 cursorPos;
+	uint pad2;
+#else
+	vec2 minRange;
+	vec2 maxRange;
+
+	vec2 cursorPos;
+	uint pad3;
+	uint pad4;
+#endif
+	uvec2 mouseButtons;
+	float mouseRadius;
+	float mouseStrength;
+
+	float radius;
+	float dt;
+	float damping;
+	float dampingBorder;
+
+	float gravity;
+	uint taskSize;
+};
+
+
+
+layout(push_constant) uniform PC {PushStruct pc;};
+layout(binding = LOCAL_BINDING_OFFSET + 0) buffer PARTICLES { PARTICLE_TYPE particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) readonly buffer FORCE { vecN particle_force[];};
+layout(binding = LOCAL_BINDING_OFFSET + 2) writeonly buffer PREDICTED_POS { vecN pred_pos[];};
+layout(binding = LOCAL_BINDING_OFFSET + 3) writeonly buffer VELOCITY { vecN vel[];};
+
 
 void main()
 {
@@ -47,44 +61,69 @@ void main()
 
 
 	uint id = gl_GlobalInvocationID.x;
-	vec2 force = particle_force[id];
+	PARTICLE_TYPE elem = particles[id];
 
-	vec2 localMouseCoord = (pc.mouse_pos-vec2(pc.x_range.x, pc.y_range.x))*(vec2(pc.x_range.y, pc.y_range.y) - vec2(pc.x_range.x, pc.y_range.x));
-
-	GLSLParticle elem = particles[id];
-	float time = pc.dt * 0.001;
+	// Accumulate forces
+	vecN force = particle_force[id];
 	force.y += pc.gravity;
+	vecN cursorForce;
+#if VECN_DIM == 3
+	cursorForce = getCursorForce(pc.cursorPos, elem.pos, pc.radius);
+#else
+	vec2 localMouseCoord = (pc.cursorPos-pc.minRange)*(pc.maxRange - pc.minRange);
+	cursorForce = getCursorForce(localMouseCoord, elem.pos, pc.radius);
+#endif
+	if(pc.mouseButtons.x == 1) force += cursorForce * pc.mouseStrength;
+	if(pc.mouseButtons.y == 1) force -= cursorForce * pc.mouseStrength;
 
-	vec2 dir = localMouseCoord - elem.pos;
-	float dist = length(dir);
-	dir = normalize(dir);
-	if(dist < pc.mouse_radius)
-	{
-		float weight = kernelWeight_smooth(dist, pc.mouse_radius) * kernelNormalization_smooth(pc.mouse_radius)*0.001;
-		if(pc.mouse_buttons.x == 1)
-		{
-			force += dir * weight * pc.mouse_influence * 100.0;
-		}
-		else if(pc.mouse_buttons.y == 1)
-		{
-			force -= dir * weight * pc.mouse_influence  * 100.0;
-		}
-	}
-
+	// Apply forces
+	float time = pc.dt * 0.001;
 	elem.vel += force * time;
 	elem.pos += elem.vel * time;
-	resolve_border_collision(elem);
 
-	elem.vel *= pc.damping;
+	// For now: Hardcoded border collision
+	resolveBorderCollision(elem, pc.minRange, pc.maxRange, pc.radius, pc.dampingBorder);
+	elem.vel *= pow(pc.damping, time*60.0); // Frame rate independent damping
+
+	//  Write back data
+
 	particles[id] = elem;
-
 	vel[id] = elem.vel;
 
+	// Predicted pos next frame
 	GLSLParticle predElem = elem;
 	predElem.vel.y += pc.gravity * time;
-	//predElem.vel += force * time;
 	predElem.pos += predElem.vel * time;
-	//resolve_border_collision(predElem);
 	pred_pos[id] = predElem.pos;
+
+
+	//vec2 dir = localMouseCoord - elem.pos;
+	//float dist = length(dir);
+	//dir = normalize(dir);
+	//if(dist < pc.mouse_radius)
+	//{
+	//	float weight = kernelWeight_smooth(dist, pc.mouse_radius) * kernelNormalization_smooth(pc.mouse_radius)*0.001;
+	//	if(pc.mouse_buttons.x == 1)
+	//	{
+	//		force += dir * weight * pc.mouse_influence * 100.0;
+	//	}
+	//	else if(pc.mouse_buttons.y == 1)
+	//	{
+	//		force -= dir * weight * pc.mouse_influence  * 100.0;
+	//	}
+	//}
+
+	//resolve_border_collision(elem);
+	//
+	//particles[id] = elem;
+	//
+	//vel[id] = elem.vel;
+	//
+	//GLSLParticle predElem = elem;
+	//predElem.vel.y += pc.gravity * time;
+	////predElem.vel += force * time;
+	//predElem.pos += predElem.vel * time;
+	////resolve_border_collision(predElem);
+	//pred_pos[id] = predElem.pos;
 
 }

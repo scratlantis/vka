@@ -9,12 +9,19 @@ namespace vka
 			PD_2D,
 			PD_3D
 		};
+
+		constexpr uint32_t vec_size(ParticleDimensions dim)
+		{
+			return (dim == PD_3D) ? sizeof(glm::vec3) : sizeof(glm::vec2);
+		}
+
 		struct ParticleDescription
 		{
 	        float              radius;
 	        ParticleDimensions dimensions;
 	        uint32_t           structureSize;
 	        uint32_t           posAttributeOffset;
+	        uint32_t           velAttributeOffset;
 
 			std::string getStructDef() const;
 

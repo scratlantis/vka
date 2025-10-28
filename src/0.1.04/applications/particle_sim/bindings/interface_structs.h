@@ -41,6 +41,41 @@ struct particle_type<GLSLParticle>
 	}
 };
 
+
+template <>
+struct vertex_type<GLSLParticle3D>
+{
+	VertexDataLayout data_layout()
+	{
+		VertexDataLayout layout{};
+		layout.formats =
+		    {
+		        VK_FORMAT_R32G32B32_SFLOAT,
+		        VK_FORMAT_R32G32B32_SFLOAT};
+		layout.offsets =
+		    {
+		        offsetof(GLSLParticle3D, pos),
+		        offsetof(GLSLParticle3D, vel)};
+		layout.stride = sizeof(GLSLParticle3D);
+		return layout;
+	}
+};
+
+
+template<>
+struct particle_type<GLSLParticle3D>
+{
+	static physics::ParticleDescription get_description(float radius)
+	{
+		physics::ParticleDescription desc{};
+		desc.radius = radius;
+		desc.dimensions = physics::PD_3D;
+		desc.structureSize = sizeof(GLSLParticle3D);
+		desc.posAttributeOffset = offsetof(GLSLParticle3D, pos);
+		return desc;
+	}
+};
+
 template <>
 struct particle_type<vec2>
 {

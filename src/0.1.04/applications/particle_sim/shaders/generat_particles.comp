@@ -1,12 +1,33 @@
 #include "interface_structs.glsl"
 #include "../lib/lib/random.glsl"
 
-layout(push_constant) uniform PC {PCGenerateParticles pc;};
-layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { GLSLParticle particles[];};
-layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer PREDICTED_POS { vec2 pred_pos[];};
-//layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { vec2 particles[];};
 
+struct PushStruct
+{
+#if VECN_DIM == 3
+	vec3 minRange;
+	uint pad0;
 
+	vec3 maxRange;
+	uint pad1;
+#else
+	vec2 minRange;
+	vec2 maxRange;
+#endif
+	uint seed;
+	uint taskSize;
+	float radius;
+};
+
+#if VECN_DIM == 3
+#define PARTICLE_TYPE GLSLParticle3D
+#else
+#define PARTICLE_TYPE GLSLParticle
+#endif
+
+layout(push_constant) uniform PC {PushStruct pc;};
+layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { PARTICLE_TYPE particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer PREDICTED_POS { vecN pred_pos[];};
 
 void main()
 {
@@ -18,17 +39,29 @@ void main()
 	uint id = gl_GlobalInvocationID.x;
 	uint seed = pc.taskSize*pc.seed + id + 46732468;
 
-	GLSLParticle elem;
-	uint xSize = uint(sqrt(float(pc.taskSize)));
-	//vec2 rng = vec2(float(id%xSize)/float(xSize), float(id/xSize));
-	vec2 rng = vec2(unormNext(seed), unormNext(seed));
-	vec2 scale = vec2(pc.x_range.y - pc.x_range.x, pc.y_range.y - pc.y_range.x);
-	scale -= vec2(2.0*pc.radius);
-	vec2 offset = vec2(pc.x_range.x, pc.y_range.x);
-	offset += vec2(pc.radius);
+	vecN rng;
+	#if VECN_DIM == 3
+	rng = vec3(unormNext(seed), unormNext(seed), unormNext(seed));
+	#else
+	rng = vec2(unormNext(seed), unormNext(seed));
+	#endif
+
+	vecN scale = pc.maxRange - pc.minRange - vec2(2.0*pc.radius);
+	vecN offset = pc.minRange + vec2(pc.radius);
+
+	PARTICLE_TYPE elem;
 	elem.pos = rng * scale * 0.5f + scale * 0.25f + offset;
-	//elem.pos = rng * scale + offset;
 	elem.vel = vec2(0.0);
 	particles[id] = elem;
 	pred_pos[id] = elem.pos;
+
+	//vec2 scale = vec2(pc.x_range.y - pc.x_range.x, pc.y_range.y - pc.y_range.x);
+	//scale -= vec2(2.0*pc.radius);
+	//vec2 offset = vec2(pc.x_range.x, pc.y_range.x);
+	//offset += vec2(pc.radius);
+	//elem.pos = rng * scale * 0.5f + scale * 0.25f + offset;
+	////elem.pos = rng * scale + offset;
+	//elem.vel = vec2(0.0);
+	//particles[id] = elem;
+	//pred_pos[id] = elem.pos;
 }

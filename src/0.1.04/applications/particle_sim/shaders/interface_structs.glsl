@@ -1,6 +1,22 @@
 #ifndef PARTICLE_INTERFACE_STRUCTS
 #define PARTICLE_INTERFACE_STRUCTS
 
+
+struct GLSLParticle
+{
+	vec2 pos;
+	vec2 vel;
+};
+
+struct GLSLParticle3D
+{
+	vec3 pos;
+	uint pad0;
+
+	vec3 vel;
+	uint pad1;
+};
+
 struct PCGenerateParticles
 {
 	vec2 x_range;
@@ -10,21 +26,6 @@ struct PCGenerateParticles
 	float radius;
 };
 
-struct GLSLParticle
-{
-	vec2 pos;
-	vec2 vel;
-};
-
-struct PCRenderParticles
-{
-	vec2	viewOffset;
-	vec2	viewScale;
-	vec2	extent;
-	float	pointSize;
-	float	intensity;
-	float	velIntensity;
-};
 
 struct PCUpdateParticles
 {

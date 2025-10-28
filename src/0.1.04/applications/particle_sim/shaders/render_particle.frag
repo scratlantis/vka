@@ -1,5 +1,4 @@
 #include "interface_structs.glsl"
-layout(push_constant) uniform PC {PCRenderParticles pc;};
 layout(location = 0) out vec4 outColor;
 layout(location = 0) in vec2 inPos;
 layout(location = 1) in vec3 inColor;
@@ -8,6 +7,16 @@ layout(location = 1) in vec3 inColor;
 layout(location = 2) in vec3 inColorDebug;
 #endif
 
+struct PushStruct
+{
+	vec2	viewOffset;
+	vec2	viewScale;
+	vec2	extent;
+	float	pointSize;
+	float	intensity;
+	float	velIntensity;
+};
+layout(push_constant) uniform PC {PushStruct pc;};
 
 void main()
 {

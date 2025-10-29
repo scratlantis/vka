@@ -68,7 +68,7 @@ void main()
 	force.y += pc.gravity;
 	vecN cursorForce;
 #if VECN_DIM == 3
-	cursorForce = getCursorForce(pc.cursorPos, elem.pos, pc.cursor);
+	cursorForce = getCursorForce(pc.cursorPos, elem.pos, pc.cursorRadius);
 #else
 	vec2 localMouseCoord = (pc.cursorPos-pc.minRange)*(pc.maxRange - pc.minRange);
 	cursorForce = getCursorForce(localMouseCoord, elem.pos, pc.cursorRadius);
@@ -83,6 +83,7 @@ void main()
 
 	// For now: Hardcoded border collision
 	resolveBorderCollision(elem, pc.minRange, pc.maxRange, pc.radius, pc.dampingBorder);
+	//resolveBorderCollision(elem, vec3(0.0), vec3(1.0), 0.01, pc.dampingBorder);
 	elem.vel *= pow(pc.damping, time*60.0); // Frame rate independent damping
 
 	//  Write back data
@@ -91,7 +92,7 @@ void main()
 	vel[id] = elem.vel;
 
 	// Predicted pos next frame
-	GLSLParticle predElem = elem;
+	PARTICLE_TYPE predElem = elem;
 	predElem.vel.y += pc.gravity * time;
 	predElem.pos += predElem.vel * time;
 	pred_pos[id] = predElem.pos;

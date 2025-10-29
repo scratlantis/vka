@@ -46,22 +46,13 @@ void main()
 	rng = vec2(unormNext(seed), unormNext(seed));
 	#endif
 
-	vecN scale = pc.maxRange - pc.minRange - vec2(2.0*pc.radius);
-	vecN offset = pc.minRange + vec2(pc.radius);
+	vecN scale = pc.maxRange - pc.minRange - vecN(2.0*pc.radius);
+	vecN offset = pc.minRange + vecN(pc.radius);
 
 	PARTICLE_TYPE elem;
 	elem.pos = rng * scale * 0.5f + scale * 0.25f + offset;
-	elem.vel = vec2(0.0);
+	//elem.pos = rng * vecN(1.0);
+	elem.vel = vecN(0.0);
 	particles[id] = elem;
 	pred_pos[id] = elem.pos;
-
-	//vec2 scale = vec2(pc.x_range.y - pc.x_range.x, pc.y_range.y - pc.y_range.x);
-	//scale -= vec2(2.0*pc.radius);
-	//vec2 offset = vec2(pc.x_range.x, pc.y_range.x);
-	//offset += vec2(pc.radius);
-	//elem.pos = rng * scale * 0.5f + scale * 0.25f + offset;
-	////elem.pos = rng * scale + offset;
-	//elem.vel = vec2(0.0);
-	//particles[id] = elem;
-	//pred_pos[id] = elem.pos;
 }

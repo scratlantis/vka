@@ -46,6 +46,7 @@ class ShaderDefinition : public ResourceIdentifier
 	std::string fileIDShort() const;
 	std::string fileName() const;
 	std::string suffix() const;
+	VkShaderStageFlagBits stage() const;
 
 	std::string preprocessedPath() const;
 	static std::string preprocessedLibPath(const std::string &path);

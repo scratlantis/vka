@@ -18,9 +18,10 @@ struct CameraCI
 	float      zNear;
 	float      zFar;
 };
-void bindCamera(ComputeCmd &cmd, Buffer camBuf, Buffer camInstBuf);
-void cmdUpdateCamera(CmdBuffer cmdBuf, Buffer camBuf, Buffer camInstBuf, CameraCI ci);
-void bindScene(ComputeCmd &cmd, const pbr::USceneData *pScene);
+void   bindCamera(ComputeCmd &cmd, Buffer camBuf, Buffer camInstBuf);
+void   bindCamera(DrawCmd &cmd, Buffer camBuf, Buffer camInstBuf, VkShaderStageFlags stageFlags);
+void   cmdUpdateCamera(CmdBuffer cmdBuf, Buffer camBuf, Buffer camInstBuf, CameraCI ci);
+void   bindScene(ComputeCmd &cmd, const pbr::USceneData *pScene);
 void   bindMockScene(ComputeCmd &cmd);
 Buffer cmdGetScalarFieldUniform(CmdBuffer cmdBuf, IResourcePool *pPool, float densityScale, float minDensity, float maxDensity);
 void   bindScalarField(ComputeCmd &cmd, Image scalarField, float rayMarchStepSize, Buffer ubo);

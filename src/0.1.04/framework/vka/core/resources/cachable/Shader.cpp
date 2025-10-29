@@ -59,6 +59,43 @@ std::string ShaderDefinition::suffix() const
 	return path.substr(path.find_last_of(".") + 1);
 }
 
+VkShaderStageFlagBits ShaderDefinition::stage() const
+{
+	std::string suffix = path.substr(path.find_last_of(".") + 1);
+	if (suffix == "comp")
+		return VK_SHADER_STAGE_COMPUTE_BIT;
+	else if (suffix == "vert")
+		return VK_SHADER_STAGE_VERTEX_BIT;
+	else if (suffix == "frag")
+		return VK_SHADER_STAGE_FRAGMENT_BIT;
+	else if (suffix == "tesc")
+		return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+	else if (suffix == "tese")
+		return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+	else if (suffix == "geom")
+		return VK_SHADER_STAGE_GEOMETRY_BIT;
+	else if (suffix == "rgen")
+		return VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+	else if (suffix == "rmiss")
+		return VK_SHADER_STAGE_MISS_BIT_KHR;
+	else if (suffix == "rchit")
+		return VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+	else if (suffix == "rahit")
+		return VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
+	else if (suffix == "rint")
+		return VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
+	else if (suffix == "mesh")
+		return VK_SHADER_STAGE_MESH_BIT_NV;
+	else if (suffix == "task")
+		return VK_SHADER_STAGE_TASK_BIT_NV;
+	else
+	{
+		printVka("Unknown shader suffix: %s", suffix.c_str());
+		DEBUG_BREAK
+		return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+	}
+}
+
 std::string ShaderDefinition::preprocessedPath() const
 {
 	bool insideLib = path.compare(0, cVkaShaderRoot.size(), cVkaShaderRoot) == 0;

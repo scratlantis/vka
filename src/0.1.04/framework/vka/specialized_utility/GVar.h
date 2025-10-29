@@ -127,6 +127,8 @@ struct GVar
 	static std::vector<GVar *> getAll();
 	static void                loadAll(std::string path);
 	static void                storeAll(std::string path);
+	static void                loadSelect(std::string path, std::vector<int> ids);
+	static void                storeSelect(std::string path, std::vector<int> ids);
 	template <typename CAT>
 	static std::vector<bool> addAllToGui(uint32_t guiFlags = 0)
 	{

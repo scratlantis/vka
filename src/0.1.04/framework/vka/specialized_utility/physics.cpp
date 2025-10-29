@@ -47,7 +47,7 @@ namespace vka
 			cmd.pushLocal();
 			if (desc.dimensions == PD_3D)
 			{
-				cmd.pipelineDef.shaderDef.args.push_back({ "PARTICLE_3D","" });
+				cmd.pipelineDef.shaderDef.args.push_back({ "VECN_DIM","3" });
 			}
 			//std::string structDef = desc.getStructDef();
 			//std::string structDef = "structParticle{vec2pos;uintplaceholder8;uintplaceholder12;};";

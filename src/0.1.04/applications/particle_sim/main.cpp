@@ -19,10 +19,11 @@ extern GVar gvar_menu;
 extern GVar gvar_particle_size;
 extern GVar gvar_particle_generation_count;
 extern GVar gvar_simulation_step_count;
+extern GVar gvar_camera_reset;
 
 
-GVar gvar_display_frame_time{"Frame Time: %.4f ms", 1.f, GVAR_DISPLAY_FLOAT, GUI_CAT_GENERAL};
 GVar gvar_application_mode{"Application Mode", 0U, GVAR_ENUM, GUI_CAT_GENERAL, std::vector<std::string>{"2D", "3D"}};
+GVar gvar_display_frame_time{"Frame Time: %.4f ms", 1.f, GVAR_DISPLAY_FLOAT, GUI_CAT_GENERAL};
 enum ApplicationMode
 {
 	AM_2D,
@@ -49,6 +50,8 @@ int main()
 	uint64_t curFrameCount = 0;
 	ApplicationMode curAppMode = static_cast<ApplicationMode>(gvar_application_mode.val.v_uint);
 	ParticleResources particleRes{};
+	FixedCamera       cam = loadCamState();
+
 
 	// Main Loop
 	while (!gState.io.shouldTerminate())
@@ -70,7 +73,18 @@ int main()
 
 		if (curFrameCount == 0 || curAppMode != static_cast<ApplicationMode>(gvar_application_mode.val.v_uint))
 		{
+			if (curAppMode == AM_2D)
+				GVar::storeSelect("simulation_params_2D.json", {GUI_CAT_PARTICLE_GEN, GUI_CAT_PARTICLE_UPDATE, GUI_CAT_RENDER_GENERAL});
+			else if (curAppMode == AM_3D)
+				GVar::storeSelect("simulation_params_3D.json", {GUI_CAT_PARTICLE_GEN, GUI_CAT_PARTICLE_UPDATE, GUI_CAT_RENDER_GENERAL});
+
 			curAppMode = static_cast<ApplicationMode>(gvar_application_mode.val.v_uint);
+
+			if (curAppMode == AM_2D)
+				GVar::loadSelect("simulation_params_2D.json", {GUI_CAT_PARTICLE_GEN, GUI_CAT_PARTICLE_UPDATE, GUI_CAT_RENDER_GENERAL});
+			else if (curAppMode == AM_3D)
+				GVar::loadSelect("simulation_params_3D.json", {GUI_CAT_PARTICLE_GEN, GUI_CAT_PARTICLE_UPDATE, GUI_CAT_RENDER_GENERAL});
+
 			ParticleDescription particleDesc{};
 			switch (curAppMode)
 			{
@@ -83,6 +97,24 @@ int main()
 			}
 			particleRes.init(gvar_particle_generation_count.set.range.max.v_uint, particleDesc, gState.heap, &curFrameCount, &gvar_particle_generation_count.val.v_uint);
 			reset = true;
+		}
+		bool viewFocus = !GVar::holdsFocus() && mouseInView(viewDimensions);
+
+
+		// Todo fix
+		particleRes.desc.radius = gvar_particle_size.val.v_float * cParticle_size_scale;
+		particleRes.descAttr.radius = gvar_particle_size.val.v_float * cParticle_size_scale;
+
+		if (viewFocus)
+		{
+			if (curAppMode == AM_3D)
+			{
+				cam = FixedCamera(loadCamState());
+				if(gState.io.mouse.rightPressed) cam.mouseControl();
+				cam.keyControl();
+				gvar_camera_reset.val.v_bool = gState.io.keyPressedEvent[GLFW_KEY_T];
+				saveCamState(cam.getState());
+			}
 		}
 
 		CmdBuffer cmdBuf       = createCmdBuffer(gState.frame->stack);
@@ -109,9 +141,29 @@ int main()
 		
 
 		// Render
+		img_shaded->setClearValue(ClearValue::black());
+		if (curAppMode == AM_2D)
 		{
-			img_shaded->setClearValue(ClearValue::black());
 			getCmdRenderParticles2D(img_shaded, particleRes.getParticleBuf(), particleRes.simRes.densityBuffer).exec(cmdBuf);
+		}
+		else if (curAppMode == AM_3D)
+		{
+			default_scene::CameraCI   camCI{};
+			camCI.pos      = cam.getPosition();
+			camCI.frontDir = cam.getViewDirection();
+			camCI.upDir    = cam.getViewUpDirection();
+			camCI.frameIdx = curFrameCount;
+			camCI.extent   = getScissorRect(viewDimensions).extent;
+			camCI.yFovDeg  = 60.0;
+			camCI.zNear    = 0.1;
+			camCI.zFar     = 100.0;
+			Buffer camBuf = nullptr, camInstBuf = nullptr;
+			gState.dataCache->fetch(camBuf, "camBuf");
+			gState.dataCache->fetch(camInstBuf, "camInstBuf");
+			default_scene::cmdUpdateCamera(cmdBuf, camBuf, camInstBuf, camCI);
+			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+			cmdShowBoxFrame(cmdBuf, gState.frame->stack, img_shaded, &cam, glm::mat4(1.0f), true, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), VK_IMAGE_LAYOUT_GENERAL);
+			getCmdRenderParticles3D(img_shaded, particleRes.getParticleBuf(), particleRes.simRes.densityBuffer).exec(cmdBuf);
 		}
 		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 

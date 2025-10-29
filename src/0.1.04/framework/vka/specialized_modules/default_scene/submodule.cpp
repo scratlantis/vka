@@ -10,6 +10,14 @@ namespace vka
 	        cmd.pushDescriptor(camBuf, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 	        cmd.pushDescriptor(camInstBuf, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 		}
+
+		void bindCamera(DrawCmd &cmd, Buffer camBuf, Buffer camInstBuf, VkShaderStageFlags stageFlags)
+        {
+	        cmd.pushSubmodule(cVkaShaderModulePath + "default_scene/pt_camera.glsl", stageFlags);
+	        cmd.pushDescriptor(camBuf, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, stageFlags);
+	        cmd.pushDescriptor(camInstBuf, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, stageFlags);
+        }
+
 		void cmdUpdateCamera(CmdBuffer cmdBuf, Buffer camBuf, Buffer camInstBuf, CameraCI ci)
 		{
 	        GLSLCamera cam{};

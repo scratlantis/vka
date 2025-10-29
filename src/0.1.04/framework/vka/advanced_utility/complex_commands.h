@@ -85,6 +85,9 @@ class DrawCmd
 	void pushInstanceData(BufferRef buffer, VertexDataLayout layout);
 	void pushVertexData(BufferRef buffer, VertexDataLayout layout);
 
+	void pushSubmodule(const std::string path, VkShaderStageFlags stageFlags, std::vector<ShaderArgs> args = {});
+	void pushLocal();
+
 
 	void exec(CmdBuffer cmdBuf) const;
 

@@ -42,7 +42,7 @@ Rect2D<float> getViewAdjustedArea()
 
 GVar gvar_particle_generation_seed{"Particle Seed", 42U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {0U, 100U}};
 GVar gvar_particle_generation_count{"Particle Count", 1000U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {1U, 100000U}};
-GVar gvar_particle_size{"Particle Size", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 1.f}};
+GVar gvar_particle_size{"Particle Size", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
 
 ComputeCmd getCmdGenParticles(ParticleResources *pRes)
 {
@@ -99,7 +99,7 @@ ComputeCmd getCmdGenParticles(ParticleResources *pRes)
 
 
 GVar gvar_mouse_influence_radius{"Mouse Influence Radius", 0.1f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.01f, 1.f}};
-GVar gvar_mouse_influence_strength{"Mouse Influence Strength", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
+GVar gvar_mouse_influence_strength{"Mouse Influence Strength", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.f}};
 
 GVar gvar_particle_update_damping{"Particle Damping", 0.98f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
 GVar gvar_particle_update_damping_border{"Particle Damping Border", 0.98f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
@@ -155,7 +155,7 @@ ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
 		pc.gravity         = gvar_particle_update_gravity.val.v_float;
 		pc.taskSize        = pRes->count();
 		cmd.pushConstant(&pc, sizeof(PushStruct));
-		cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", ""});
+		cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", "3"});
 	}
 	else
 	{
@@ -195,6 +195,7 @@ ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
 		pc.gravity         = gvar_particle_update_gravity.val.v_float;
 		pc.taskSize        = pRes->count();
 		cmd.pushConstant(&pc, sizeof(PushStruct));
+		cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", "2"});
 	}
 	return cmd;
 }
@@ -209,7 +210,7 @@ GVar gvar_particle_target_density{"Particle Target Density", 10.f, GVAR_FLOAT_RA
 
 
 
-GVar gvar_simulation_time_scale{"Simulation Time Scale", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_GENERAL, {0.1f, 10.f}};
+GVar gvar_simulation_time_scale{"Simulation Time Scale", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_GENERAL, {0.0f, 10.f}};
 void cmdComputeInteractionData(CmdBuffer cmdBuf, ParticleResources *pRes)
 {
 	{
@@ -251,7 +252,7 @@ void cmdComputeInteractionData(CmdBuffer cmdBuf, ParticleResources *pRes)
 	}
 }
 
-GVar gvar_simulation_step_count{"Simulation Steps Per Frame", 1U, GVAR_UINT_RANGE, GUI_CAT_GENERAL, {1U, 10U}};
+GVar gvar_simulation_step_count{"Simulation Steps Per Frame", 1U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_UPDATE, {1U, 10U}};
 void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes)
 {
 	cmdComputeInteractionData(cmdBuf, pRes);

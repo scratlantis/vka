@@ -10,7 +10,11 @@ float kernelWeight_quadratic(float dst, float rad)
 }
 float kernelNormalization_quadratic(float rad)
 {
+#if VECN_DIM == 3
+	return 15.0/(PI * pow(rad,5));
+#else
 	return 6.0/(PI * pow(rad,4));
+#endif
 }
 float kernelDerivative_quadratic(float dst, float rad)
 {
@@ -30,7 +34,11 @@ float kernelWeight_smooth(float dst, float rad)
 }
 float kernelNormalization_smooth(float rad)
 {
+#if VECN_DIM == 3
+	return 315.0/(64.0 * PI * pow(rad,9));
+#else
 	return 4.0/(PI * pow(rad,8));
+#endif
 }
 float kernelDerivative_smooth(float dst, float rad)
 {

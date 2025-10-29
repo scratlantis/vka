@@ -9,6 +9,10 @@ void DataCache::clear()
 		pair.second->garbageCollect();
 	}
 	map.clear();
+	for (auto &pair : strMap)
+	{
+		pair.second->garbageCollect();
+	}
 }
 bool DataCache::fetch(Buffer &buf, hash_t key)
 {
@@ -21,6 +25,20 @@ bool DataCache::fetch(Buffer &buf, hash_t key)
 	{
 		buf = createBuffer(pPool, 0);
 		map[key] = buf;
+		return false;
+	}
+}
+bool DataCache::fetch(Buffer &buf, std::string key)
+{
+	if (strMap.find(key) != strMap.end())
+	{
+		buf = strMap[key];
+		return true;
+	}
+	else
+	{
+		buf         = createBuffer(pPool, 0);
+		strMap[key] = buf;
 		return false;
 	}
 }

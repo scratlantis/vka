@@ -45,7 +45,7 @@ void main()
 		density += KERNEL_WEIGHT(dist, pc.radius);
 	ITERATE_END
 
-	density += KERNEL_WEIGHT(0, pc.radius);
+	//density += KERNEL_WEIGHT(0, pc.radius);
 
 	density *= KERNEL_NORMALIZATION(pc.radius)*pc.densityCoef * 0.0001;
 	particle_densities[id] = density;

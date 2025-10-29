@@ -293,6 +293,33 @@ void DrawCmd::pushVertexData(BufferRef buffer, VertexDataLayout layout)
 	addInput(pipelineDef, layout, VK_VERTEX_INPUT_RATE_VERTEX);
 }
 
+void DrawCmd::pushSubmodule(const std::string path, VkShaderStageFlags stageFlags, std::vector<ShaderArgs> args)
+{
+	for (auto &def : pipelineDef.shaderDefinitions)
+	{
+		if (def.stage() & stageFlags)
+		{
+			def.libs.push_back(path);
+			uint32_t    nameLength = path.find_last_of(".") - path.find_last_of("/") - 1;
+			std::string name       = path.substr(path.find_last_of("/") + 1, nameLength);
+			for (auto &c : name)
+				c = toupper(c);
+			std::string bindingOffset   = name + "_BINDING_OFFSET";
+			def.args.push_back({ShaderArgs(bindingOffset, static_cast<uint32_t>(descriptors.size()))});
+			def.args.insert(def.args.end(), args.begin(), args.end());
+
+		}
+	}
+}
+
+void DrawCmd::pushLocal()
+{
+	for (auto &def : pipelineDef.shaderDefinitions)
+	{
+		def.args.push_back({"LOCAL_BINDING_OFFSET", static_cast<uint32_t>(descriptors.size())});
+	}
+}
+
 void ComputeCmd::pushSubmodule(const std::string path, std::vector<ShaderArgs> args)
 {
 	pipelineDef.shaderDef.libs.push_back(path);

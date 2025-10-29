@@ -34,6 +34,7 @@ struct DefaultDeviceCI : DeviceCI
 		enabledDeviceExtensions.push_back(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
 		VkPhysicalDeviceVulkan13Features features13{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
 		features13.maintenance4 = VK_TRUE;
+		features13.shaderDemoteToHelperInvocation = VK_TRUE;
 		enabledDeviceFeatures.addNode(features13);
 #endif
 #ifdef USE_SHADER_PRINT_F

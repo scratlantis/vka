@@ -5,9 +5,11 @@
 extern const float cParticle_size_scale;
 
 
-
+FixedCameraState loadCamState();
+void saveCamState(FixedCameraState state);
 
 DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer densityBuffer);
+DrawCmd getCmdRenderParticles3D(Image target, Buffer particleBuffer, Buffer densityBuffer);
 
 class ParticleResources;
 

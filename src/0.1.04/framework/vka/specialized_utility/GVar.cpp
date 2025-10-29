@@ -601,10 +601,40 @@ void GVar::loadAll(std::string path)
 {
 	load(all, path);
 }
-
 void GVar::storeAll(std::string path)
 {
 	store(all, path);
 }
 
+void GVar::loadSelect(std::string path, std::vector<int> ids)
+{
+	std::vector<GVar *> selected;
+	for (auto gv : all)
+	{
+		for (auto id : ids)
+		{
+			if (gv->sortId == id)
+			{
+				selected.push_back(gv);
+			}
+		}
+	}
+	load(selected, path);
+}
+
+void GVar::storeSelect(std::string path, std::vector<int> ids)
+{
+	std::vector<GVar *> selected;
+	for (auto gv : all)
+	{
+		for (auto id : ids)
+		{
+			if (gv->sortId == id)
+			{
+				selected.push_back(gv);
+			}
+		}
+	}
+	store(selected, path);
+}
 }        // namespace vka

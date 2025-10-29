@@ -29,24 +29,44 @@ ENUM_ADD_ITERATOR(GuiGroupMenuBar, GUI_CAT_MENU_BAR, GUI_CAT_MENU_BAR)
 
 enum GuiGroups
 {
-	GUI_GROUP_DEFAULT = 0,
+	GUI_GROUP_GENERAL = 0,
+	GUI_GROUP_RENDER  = 1,
+	GUI_GROUP_NO_GUI  = 2,
 };
 
-enum GuiGroupDefault
+enum GuiGroupGeneral
 {
-	GUI_CAT_GENERAL = 0x00000,
-	GUI_CAT_RENDER = 0x00001,
-	GUI_CAT_PARTICLE_GEN = 0x00002,
-	GUI_CAT_PARTICLE_UPDATE = 0x00003,
+	GUI_CAT_GENERAL         = 0x00000,
+	GUI_CAT_PARTICLE_GEN    = 0x00001,
+	GUI_CAT_PARTICLE_UPDATE = 0x00002,
 };
-const std::vector<std::string> GuiGroupDefault_names =
+const std::vector<std::string> GuiGroupGeneral_names =
 {
 	"General",
-	"Render",
 	"Particle Generation",
 	"Particle Update",
+};
+MASKED_ENUM_ADD_STRING_VALUES(GuiGroupGeneral, GuiGroupGeneral_names, GUI_INDEX_MASK)
+ENUM_ADD_ITERATOR(GuiGroupGeneral, GUI_CAT_GENERAL, GUI_CAT_PARTICLE_UPDATE)
 
+enum GuiGroupRender
+{
+	GUI_CAT_RENDER_GENERAL = 0x00010,
+	GUI_CAT_RENDER_2D      = 0x00011,
+	GUI_CAT_RENDER_3D      = 0x00012,
 };
 
-MASKED_ENUM_ADD_STRING_VALUES(GuiGroupDefault, GuiGroupDefault_names, GUI_INDEX_MASK)
-ENUM_ADD_ITERATOR(GuiGroupDefault, GUI_CAT_GENERAL, GUI_CAT_PARTICLE_UPDATE)
+const std::vector<std::string> GuiGroupRender_names =
+{
+	"Render General",
+	"Render 2D",
+	"Render 3D",
+};
+
+MASKED_ENUM_ADD_STRING_VALUES(GuiGroupRender, GuiGroupRender_names, GUI_INDEX_MASK)
+ENUM_ADD_ITERATOR(GuiGroupRender, GUI_CAT_RENDER_GENERAL, GUI_CAT_RENDER_3D)
+
+enum GuiGroupNoGui
+{
+	GUI_CAT_CAM = 0x00020,
+};

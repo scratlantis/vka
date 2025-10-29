@@ -1,6 +1,6 @@
 #include "ui.h"
 
-GVar gvar_menu{"Menu", 0U, GVAR_ENUM, GUI_CAT_MENU_BAR, std::vector<std::string>({"Default"}), GVAR_FLAGS_V2};
+GVar gvar_menu{"Menu", 0U, GVAR_ENUM, GUI_CAT_MENU_BAR, std::vector<std::string>({"General", "Render"}), GVAR_FLAGS_V2};
 
 bool guiCatChanged(uint32_t setting, std::vector<bool> settingsChanged)
 {
@@ -19,8 +19,11 @@ std::vector<bool> buildGui()
 	beginGui("Left", leftGuiDimensions, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize, nullptr);
 	switch (gvar_menu.val.v_uint)
 	{
-	case GUI_GROUP_DEFAULT:
-		changed = GVar::addAllToGui<GuiGroupDefault>(GUI_FLAGS_OPEN_NODES);
+	case GUI_GROUP_GENERAL:
+		changed = GVar::addAllToGui<GuiGroupGeneral>(GUI_FLAGS_OPEN_NODES);
+		break;
+	case GUI_GROUP_RENDER:
+		changed = GVar::addAllToGui<GuiGroupRender>(GUI_FLAGS_OPEN_NODES);
 		break;
 	}
 	endGui();

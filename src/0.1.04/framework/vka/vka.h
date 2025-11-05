@@ -23,3 +23,5 @@
 #include <vka/specialized_utility/sorting.h>
 #include <vka/specialized_utility/physics.h>
 #include <vka/specialized_modules/physics/submodule.h>
+#include <vka/advanced_state/vr/VrState.h>
+#include <vka/advanced_state/vr/XrSwapchainImage.h>

@@ -2,7 +2,8 @@
 #include "shader_interface.h"
 #include "ui.h"
 #include "resources.h"
-AdvancedState     gState;
+
+VrState     gState;
 const std::string gShaderOutputDir = SHADER_OUTPUT_DIR;
 const std::string gAppShaderRoot   = std::string(APP_SRC_DIR) + "/shaders/";
 using namespace glm;
@@ -24,6 +25,8 @@ extern GVar gvar_camera_reset;
 
 GVar gvar_application_mode{"Application Mode", 0U, GVAR_ENUM, GUI_CAT_GENERAL, std::vector<std::string>{"2D", "3D"}};
 GVar gvar_display_frame_time{"Frame Time: %.4f ms", 1.f, GVAR_DISPLAY_FLOAT, GUI_CAT_GENERAL};
+GVar gvar_sliding_average_coef {"Sliding Average Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_GENERAL, {0.5f, 1.f}};
+
 enum ApplicationMode
 {
 	AM_2D,
@@ -38,13 +41,21 @@ int main()
 	IOControlerCI       ioCI     = DefaultIOControlerCI(APP_NAME, 1000, 700, true);
 	GlfwWindow          window   = GlfwWindow();
 	AdvancedStateConfig config   = DefaultAdvancedStateConfig();
+	gState.enableVr();
 	gState.init(deviceCI, ioCI, &window, config);
 	enableGui();
 	//// Init swapchain attachments
-	Image img_shaded              = createSwapchainAttachment(VK_FORMAT_R32G32B32A32_SFLOAT,
-		VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
-		| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_LAYOUT_GENERAL,
-		viewDimensions.width, viewDimensions.height);
+	Image img_shaded = createSwapchainAttachment(VK_FORMAT_R32G32B32A32_SFLOAT,
+	                                             VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+	                                                 VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+	                                             VK_IMAGE_LAYOUT_GENERAL,
+	                                             viewDimensions.width, viewDimensions.height);
+
+	Image last_img_shaded = createSwapchainAttachment(VK_FORMAT_R32G32B32A32_SFLOAT,
+	                                                  VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+	                                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+	                                                  VK_IMAGE_LAYOUT_GENERAL,
+	                                                  viewDimensions.width, viewDimensions.height);
 	gState.updateSwapchainAttachments();
 	//// Init other stuff
 	uint64_t curFrameCount = 0;
@@ -165,6 +176,23 @@ int main()
 			cmdShowBoxFrame(cmdBuf, gState.frame->stack, img_shaded, &cam, glm::mat4(1.0f), true, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), VK_IMAGE_LAYOUT_GENERAL);
 			getCmdRenderParticles3D(img_shaded, particleRes.getParticleBuf(), particleRes.simRes.densityBuffer).exec(cmdBuf);
 		}
+
+		if (!reset)
+		{
+			//VkRect2D_OP fullArea = VkRect2D_OP(img_shaded->getExtent2D());
+			//BlendOperation blendOp  = {1.f-gvar_sliding_average_coef.val.v_float, };
+			//getCmdImageToImage(last_img_shaded, img_shaded, VK_IMAGE_LAYOUT_GENERAL, fullArea, fullArea,)
+		}
+
+		// VR Test
+		{
+			Image leftEyeImg = getVrSwapchainImage(XR_EYE_LEFT);
+			Image rightEyeImg = getVrSwapchainImage(XR_EYE_RIGHT);
+
+			cmdFill(cmdBuf, leftEyeImg, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, vec4(1.0, 0.0, 0.0, 1.0));
+			cmdFill(cmdBuf, rightEyeImg, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, vec4(0.0, 1.0, 0.0, 1.0));
+		}
+
 		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 
 

@@ -125,7 +125,7 @@ FOREACH(vka_version ${VKA_VERSIONS})
   target_include_directories(${current_lib} PRIVATE ${Vulkan_INCLUDE_DIRS})
   target_link_libraries(
       ${current_lib} Vulkan::Vulkan glfw imgui stb tinyexr glm tinyobjloader
-      implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma)
+      implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma boxer openxr)
   
   # folder
   set_target_properties (${current_lib} PROPERTIES FOLDER ${vka_version}/framework )
@@ -162,7 +162,7 @@ FOREACH(vka_version ${VKA_VERSIONS})
     target_include_directories(${current_app} PUBLIC   ./src/${vka_version}/framework/ )
     target_include_directories(${current_app} PRIVATE ${Vulkan_INCLUDE_DIRS})
     target_link_libraries(${current_app} Vulkan::Vulkan glfw imgui stb tinyexr glm tinyobjloader
-    implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma)
+    implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma boxer openxr)
     target_link_libraries(${current_app} ${current_lib})
 
     # folder

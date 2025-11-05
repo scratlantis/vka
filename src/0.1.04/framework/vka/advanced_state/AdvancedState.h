@@ -63,7 +63,7 @@ class AdvancedState : public CoreState
 	virtual void nextFrame() override;
 	void         updateSwapchainAttachments();
 
-	private:
+	protected:
 	IResourcePool *hostCacheLocalPool;
 };
 }        // namespace vka

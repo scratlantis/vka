@@ -65,7 +65,7 @@ class CoreState
 	virtual void			  nextFrame();
 	virtual void              destroy();
 
-  private:
+  protected:
 	void               initFrames();
 	void               destroyFrames();
 	uint32_t           lastTimeStamp;

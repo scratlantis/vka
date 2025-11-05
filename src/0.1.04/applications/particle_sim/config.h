@@ -1,4 +1,10 @@
 #pragma once
+//#define USE_SHADER_PRINT_F
+#define RAY_TRACING_SUPPORT
+//#define USE_ATOMICS
+#define USE_VULKAN_1_3
+#define VR_INTEGRATION
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <vka/vka.h>
 static const std::string shaderPath = std::string(APP_SRC_DIR) + "/shaders/";
@@ -10,10 +16,6 @@ using namespace vka::pbr;
 static const std::string modelPath = std::string(RESOURCE_BASE_DIR) + "/models/";
 static const std::string texturePath = std::string(RESOURCE_BASE_DIR) + "/textures/";
 
-//#define USE_SHADER_PRINT_F
-#define RAY_TRACING_SUPPORT
-//#define USE_ATOMICS
-#define USE_VULKAN_1_3
 
 struct DefaultDeviceCI : DeviceCI
 {
@@ -49,6 +51,7 @@ struct DefaultDeviceCI : DeviceCI
 		features12.shaderInt8 = VK_TRUE;
 		features12.hostQueryReset = VK_TRUE;
 		enabledDeviceFeatures.addNode(features12);
+
 		VkPhysicalDeviceVulkan11Features features11{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES };
 		features11.storageBuffer16BitAccess = VK_TRUE;
 		enabledDeviceFeatures.addNode(features11);

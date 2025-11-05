@@ -110,7 +110,7 @@ class IOController
 
 	DELETE_COPY_CONSTRUCTORS(IOController);
 
-  private:
+  protected:
 	bool               shouldRecreateSwapchain;
 	bool               swapchainWasRecreated;
 	Window            *window;

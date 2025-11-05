@@ -40,7 +40,7 @@ class Device
 
 	DELETE_COPY_CONSTRUCTORS(Device);
 
-  private:
+  protected:
 	DeviceCI deviceCI;
 };
 }        // namespace vka

@@ -2,6 +2,7 @@
 #include <vka/core/core_utility/types.h>
 namespace vka
 {
+enum XrEye;
 void               swapBuffers(std::vector<CmdBuffer> cmdBufs);
 vka::VkRect2D_OP   getScissorRect();
 vka::VkRect2D_OP   getScissorRect(float x, float y, float width, float height);
@@ -13,6 +14,7 @@ bool               mouseInView(vka::Rect2D<float> viewRect);
 Image              createSwapchainAttachment(VkFormat format, VkImageUsageFlags usageFlags, VkImageLayout initialLayout);
 Image            createSwapchainAttachment(VkFormat format, VkImageUsageFlags usageFlags, VkImageLayout initialLayout, float widthCoef, float heightCoef);
 Image            getSwapchainImage();
+Image              getVrSwapchainImage(XrEye eye);
 void             clearShaderCache();
 void             waitIdle();
 

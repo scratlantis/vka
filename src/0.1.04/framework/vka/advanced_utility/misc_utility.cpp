@@ -6,7 +6,8 @@
 
 namespace vka
 {
-void swapBuffers(std::vector<CmdBuffer> cmdBufs)
+
+void swapBuffersVr(std::vector<CmdBuffer> cmdBufs)
 {
 	for (auto &cmdBuf : cmdBufs)
 	{
@@ -18,7 +19,37 @@ void swapBuffers(std::vector<CmdBuffer> cmdBufs)
 	SubmitSynchronizationInfo syncInfo = gState.acquireNextSwapchainImage();
 	submit(cmdBufs, gState.device.universalQueues[0], syncInfo);
 	gState.presentFrame();
+	if (gState.isVrEnabled())
+	{
+		gState.xrHeadset.endFrame();
+	}
 	gState.nextFrame();
+	if (gState.isVrEnabled())
+	{
+		uint32_t imageIdxLeft, imageIdxRight;
+		gState.xrHeadset.beginFrame(imageIdxLeft, imageIdxRight);
+	}
+}
+
+void swapBuffers(std::vector<CmdBuffer> cmdBufs)
+{
+	if (gState.isVrEnabled())
+	{
+		swapBuffersVr(cmdBufs);
+		return;
+	}
+	for (auto &cmdBuf : cmdBufs)
+	{
+		cmdClearState(cmdBuf);
+	}
+	cmdBarrier(cmdBufs[0], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+	           VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+	gState.hostCache->update(cmdBufs[0]);
+	SubmitSynchronizationInfo syncInfo = gState.acquireNextSwapchainImage();
+	submit(cmdBufs, gState.device.universalQueues[0], syncInfo);
+	gState.presentFrame();
+	gState.nextFrame();
+
 }
 
 vka::VkRect2D_OP getScissorRect()
@@ -107,6 +138,16 @@ Image getSwapchainImage()
 	gState.swapchainImage = new SwapchainImage_R();
 	gState.swapchainImage->setClearValue({0.f, 0.f, 0.f, 1.f});
 	return gState.swapchainImage;
+}
+Image getVrSwapchainImage(XrEye eye)
+{
+	if (gState.xrSwapchainImages[eye] != nullptr)
+	{
+		delete gState.xrSwapchainImages[eye];
+	}
+	gState.xrSwapchainImages[eye] = new XrSwapchainImage_R(eye);
+	gState.xrSwapchainImages[eye]->setClearValue({0.f, 0.f, 0.f, 1.f});
+	return gState.xrSwapchainImages[eye];
 }
 
 void clearShaderCache()

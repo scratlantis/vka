@@ -17,6 +17,10 @@ struct CameraCI
 	float      yFovDeg;
 	float      zNear;
 	float      zFar;
+	bool       useMatricies = false;
+	glm::mat4  viewMat;
+	glm::mat4  projMat;
+
 };
 void   bindCamera(ComputeCmd &cmd, Buffer camBuf, Buffer camInstBuf);
 void   bindCamera(DrawCmd &cmd, Buffer camBuf, Buffer camInstBuf, VkShaderStageFlags stageFlags);

@@ -38,6 +38,7 @@ Ray genPrimaryRay(uvec2 pixel, inout uint seed)
 	ray.origin = (camInst.invView * vec4(0,0,0,1)).xyz;
 	vec4 target = cam.invProjection * vec4(d.x, d.y, 1, 1) ;
 	ray.direction = (camInst.invView*vec4(normalize(target.xyz), 0)).xyz ;
+	ray.direction = normalize(ray.direction);
 	ray.tmin = TMIN;
 	ray.tmax = TMAX;
 	ray.weight = vec3(1.0);
@@ -53,6 +54,7 @@ Ray genPrimaryRay(uvec2 pixel)
 	ray.origin = (camInst.invView * vec4(0,0,0,1)).xyz;
 	vec4 target = cam.invProjection * vec4(d.x, d.y, 1, 1) ;
 	ray.direction = (camInst.invView*vec4(normalize(target.xyz), 0)).xyz ;
+	ray.direction = normalize(ray.direction);
 	ray.tmin = TMIN;
 	ray.tmax = TMAX;
 	ray.weight = vec3(1.0);

@@ -29,6 +29,14 @@ class XrControllers final
 	glm::mat4 getPose(size_t controllerIndex) const;
 	float     getFlySpeed(size_t controllerIndex) const;
 
+	float getGrabStrength(size_t controllerIndex) const;
+
+	bool getAPress(size_t controllerIndex) const;
+
+	bool getBPress(size_t controllerIndex) const;
+
+	float getTriggerPressure(size_t controllerIndex) const;
+
   private:
 
 	std::vector<XrPath>  paths;
@@ -36,9 +44,14 @@ class XrControllers final
 
 	std::vector<glm::mat4> poses;
 	std::vector<float>     flySpeeds;
+	std::vector<float>     grapStrength;
+	std::vector<bool>      aPress;
+	std::vector<bool>      bPress;
+	std::vector<float>     triggerPressure;
 
 	XrActionSet actionSet  = nullptr;
-	XrAction    poseAction = nullptr, flyAction = nullptr;
+	XrAction    poseAction = nullptr, flyAction = nullptr, grabAction = nullptr,
+		aPressAction = nullptr, bPressAction = nullptr, triggerAction = nullptr;
 
 	DELETE_COPY_CONSTRUCTORS(XrControllers);
 };

@@ -30,7 +30,6 @@ class VrState
 	XrControllers xrControllers;
 	std::vector<XrSwapchainImage_R*> xrSwapchainImages;
 
-
 	//Core State
   public:
 	uint32_t        initBits;

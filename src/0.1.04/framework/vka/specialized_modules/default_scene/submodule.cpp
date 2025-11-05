@@ -21,7 +21,14 @@ namespace vka
 		void cmdUpdateCamera(CmdBuffer cmdBuf, Buffer camBuf, Buffer camInstBuf, CameraCI ci)
 		{
 	        GLSLCamera cam{};
-	        cam.projection    = glm::perspective(glm::radians(ci.yFovDeg), (float) ci.extent.width / (float) ci.extent.height, ci.zNear, ci.zFar);
+			if (!ci.useMatricies)
+			{
+				cam.projection    = glm::perspective(glm::radians(ci.yFovDeg), (float) ci.extent.width / (float) ci.extent.height, ci.zNear, ci.zFar);
+			}
+	        else
+	        {
+		        cam.projection = ci.projMat;
+	        }
 	        cam.invProjection = glm::inverse(cam.projection);
 	        cam.width = ci.extent.width;
 	        cam.height = ci.extent.height;
@@ -29,7 +36,14 @@ namespace vka
 	        cmdWriteCopy(cmdBuf, camBuf, &cam, sizeof(GLSLCamera));
 
 			GLSLCameraInstance camInst{};
-	        camInst.view = glm::lookAt(ci.pos, ci.pos + glm::normalize(ci.frontDir), glm::normalize(ci.upDir));
+	        if (!ci.useMatricies)
+	        {
+		        camInst.view = glm::lookAt(ci.pos, ci.pos + glm::normalize(ci.frontDir), glm::normalize(ci.upDir));
+	        }
+	        else
+	        {
+		        camInst.view = ci.viewMat;
+	        }
 	        camInst.invView = glm::inverse(camInst.view);
 	        camInst.frameIdx = ci.frameIdx;
 			camInstBuf->addUsage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);

@@ -64,6 +64,20 @@ int main()
 	FixedCamera       cam = loadCamState();
 
 
+	glm::mat4 modelMat = glm::mat4(1.0f);
+	modelMat[1][1]     = -1;
+	// modelMat[0][0] = -1;
+	modelMat = glm::scale(modelMat, vec3(0.2));
+	modelMat = glm::translate(modelMat, {-2.0f, -4.0f, 5.0f});
+
+	//modelMat = glm::mat4(1.0);
+	glm::mat4 ogModelMat = glm::mat4(modelMat);
+
+
+	glm::mat4 rightControllerMat = glm::mat4(1.0f);
+	bool      isGrip             = false;
+	glm::mat4 changeMat = glm::mat4(1.0f);
+
 	// Main Loop
 	while (!gState.io.shouldTerminate())
 	{
@@ -79,6 +93,8 @@ int main()
 		bool reset = shaderRecompiled
 			|| gState.io.keyPressedEvent[GLFW_KEY_Q]
 			|| curFrameCount == 0;
+
+		reset = reset || gState.isVrEnabled() && gState.xrControllers.getBPress(1);
 
 		std::vector<bool> settingsChanged = buildGui();
 
@@ -185,12 +201,56 @@ int main()
 		}
 
 		// VR Test
+		if (gState.isVrEnabled())
 		{
+			if (gState.xrControllers.getAPress(1))
+			{
+				modelMat = glm::mat4(ogModelMat);
+			}
+			if (gState.xrControllers.getGrabStrength(1) > 0.5f)
+			{
+				changeMat = gState.xrControllers.getPose(1) * glm::inverse(rightControllerMat);
+				isGrip    = true;
+			}
+			else
+			{
+				if (isGrip)
+				{
+					isGrip = false;
+					modelMat  = changeMat * modelMat;
+					changeMat = glm::mat4(1.0f);
+				}
+				rightControllerMat = gState.xrControllers.getPose(1);
+			}
+
+
 			Image leftEyeImg = getVrSwapchainImage(XR_EYE_LEFT);
 			Image rightEyeImg = getVrSwapchainImage(XR_EYE_RIGHT);
+			std::vector<Image> eyeImages = {leftEyeImg,  rightEyeImg};
+			//std::vector<Image> eyeImages   = {rightEyeImg, leftEyeImg};
+			for (size_t i = 0; i < eyeImages.size(); i++)
+			{
+				eyeImages[i]->setClearValue(ClearValue(0.f,0.f, 0.f, 1.f));
+				cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+				//XrFovf                  fov = gState.xrHeadset.eyePoses[i].fov;
+				glm::mat4               projMat = gState.xrHeadset.eyeProjectionMatrices[i];
+				glm::mat4               viewMat = gState.xrHeadset.eyeViewMatrices[i];
 
-			cmdFill(cmdBuf, leftEyeImg, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, vec4(1.0, 0.0, 0.0, 1.0));
-			cmdFill(cmdBuf, rightEyeImg, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, vec4(0.0, 1.0, 0.0, 1.0));
+				default_scene::CameraCI camCI{};
+				camCI.useMatricies = true;
+				camCI.projMat      = projMat;
+				camCI.viewMat      = viewMat * changeMat * modelMat;
+				camCI.frameIdx = curFrameCount;
+				camCI.extent   = gState.xrHeadset.eyeResolution;
+				Buffer camBuf = nullptr, camInstBuf = nullptr;
+				gState.dataCache->fetch(camBuf, "camBuf");
+				gState.dataCache->fetch(camInstBuf, "camInstBuf");
+				default_scene::cmdUpdateCamera(cmdBuf, camBuf, camInstBuf, camCI);
+				cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+				//cmdShowBoxFrame(cmdBuf, gState.frame->stack, eyeImages[i], &cam, glm::mat4(1.0f), true, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), VK_IMAGE_LAYOUT_GENERAL);
+				cmdShowBoxFrame(cmdBuf, gState.frame->stack, eyeImages[i], nullptr, projMat * viewMat * changeMat * modelMat, true, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), VK_IMAGE_LAYOUT_GENERAL);
+				getCmdRenderParticles3D(eyeImages[i], particleRes.getParticleBuf(), particleRes.simRes.densityBuffer).exec(cmdBuf);
+			}
 		}
 
 		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);

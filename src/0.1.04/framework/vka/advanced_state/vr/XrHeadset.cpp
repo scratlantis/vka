@@ -308,6 +308,7 @@ void XrHeadset::endFrame() const
 	XrFrameEndInfo frameEndInfo{XR_TYPE_FRAME_END_INFO};
 	frameEndInfo.displayTime          = frameState.predictedDisplayTime;
 	frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+	//frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_ADDITIVE;
 	frameEndInfo.layerCount           = layers.size();        // ?
 	frameEndInfo.layers               = layers.data();
 	VKXR_CHECK(xrEndFrame(session, &frameEndInfo));

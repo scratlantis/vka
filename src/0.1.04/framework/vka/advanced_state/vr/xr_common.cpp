@@ -455,5 +455,21 @@ bool updateActionStateFloat(XrSession session, XrAction action, XrPath path, XrA
 
 	return true;
 }
+
+bool updateActionStateBoolean(XrSession session, XrAction action, XrPath path, XrActionStateBoolean &state)
+{
+	XrActionStateGetInfo actionStateGetInfo{XR_TYPE_ACTION_STATE_GET_INFO};
+	actionStateGetInfo.action        = action;
+	actionStateGetInfo.subactionPath = path;
+
+	const XrResult result = xrGetActionStateBoolean(session, &actionStateGetInfo, &state);
+	if (XR_FAILED(result))
+	{
+		return false;
+	}
+
+	return true;
+}
+
 }        // namespace xr
 }        // namespace vka

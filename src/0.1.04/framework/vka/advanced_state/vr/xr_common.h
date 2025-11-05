@@ -64,5 +64,7 @@ bool updateActionStatePose(XrSession session, XrAction action, XrPath path, XrAc
 
 bool updateActionStateFloat(XrSession session, XrAction action, XrPath path, XrActionStateFloat &state);
 
+bool updateActionStateBoolean(XrSession session, XrAction action, XrPath path, XrActionStateBoolean &state);
+
 }        // namespace xr
 }

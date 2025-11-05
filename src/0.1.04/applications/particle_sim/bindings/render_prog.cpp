@@ -132,7 +132,8 @@ DrawCmd getCmdRenderParticles3D(Image target, Buffer particleBuffer, Buffer dens
 
 	gState.depthBufferCache->fetch(target->getExtent2D());
 
-	cmd.pushColorAttachment(target, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, BlendOperation::add(), BlendOperation::add());
+	//cmd.pushColorAttachment(target, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, BlendOperation::add(), BlendOperation::add());
+	cmd.pushColorAttachment(target, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, BlendOperation::add(), BlendOperation::add());
 	cmd.pushDepthAttachment(gState.depthBufferCache->fetch(target->getExtent2D()), VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
 
 	struct PushStruct

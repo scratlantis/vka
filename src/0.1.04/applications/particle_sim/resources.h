@@ -3,12 +3,16 @@
 #include "shader_interface.h"
 
 
+
+
 class ParticleResources
 {
   private:
 	Buffer particleMemory = nullptr;
 	Buffer predPosMemory  = nullptr;
 	Buffer velocityMemory = nullptr;
+
+	Buffer paramsBuffer = nullptr;
 
 	const uint64_t *pCurrentFrameID = nullptr;
 	const uint32_t *pParticleCount  = nullptr;
@@ -37,6 +41,7 @@ class ParticleResources
 	const Buffer getParticleBuf();
 	const Buffer getPredictedPosBuf();
 	const Buffer getVelocityBuf();
+	const Buffer getParamsBuf();
 
 	uint32_t count() const
 	{

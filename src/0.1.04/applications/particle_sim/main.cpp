@@ -73,6 +73,7 @@ int main()
 	//modelMat = glm::mat4(1.0);
 	glm::mat4 ogModelMat = glm::mat4(modelMat);
 
+	glm::mat4 lastModelMat = modelMat;
 
 	glm::mat4 rightControllerMat = glm::mat4(1.0f);
 	bool      isGrip             = false;
@@ -154,7 +155,7 @@ int main()
 		// Simulate
 		for (uint32_t step = 0; step < gvar_simulation_step_count.val.v_uint; step++)
 		{
-			cmdSimulateParticles(cmdBuf, &particleRes);
+			cmdSimulateParticles(cmdBuf, &particleRes, {changeMat * modelMat, lastModelMat, glm::inverse(changeMat * modelMat), glm::inverse(lastModelMat)});
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
 		}
 
@@ -168,6 +169,9 @@ int main()
 		
 
 		// Render
+		if (!gState.isVrEnabled())
+		{
+
 		img_shaded->setClearValue(ClearValue::black());
 		if (curAppMode == AM_2D)
 		{
@@ -192,6 +196,7 @@ int main()
 			cmdShowBoxFrame(cmdBuf, gState.frame->stack, img_shaded, &cam, glm::mat4(1.0f), true, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), VK_IMAGE_LAYOUT_GENERAL);
 			getCmdRenderParticles3D(img_shaded, particleRes.getParticleBuf(), particleRes.simRes.densityBuffer).exec(cmdBuf);
 		}
+		}
 
 		if (!reset)
 		{
@@ -199,6 +204,8 @@ int main()
 			//BlendOperation blendOp  = {1.f-gvar_sliding_average_coef.val.v_float, };
 			//getCmdImageToImage(last_img_shaded, img_shaded, VK_IMAGE_LAYOUT_GENERAL, fullArea, fullArea,)
 		}
+
+		lastModelMat = changeMat * modelMat;
 
 		// VR Test
 		if (gState.isVrEnabled())
@@ -252,6 +259,8 @@ int main()
 				getCmdRenderParticles3D(eyeImages[i], particleRes.getParticleBuf(), particleRes.simRes.densityBuffer).exec(cmdBuf);
 			}
 		}
+
+		
 
 		cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 

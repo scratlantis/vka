@@ -105,6 +105,9 @@ GVar gvar_particle_update_damping{"Particle Damping", 0.98f, GVAR_FLOAT_RANGE, G
 GVar gvar_particle_update_damping_border{"Particle Damping Border", 0.98f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
 GVar gvar_particle_update_gravity{"Particle Gravity", 0.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.0f}};
 
+
+
+
 ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
 {
 	ComputeCmd cmd(pRes->count(), shaderPath + "update_particles.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC, {});
@@ -113,6 +116,7 @@ ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
 	cmd.pushDescriptor(pRes->simRes.forceBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	cmd.pushDescriptor(pRes->getPredictedPosBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	cmd.pushDescriptor(pRes->getVelocityBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	cmd.pushDescriptor(pRes->getParamsBuf(), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
 	if (pRes->desc.dimensions == PD_3D)
 	{
@@ -203,7 +207,7 @@ ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
 
 
 GVar gvar_particle_density_coef{"Particle Density Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
-GVar gvar_particle_pressure_force_coef{"Particle pressure force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 0.1f}};
+GVar gvar_particle_pressure_force_coef{"Particle pressure force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 0.2f}};
 GVar gvar_particle_viscosity_force_coef{"Particle viscosity force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.0f}};
 GVar gvar_particle_target_density{"Particle Target Density", 10.f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.f}};
 
@@ -253,8 +257,13 @@ void cmdComputeInteractionData(CmdBuffer cmdBuf, ParticleResources *pRes)
 }
 
 GVar gvar_simulation_step_count{"Simulation Steps Per Frame", 1U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_UPDATE, {1U, 10U}};
-void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes)
+
+
+
+void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes, GLSLParticleUpdateParams params)
 {
+
+	cmdWriteCopy(cmdBuf, pRes->getParamsBuf(), &params, sizeof(GLSLParticleUpdateParams));
 	cmdComputeInteractionData(cmdBuf, pRes);
 
 	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,

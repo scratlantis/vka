@@ -1,5 +1,6 @@
 
 #include "resources.h"
+#include "shaders/interface_structs.glsl"
 
 using namespace physics;
 
@@ -24,6 +25,10 @@ const Buffer ParticleResources::getVelocityBuf()
 {
 	refreshTemporaryBuffers();
 	return tmpVelocityBuffer;
+}
+const Buffer ParticleResources::getParamsBuf()
+{
+	return paramsBuffer;
 }
 const Buffer ParticleResources::getPredictedPosBuf()
 {
@@ -65,6 +70,10 @@ void ParticleResources::init(uint32_t maxParticleCount, const ParticleDescriptio
 	{
 		descAttr.structureSize = vec_size_aligned(PD_2D);
 	}
+
+	paramsBuffer = createBuffer(pPool, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+	paramsBuffer->changeSize(sizeof(GLSLParticleUpdateParams));
+	paramsBuffer->recreate();
 
 
 	simRes.init(pPool, maxParticleCount);

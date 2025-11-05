@@ -24,6 +24,6 @@ struct SimulationResources
 	bool                          isInitialized() const;
 };
 
-void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes);
-
+struct GLSLParticleUpdateParams;
+void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes, GLSLParticleUpdateParams params);
 

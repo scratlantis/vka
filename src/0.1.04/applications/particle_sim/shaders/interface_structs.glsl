@@ -42,4 +42,13 @@ struct PCUpdateParticles
 	uint taskSize;
 };
 
+struct GLSLParticleUpdateParams
+{
+
+	mat4 modelMat;
+	mat4 modelMatLastFrame;
+	mat4 invModelMat;
+	mat4 invModelMatLastFrame;
+};
+
 #endif

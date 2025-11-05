@@ -50,6 +50,7 @@ layout(binding = LOCAL_BINDING_OFFSET + 0) buffer PARTICLES { PARTICLE_TYPE part
 layout(binding = LOCAL_BINDING_OFFSET + 1) readonly buffer FORCE { vecN particle_force[];};
 layout(binding = LOCAL_BINDING_OFFSET + 2) writeonly buffer PREDICTED_POS { vecN pred_pos[];};
 layout(binding = LOCAL_BINDING_OFFSET + 3) writeonly buffer VELOCITY { vecN vel[];};
+layout(binding = LOCAL_BINDING_OFFSET + 4) uniform PARAMS { GLSLParticleUpdateParams params;};
 
 
 void main()
@@ -59,13 +60,23 @@ void main()
 		return;
 	}
 
-
 	uint id = gl_GlobalInvocationID.x;
 	PARTICLE_TYPE elem = particles[id];
 
 	// Accumulate forces
 	vecN force = particle_force[id];
+
+#if VECN_DIM == 3
+	vec3 down = (params.invModelMat * vec4(0.0, -1.0, 0.0, 0.0)).xyz;
+	down = normalize(down);
+	force += down * pc.gravity;
+#else
 	force.y += pc.gravity;
+#endif
+
+
+
+
 	vecN cursorForce;
 #if VECN_DIM == 3
 	cursorForce = getCursorForce(pc.cursorPos, elem.pos, pc.cursorRadius);
@@ -81,8 +92,18 @@ void main()
 	elem.vel += force * time;
 	elem.pos += elem.vel * time;
 
+    vecN boundaryVel = vecN(0.0);
+#if VECN_DIM == 3
+	boundaryVel = (params.modelMat * vec4(elem.pos, 1.0) - params.modelMatLastFrame * vec4(elem.pos, 1.0)).xyz;
+	boundaryVel = (params.invModelMat*vec4(boundaryVel,0.0)).xyz;
+	boundaryVel*=10.0;
+#endif
+
+
+
+
 	// For now: Hardcoded border collision
-	resolveBorderCollision(elem, pc.minRange, pc.maxRange, pc.radius, pc.dampingBorder);
+	resolveBorderCollision(elem, pc.minRange, pc.maxRange, pc.radius, pc.dampingBorder, boundaryVel);
 	//resolveBorderCollision(elem, vec3(0.0), vec3(1.0), 0.01, pc.dampingBorder);
 	elem.vel *= pow(pc.damping, time*60.0); // Frame rate independent damping
 

@@ -282,7 +282,10 @@ void VrState::destroy()
 void VrState::nextFrame()
 {
 	coreNextFrame();
-	xrControllers.sync(xrHeadset.space, xrHeadset.frameState.predictedDisplayTime);
+	if (vrEnabled)
+	{
+		xrControllers.sync(xrHeadset.space, xrHeadset.frameState.predictedDisplayTime);
+	}
 	if (io.swapchainRecreated())
 	{
 		if (initBits & STATE_INIT_ALL_BIT)

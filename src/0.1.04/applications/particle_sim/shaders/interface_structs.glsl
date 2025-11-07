@@ -8,10 +8,12 @@ struct GLSLParticle
 	vec2 vel;
 };
 
+#define PARTICLE_STATE_IN_BOX_BIT 0x1
+
 struct GLSLParticle3D
 {
 	vec3 pos;
-	uint pad0;
+	uint stateFlags;
 
 	vec3 vel;
 	uint pad1;
@@ -42,6 +44,11 @@ struct PCUpdateParticles
 	uint taskSize;
 };
 
+
+#define PARTICLE_EARTH_GRAVITY_BIT 0x1
+#define PARTICLE_GRAVITY_BIT 0x2
+#define PARTICLE_BOX_BIT 0x4
+
 struct GLSLParticleUpdateParams
 {
 
@@ -49,6 +56,8 @@ struct GLSLParticleUpdateParams
 	mat4 modelMatLastFrame;
 	mat4 invModelMat;
 	mat4 invModelMatLastFrame;
+	uint toggleFlags;
+	uint frameIdx;
 };
 
 #endif

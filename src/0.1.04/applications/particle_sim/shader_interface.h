@@ -8,8 +8,8 @@ extern const float cParticle_size_scale;
 FixedCameraState loadCamState();
 void saveCamState(FixedCameraState state);
 
-DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer densityBuffer);
-DrawCmd getCmdRenderParticles3D(Image target, Buffer particleBuffer, Buffer densityBuffer);
+DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer densityBuffer, Buffer forceBuffer);
+DrawCmd getCmdRenderParticles3D(Image target, Buffer particleBuffer, Buffer densityBuffer, Buffer forceBuffer);
 
 class ParticleResources;
 
@@ -25,5 +25,5 @@ struct SimulationResources
 };
 
 struct GLSLParticleUpdateParams;
-void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes, GLSLParticleUpdateParams params);
+void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes, GLSLParticleUpdateParams params, uint32_t frameInvocationNr);
 

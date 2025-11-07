@@ -14,6 +14,9 @@ class ParticleResources
 
 	Buffer paramsBuffer = nullptr;
 
+	Buffer particlePingPongMemory = nullptr;
+	Buffer predPosPingPongMemory  = nullptr;
+
 	const uint64_t *pCurrentFrameID = nullptr;
 	const uint32_t *pParticleCount  = nullptr;
 
@@ -22,8 +25,12 @@ class ParticleResources
 	Buffer   tmpPredPosBuffer  = nullptr;
 	Buffer   tmpVelocityBuffer = nullptr;
 
+	Buffer tmpParticlePingPongBuffer = nullptr;
+	Buffer tmpPredPosPingPongBuffer  = nullptr;
+
 	void createTemporaryBuffers();
 	void refreshTemporaryBuffers();
+
 
   public:
 	SimulationResources simRes;
@@ -42,6 +49,9 @@ class ParticleResources
 	const Buffer getPredictedPosBuf();
 	const Buffer getVelocityBuf();
 	const Buffer getParamsBuf();
+	const Buffer getParticlePingPongBuf();
+	const Buffer getPredictedPosPingPongBuf();
+	void swapPingPongBuffers();
 
 	uint32_t count() const
 	{

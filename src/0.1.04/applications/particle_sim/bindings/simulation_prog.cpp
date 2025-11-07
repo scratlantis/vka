@@ -95,7 +95,23 @@ ComputeCmd getCmdGenParticles(ParticleResources *pRes)
 	return cmd;
 }
 
-
+void cmdReorderParticles(CmdBuffer cmdBuf, ParticleResources *pRes)
+{
+	ComputeCmd cmd = ComputeCmd(pRes->count(), shaderPath + "reorder_particles.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
+	cmd.pushLocal();
+	cmd.pushDescriptor(pRes->getParticleBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	cmd.pushDescriptor(pRes->getPredictedPosBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	cmd.pushDescriptor(pRes->simRes.it.getPermutationBuffer(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	cmd.pushDescriptor(pRes->getParticlePingPongBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	cmd.pushDescriptor(pRes->getPredictedPosPingPongBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	struct PC
+	{
+		uint32_t taskSize;
+	} pc;
+	cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", pRes->desc.dimensions == PD_2D ? "2" : "3"});
+	cmd.exec(cmdBuf);
+	pRes->swapPingPongBuffers();
+}
 
 
 GVar gvar_mouse_influence_radius{"Mouse Influence Radius", 0.1f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.01f, 1.f}};
@@ -104,11 +120,12 @@ GVar gvar_mouse_influence_strength{"Mouse Influence Strength", 1.f, GVAR_FLOAT_R
 GVar gvar_particle_update_damping{"Particle Damping", 0.98f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
 GVar gvar_particle_update_damping_border{"Particle Damping Border", 0.98f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.0f}};
 GVar gvar_particle_update_gravity{"Particle Gravity", 0.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.0f}};
+GVar gvar_particle_update_inter_gravity{"Inter-Particle Gravity", 0.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.0f}};
 
 
 
 
-ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
+ComputeCmd getCmdUpdateParticles(ParticleResources *pRes, float timeStep, uint32_t frameInvocationNr)
 {
 	ComputeCmd cmd(pRes->count(), shaderPath + "update_particles.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC, {});
 	cmd.pushLocal();
@@ -142,9 +159,13 @@ ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
 
 			float gravity;
 			uint  taskSize;
+			uint  frameInvocationNr;
+			float particleGravityCoef;
 		} pc;
 
 		Rect3D<float> area = {0.f,0.f,0.f,1.f,1.f,1.f};
+		pc.particleGravityCoef = gvar_particle_update_inter_gravity.val.v_float;
+		pc.frameInvocationNr = frameInvocationNr;
 		pc.minRange        = vec3(area.x, area.y, area.x);
 		pc.maxRange        = vec3(area.x + area.width, area.y + area.height, area.z + area.depth);
 		pc.cursorPos       = vec3(0.5f); // todo
@@ -183,8 +204,12 @@ ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
 
 			float gravity;
 			uint  taskSize;
+			uint  frameInvocationNr;
+			float particleGravityCoef;
 		} pc;
 		Rect2D<float> area = getViewAdjustedArea();
+		pc.particleGravityCoef = gvar_particle_update_inter_gravity.val.v_float;
+		pc.frameInvocationNr = frameInvocationNr;
 		pc.minRange        = vec2(area.x, area.y);
 		pc.maxRange        = vec2(area.x + area.width, area.y + area.height);
 		pc.cursorPos       = mouseInView(viewDimensions) ? mouseViewCoord(viewDimensions) : vec2(0.0f);
@@ -206,8 +231,8 @@ ComputeCmd getCmdUpdateParticles(ParticleResources* pRes, float timeStep)
 
 
 
-GVar gvar_particle_density_coef{"Particle Density Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
-GVar gvar_particle_pressure_force_coef{"Particle pressure force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 0.2f}};
+GVar gvar_particle_density_coef{"Particle Density Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.01f, 1.f}};
+GVar gvar_particle_pressure_force_coef{"Particle pressure force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 0.5f}};
 GVar gvar_particle_viscosity_force_coef{"Particle viscosity force coefficient", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 10.0f}};
 GVar gvar_particle_target_density{"Particle Target Density", 10.f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.0f, 1.f}};
 
@@ -254,13 +279,18 @@ void cmdComputeInteractionData(CmdBuffer cmdBuf, ParticleResources *pRes)
 		viscosityCI.forceCoef    = gvar_particle_viscosity_force_coef.val.v_float;
 		getCmdAddViscosityForce(pRes->getPredictedPosBuf(), pRes->simRes.densityBuffer, pRes->getVelocityBuf(), pRes->simRes.it, viscosityCI, pRes->simRes.forceBuffer).exec(cmdBuf);
 	}
+
+	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+	           VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_READ_BIT);
+
+	//cmdReorderParticles(cmdBuf, pRes);
 }
 
 GVar gvar_simulation_step_count{"Simulation Steps Per Frame", 1U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_UPDATE, {1U, 10U}};
 
 
 
-void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes, GLSLParticleUpdateParams params)
+void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes, GLSLParticleUpdateParams params, uint32_t frameInvocationNr)
 {
 
 	cmdWriteCopy(cmdBuf, pRes->getParamsBuf(), &params, sizeof(GLSLParticleUpdateParams));
@@ -271,5 +301,5 @@ void cmdSimulateParticles(CmdBuffer cmdBuf, ParticleResources *pRes, GLSLParticl
 
 	float timeStep = min(static_cast<float>(gState.frameTime), 20.0f) * (1.f / static_cast<float>(gvar_simulation_step_count.val.v_uint));
 	timeStep *= gvar_simulation_time_scale.val.v_float;
-	getCmdUpdateParticles(pRes, timeStep).exec(cmdBuf);
+	getCmdUpdateParticles(pRes, timeStep, frameInvocationNr).exec(cmdBuf);
 }

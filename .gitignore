@@ -35,9 +35,6 @@
 build/*
 out/*
 
-#add config
-config/*
-
 results/data/*
 
 # gimp

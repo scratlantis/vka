@@ -31,11 +31,19 @@ class XrControllers final
 
 	float getGrabStrength(size_t controllerIndex) const;
 
+	bool getAPressed(size_t controllerIndex) const;
+
+	bool getBPressed(size_t controllerIndex) const;
+
+	float getTriggerPressure(size_t controllerIndex) const;
+
+	bool getThumbstickPressed(size_t controllerIndex) const;
+
 	bool getAPress(size_t controllerIndex) const;
 
 	bool getBPress(size_t controllerIndex) const;
 
-	float getTriggerPressure(size_t controllerIndex) const;
+	bool getThumbstickPress(size_t controllerIndex) const;
 
   private:
 
@@ -47,11 +55,17 @@ class XrControllers final
 	std::vector<float>     grapStrength;
 	std::vector<bool>      aPress;
 	std::vector<bool>      bPress;
+	std::vector<bool>      thumbstickClick;
+
+	std::vector<bool> aPressLastFrame;
+	std::vector<bool> bPressLastFrame;
+	std::vector<bool> thumbstickClickLastFrame;
+
 	std::vector<float>     triggerPressure;
 
 	XrActionSet actionSet  = nullptr;
 	XrAction    poseAction = nullptr, flyAction = nullptr, grabAction = nullptr,
-		aPressAction = nullptr, bPressAction = nullptr, triggerAction = nullptr;
+		aPressAction = nullptr, bPressAction = nullptr, triggerAction = nullptr, thumbstickClickAction = nullptr;
 
 	DELETE_COPY_CONSTRUCTORS(XrControllers);
 };

@@ -25,7 +25,7 @@ constexpr XrViewConfigurationType viewType             = XR_VIEW_CONFIGURATION_T
 constexpr XrEnvironmentBlendMode  environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 constexpr VkFormat                colorFormat          = VK_FORMAT_R8G8B8A8_SRGB;
 
-XrInstance         createInstance();
+XrInstance         createInstance(const char* name);
 PFN_xrVoidFunction getXRFunction(XrInstance instance, const char *name);
 
 XrBool32 handleXRError(

@@ -1,0 +1,18 @@
+{
+    "Mouse Influence Radius": 0.19200000166893005,
+    "Mouse Influence Strength": 6.188000202178955,
+    "Particle Count": 14584,
+    "Particle Damping": 0.9980000257492065,
+    "Particle Damping Border": 0.5809999704360962,
+    "Particle Density Coefficient": 1.8940000534057617,
+    "Particle Gravity": 2.0,
+    "Particle Render Brightness": 0.02800000086426735,
+    "Particle Render Size": 0.36800000071525574,
+    "Particle Seed": 33,
+    "Particle Size": 0.16200000047683716,
+    "Particle Target Density": 1.0,
+    "Particle Velocity Brightness": 43.75,
+    "Particle pressure force coefficient": 0.035999998450279236,
+    "Particle viscosity force coefficient": 0.6460000276565552,
+    "Simulation Steps Per Frame": 1
+}

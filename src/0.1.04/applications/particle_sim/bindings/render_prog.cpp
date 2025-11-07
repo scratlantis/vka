@@ -5,11 +5,12 @@
 
 
 extern GVar gvar_particle_size;
-GVar        gvar_particle_rel_render_size{"Particle Render Size", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER_GENERAL, {0.1f, 10.f}};
+GVar        gvar_particle_rel_render_size{"Particle Render Size", 1.f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER_GENERAL, {0.01f, 5.f}};
 GVar        gvar_particle_render_brightness{"Particle Render Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER_GENERAL, {0.0f, 1.f}};
 GVar        gvar_particle_render_vel_brightness{"Particle Velocity Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER_GENERAL, {0.0f, 100.f}};
+GVar        gvar_particle_render_force_brightness{"Particle Force Brightness", 0.5f, GVAR_FLOAT_RANGE, GUI_CAT_RENDER_GENERAL, {0.0f, 100.f}};
 
-DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer densityBuffer)
+DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer densityBuffer, Buffer forceBuffer)
 {
 	DrawCmd cmd = DrawCmd();
 	cmd.renderArea = VkRect2D_OP(target->getExtent2D());
@@ -33,6 +34,7 @@ DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer dens
 		float radius;
 		float intensity;
 		float velIntensity;
+		float forceIntensity;
 	} pc;
 	pc.viewOffset = vec2(0.f, 0.f);
 	VkExtent2D extent = target->getExtent2D();
@@ -42,9 +44,11 @@ DrawCmd getCmdRenderParticles2D(Image target, Buffer particleBuffer, Buffer dens
 	pc.radius         = gvar_particle_rel_render_size.val.v_float * gvar_particle_size.val.v_float * cParticle_size_scale * maxDim;
 	pc.intensity      = gvar_particle_render_brightness.val.v_float;
 	pc.velIntensity   = gvar_particle_render_vel_brightness.val.v_float;
+	pc.forceIntensity                 = gvar_particle_render_force_brightness.val.v_float;
 	pc.extent = vec2(static_cast<float>(extent.width),static_cast<float>(extent.height));
 	cmd.pushConstant(&pc, sizeof(PushStruct), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	cmd.pushDescriptor(densityBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+	cmd.pushDescriptor(forceBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 	return cmd;
 }
 
@@ -109,7 +113,7 @@ void saveCamState(FixedCameraState state)
 }
 
 
-DrawCmd getCmdRenderParticles3D(Image target, Buffer particleBuffer, Buffer densityBuffer)
+DrawCmd getCmdRenderParticles3D(Image target, Buffer particleBuffer, Buffer densityBuffer, Buffer forceBuffer)
 {
 	DrawCmd cmd    = DrawCmd();
 	Buffer  camBuf = nullptr, camInstBuf = nullptr;
@@ -144,6 +148,7 @@ DrawCmd getCmdRenderParticles3D(Image target, Buffer particleBuffer, Buffer dens
 		float radius;
 		float intensity;
 		float velIntensity;
+		float forceIntensity;
 	} pc;
 	pc.viewOffset     = vec2(0.f, 0.f);
 	VkExtent2D extent = target->getExtent2D();
@@ -153,8 +158,10 @@ DrawCmd getCmdRenderParticles3D(Image target, Buffer particleBuffer, Buffer dens
 	pc.radius         = gvar_particle_rel_render_size.val.v_float * gvar_particle_size.val.v_float * cParticle_size_scale * maxDim;
 	pc.intensity      = gvar_particle_render_brightness.val.v_float;
 	pc.velIntensity   = gvar_particle_render_vel_brightness.val.v_float;
+	pc.forceIntensity = gvar_particle_render_force_brightness.val.v_float;
 	pc.extent         = vec2(static_cast<float>(extent.width), static_cast<float>(extent.height));
 	cmd.pushConstant(&pc, sizeof(PushStruct), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	cmd.pushDescriptor(densityBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+	cmd.pushDescriptor(forceBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 	return cmd;
 }

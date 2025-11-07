@@ -8,6 +8,7 @@ layout(location = 1) out vec3 outColor;
 
 
 layout(binding = LOCAL_BINDING_OFFSET) readonly buffer PARTICLE_DENSITIES { float densities[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) readonly buffer PARTICLE_FORCES { vecN forces[];};
 
 out gl_PerVertex {
         vec4 gl_Position;
@@ -23,6 +24,7 @@ struct PushStruct
 	float	radius;
 	float	intensity;
 	float	velIntensity;
+	float	forceIntensity;
 };
 layout(push_constant) uniform PC {PushStruct pc;};
 
@@ -30,13 +32,15 @@ layout(push_constant) uniform PC {PushStruct pc;};
 void main()
 {
     float density  = densities[gl_VertexIndex]; 
+    vecN force = forces[gl_VertexIndex];
 #if VECN_DIM == 3
     outPos = pos;
     vec4 viewPos = worldToView(vec4(pos,1.0));
     gl_Position = viewToClip(viewPos);
     float dist = length(viewPos.xyz);
     gl_PointSize = pc.radius/max(dist,0.001);
-    outColor = vec3(length(vel)*pc.velIntensity, 0.5, density);
+    outColor = vec3(length(vel)*pc.velIntensity, length(force)*pc.forceIntensity*0.001, density);
+    outColor.r = clamp(outColor.r - outColor.g, 0.0, 1.0);
 #endif
 
 #if VECN_DIM == 2

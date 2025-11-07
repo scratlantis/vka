@@ -36,7 +36,7 @@ class XrContext
 	XrContext() = default;
 	~XrContext() = default;
 
-	void initInstance(std::vector<const char *> &extensions);
+	void initInstance(DeviceCI &deviceCI);
 	void destroy();
 
 	DELETE_COPY_CONSTRUCTORS(XrContext);

@@ -8,9 +8,11 @@ namespace vka
 
 
 
-void XrContext::initInstance(std::vector<const char *> &extensions)
+void XrContext::initInstance(DeviceCI &deviceCI)
 {
-	xrInstance = xr::createInstance();
+
+	std::vector<const char *> &extensions = deviceCI.enabledInstanceExtensions;
+	xrInstance                            = xr::createInstance(deviceCI.applicationName.c_str());
 	xrDebugMessenger = xr::createDebugMessenger(xrInstance);
 	xrSystemId = xr::getSystem(xrInstance);
 

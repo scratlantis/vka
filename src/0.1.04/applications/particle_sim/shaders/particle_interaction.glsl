@@ -49,6 +49,25 @@ void resolveBorderCollision(inout PARTICLE_TYPE particle, vecN rangeMin, vecN ra
 #endif
 }
 
+bool isInBox(PARTICLE_TYPE particle, vecN rangeMin, vecN rangeMax, float radius)
+{
+	vecN deltaLow = particle.pos - (rangeMin + vecN(radius*0.0));
+	vecN deltaHigh = rangeMax - vecN(radius*0.0) - particle.pos;
+
+	if(deltaLow.x < 0.0 || deltaHigh.x < 0.0)
+		return false;
+
+	if(deltaLow.y < 0.0 || deltaHigh.y < 0.0)
+		return false;
+
+#if VECN_DIM == 3
+	if(deltaLow.z < 0.0 || deltaHigh.z < 0.0)
+		return false;
+#endif
+
+	return true;
+}
+
 vecN getCursorForce(vecN cursorCoord, vecN pos, float radius)
 {
 	vecN dir = cursorCoord - pos;

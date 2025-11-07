@@ -41,6 +41,8 @@ struct PushStruct
 
 	float gravity;
 	uint taskSize;
+	uint frameInvocationNr;
+	float particleGravityCoef;
 };
 
 
@@ -69,7 +71,35 @@ void main()
 #if VECN_DIM == 3
 	vec3 down = (params.invModelMat * vec4(0.0, -1.0, 0.0, 0.0)).xyz;
 	down = normalize(down);
-	force += down * pc.gravity;
+	if((params.toggleFlags & PARTICLE_EARTH_GRAVITY_BIT) != 0U)
+	{
+		force += down * pc.gravity;
+	}
+
+	if((params.toggleFlags & PARTICLE_GRAVITY_BIT) != 0)
+	{
+		uint seed = id * 74775u + params.frameIdx * 289363u +pc.frameInvocationNr * 100423u + 13789u;
+
+		for(int i = 0; i < 10; ++i)
+		{
+			seed = hash(seed);
+			uint randomParticle = seed % pc.taskSize;
+			vec3 particlePos = particles[randomParticle].pos;
+
+			vec3 dir = particlePos - elem.pos;
+			float distSqr = dot(dir, dir);
+			dir = normalize(dir);
+			if(distSqr > 0.001)
+			{				
+
+				//distSqr = 0.1;
+				//dir = vec3(1.0,0.0,0.0);
+				force += 0.01 * dir * pc.particleGravityCoef / distSqr;
+			}
+		}
+	}
+
+
 #else
 	force.y += pc.gravity;
 #endif
@@ -80,6 +110,8 @@ void main()
 	vecN cursorForce;
 #if VECN_DIM == 3
 	cursorForce = getCursorForce(pc.cursorPos, elem.pos, pc.cursorRadius);
+
+
 #else
 	vec2 localMouseCoord = (pc.cursorPos-pc.minRange)*(pc.maxRange - pc.minRange);
 	cursorForce = getCursorForce(localMouseCoord, elem.pos, pc.cursorRadius);
@@ -96,14 +128,46 @@ void main()
 #if VECN_DIM == 3
 	boundaryVel = (params.modelMat * vec4(elem.pos, 1.0) - params.modelMatLastFrame * vec4(elem.pos, 1.0)).xyz;
 	boundaryVel = (params.invModelMat*vec4(boundaryVel,0.0)).xyz;
-	boundaryVel*=10.0;
+	vecN oldPos = elem.pos;
+	vecN oldVel = elem.vel;
+	if(pc.frameInvocationNr == 0U)
+	{
+		elem.pos = (params.invModelMat * params.modelMatLastFrame * vec4(elem.pos, 1.0)).xyz;
+		elem.vel = (params.invModelMat * params.modelMatLastFrame * vec4(elem.vel, 0.0)).xyz;
+	}
+	//elem.pos = (params.modelMat * params.invModelMatLastFrame * vec4(elem.pos, 1.0)).xyz;
+	//elem.pos = (params.invModelMatLastFrame * params.modelMat * vec4(elem.pos, 1.0)).xyz;
+	//elem.pos = (params.modelMatLastFrame * params.invModelMat * vec4(elem.pos, 1.0)).xyz;
 #endif
+	//if((elem.stateFlags & PARTICLE_STATE_IN_BOX_BIT) != 0)
+	//{
+	//	elem.pos = oldPos;
+	//	elem.vel = oldVel;
+	//	elem.vel -= 0.2*boundaryVel;
+	//}
 
 
 
 
 	// For now: Hardcoded border collision
-	resolveBorderCollision(elem, pc.minRange, pc.maxRange, pc.radius, pc.dampingBorder, boundaryVel);
+	if((params.toggleFlags & PARTICLE_BOX_BIT) != 0U)
+	{
+
+		if((elem.stateFlags & PARTICLE_STATE_IN_BOX_BIT) != 0)
+		{
+			resolveBorderCollision(elem, pc.minRange, pc.maxRange, pc.radius, pc.dampingBorder, boundaryVel);
+		}
+		else if(isInBox(elem, pc.minRange, pc.maxRange, pc.radius))
+		{
+			elem.stateFlags |= PARTICLE_STATE_IN_BOX_BIT;
+			resolveBorderCollision(elem, pc.minRange, pc.maxRange, pc.radius, pc.dampingBorder, boundaryVel);
+		}
+	}
+	else
+	{
+		elem.stateFlags &= ~PARTICLE_STATE_IN_BOX_BIT;
+	}
+
 	//resolveBorderCollision(elem, vec3(0.0), vec3(1.0), 0.01, pc.dampingBorder);
 	elem.vel *= pow(pc.damping, time*60.0); // Frame rate independent damping
 

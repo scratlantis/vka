@@ -42,6 +42,8 @@ class XrHeadset
 	std::vector<VkImageLayout> imageLayoutsLeft;
 	std::vector<VkImageLayout> imageLayoutsRight;
 
+	VkFormat swapchainImageFormat;
+
 
 	VkExtent2D getEyeResolution(size_t eyeIndex) const;
 

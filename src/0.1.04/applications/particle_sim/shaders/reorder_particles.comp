@@ -1,0 +1,41 @@
+#include "interface_structs.glsl"
+#include "../lib/lib/random.glsl"
+#include "../lib/lib/kernels.glsl"
+
+#if VECN_DIM == 3
+#define PARTICLE_TYPE GLSLParticle3D
+#else
+#define PARTICLE_TYPE GLSLParticle
+#endif
+
+
+
+
+struct PushStruct
+{
+	uint taskSize;
+};
+
+
+
+layout(push_constant) uniform PC {PushStruct pc;};
+layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer PARTICLES_IN { PARTICLE_TYPE particles_in[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) readonly buffer PREDICTED_POS_IN { vecN pred_pos_in[];};
+layout(binding = LOCAL_BINDING_OFFSET + 2) readonly buffer PERMUTATION { uint permutation[];};
+layout(binding = LOCAL_BINDING_OFFSET + 3) writeonly buffer PARTICLES_OUT { PARTICLE_TYPE particles_out[];};
+layout(binding = LOCAL_BINDING_OFFSET + 4) writeonly buffer PREDICTED_POS_OUT { vecN pred_pos_out[];};
+
+
+
+void main()
+{
+	if(gl_GlobalInvocationID.x >= pc.taskSize)
+	{
+		return;
+	}
+
+	uint id = gl_GlobalInvocationID.x;
+	particles_out[id] = particles_in[permutation[id]];
+	pred_pos_out[id] = pred_pos_in[permutation[id]];
+
+}

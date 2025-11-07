@@ -16,6 +16,7 @@ VkExtent2D XrHeadset::getEyeResolution(size_t eyeIndex) const
 
 void XrHeadset::init()
 {
+	swapchainImageFormat = xr::colorFormat;
 	// Create a session with Vulkan graphics binding
 	XrGraphicsBindingVulkan2KHR graphicsBinding{XR_TYPE_GRAPHICS_BINDING_VULKAN2_KHR};
 	graphicsBinding.device           = gState.device.logical;

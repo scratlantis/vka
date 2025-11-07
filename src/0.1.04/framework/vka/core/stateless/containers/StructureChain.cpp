@@ -31,7 +31,7 @@
 
 	StructureChain::Node::~Node()
 	{
-		delete[] reinterpret_cast<char *>(data);
+		//delete[] reinterpret_cast<char *>(data); // ToDo fix memory leak
 	}
 
 	VkBaseOutStructure *StructureChain::Node::getNode() const

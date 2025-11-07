@@ -119,7 +119,7 @@ void VrState::coreInit(DeviceCI &deviceCI, IOControlerCI ioControllerCI, Window 
 	window->addInstanceExtensions(deviceCI.enabledInstanceExtensions);
 	if (vrEnabled)
 	{
-		xrContext.initInstance(deviceCI.enabledInstanceExtensions);
+		xrContext.initInstance(deviceCI);
 	}
 	device.configure(deviceCI);
 	device.createInstance();

@@ -17,6 +17,7 @@ void VrDevice::destroy()
 	pvkDestroyDebugUtilsMessengerEXT(instance, printfDebugMessenger, nullptr);
 	pvkDestroyDebugUtilsMessengerEXT(instance, validationDebugMessenger, nullptr);
 	vkDestroyInstance(instance, nullptr);
+	deviceCI = {};
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL printf_debug_utils_message_callback(

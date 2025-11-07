@@ -1,0 +1,39 @@
+{
+    "Application Mode": 1,
+    "Camera Distance": 1.893750548362732,
+    "Camera Fixpoint": [
+        0.47549551725387573,
+        0.4122816026210785,
+        0.6040310263633728
+    ],
+    "Camera Move Speed": 2.0,
+    "Camera Pitch": 14.453126907348633,
+    "Camera Scroll Speed": 0.10000000149011612,
+    "Camera Turn Speed": 0.25,
+    "Camera Up": [
+        0.0,
+        1.0,
+        0.0
+    ],
+    "Camera Yaw": 603.171875,
+    "Frame Time: %.4f ms": 22.0,
+    "Menu": 0,
+    "Mouse Influence Radius": 0.6620000004768372,
+    "Mouse Influence Strength": 10.0,
+    "Particle Count": 25621,
+    "Particle Damping": 1.0,
+    "Particle Damping Border": 0.949999988079071,
+    "Particle Density Coefficient": 0.10400000214576721,
+    "Particle Gravity": 0.6610000133514404,
+    "Particle Render Brightness": 0.04500000178813934,
+    "Particle Render Size": 0.052000001072883606,
+    "Particle Seed": 39,
+    "Particle Size": 0.4690000116825104,
+    "Particle Target Density": 1.0,
+    "Particle Velocity Brightness": 22.726999282836914,
+    "Particle pressure force coefficient": 0.19200000166893005,
+    "Particle viscosity force coefficient": 1.1979999542236328,
+    "Simulation Steps Per Frame": 2,
+    "Simulation Time Scale": 3.181999921798706,
+    "Sliding Average Coefficient": 1.0
+}

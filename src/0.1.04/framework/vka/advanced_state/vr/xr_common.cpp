@@ -12,7 +12,7 @@ namespace vka
 
 namespace xr
 {
-XrInstance createInstance()
+XrInstance createInstance(const char* name)
 {
 	uint32_t instanceExtensionCount;
 	XrResult res = xrEnumerateInstanceExtensionProperties(nullptr, 0u, &instanceExtensionCount, nullptr);
@@ -23,7 +23,7 @@ XrInstance createInstance()
 
 	XrInstance instance;
 
-	static const char *const  applicationName  = "OpenXR Example";
+	static const char *const  applicationName  = name;
 	static const unsigned int majorVersion     = 0;
 	static const unsigned int minorVersion     = 1;
 	static const unsigned int patchVersion     = 0;

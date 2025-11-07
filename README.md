@@ -2,6 +2,7 @@
 
 High-level Vulkan framework, designed with the intent to allow for quick prototyping of interactive research applications.
 
+07.11.25: Readme currently outdated, will update in the next couple of days.
 ## Description
 
 Current Features:
@@ -17,16 +18,19 @@ Current Features:
 - ... and some other stuff
 
 Working on:
-- Shader debugging utility
+- Better VR integration
 
 Current applications:
-- minimal path tracer with participating medium
 - minimal path tracer with participating medium and gui
+- particle simulation (2D/3D/VR)
 
 ## Screenshots:
 
 - minimal path tracer with participating medium and gui:
 ![Alt text](/media/screenshot_pt_with_gui_1.png?raw=true "path_tracer_with_gui")
+
+- particle simulation (2D)
+![Alt text](/media/particle_sim_01.png?raw=true "particle simulation (2D)")
 
 
 ## Dependencies

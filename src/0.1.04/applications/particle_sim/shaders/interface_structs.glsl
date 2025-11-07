@@ -6,6 +6,12 @@ struct GLSLParticle
 {
 	vec2 pos;
 	vec2 vel;
+
+	uint stateFlags;
+	uint pad1;
+	uint pad2;
+	uint pad3;
+
 };
 
 #define PARTICLE_STATE_IN_BOX_BIT 0x1

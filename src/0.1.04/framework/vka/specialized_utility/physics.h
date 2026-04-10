@@ -4,6 +4,15 @@ namespace vka
 {
 	namespace physics
 	{
+    struct KernelParams
+    {
+	    float radius;
+	    float radius2;
+
+	    float norm;
+	    float derivScale;
+    };
+
 		enum ParticleDimensions
 		{
 			PD_2D,

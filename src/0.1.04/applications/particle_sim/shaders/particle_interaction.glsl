@@ -75,7 +75,7 @@ vecN getCursorForce(vecN cursorCoord, vecN pos, float radius)
 	dir = normalize(dir);
 	if(dist < radius)
 	{
-		float weight = kernelWeight_smooth(dist, radius) * kernelNormalization_smooth(radius)*0.001;
+		float weight = kernelShape_smooth(dist, radius) * kernelDensityNorm_smooth(radius)*0.001;
 		return dir * weight * 100.0;
 	}
 	return vecN(0.0);

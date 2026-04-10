@@ -7,6 +7,9 @@ struct PushStruct
 	uint structureSize;
 	uint structureOffset;
 	float densityCoef;
+
+    float radius2;
+    float densityNorm;
 };
 
 layout(push_constant) uniform PC {PushStruct pc;};
@@ -17,39 +20,41 @@ layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer DENSITY { float part
 
 void main()
 {
-	if(gl_GlobalInvocationID.x >= pc.taskSize)
-	{
-		return;
-	}
+	if (gl_GlobalInvocationID.x >= pc.taskSize)
+{
+    return;
+}
 
+AttributeDescriptor attrDesc;
+attrDesc.stride = pc.structureSize;
+attrDesc.offset = pc.structureOffset;
+attrDesc.alignedSize = ALIGNED_SIZE(vecN);
 
-	AttributeDescriptor attrDesc;
-	attrDesc.stride = pc.structureSize;
-	attrDesc.offset = pc.structureOffset;
-	attrDesc.alignedSize = ALIGNED_SIZE(vecN);
+uint id = gl_GlobalInvocationID.x;
+uint attrID = attributeID(id, attrDesc);
 
-	uint id				= gl_GlobalInvocationID.x;
-	uint range			= pc.taskSize;
-	uint attrID			= attributeID(id, attrDesc);
+vecN localPos = particles[attrID];
+float density = 0.0;
 
-	vecN localPos		= particles[attrID];
-	float density = 0.0f;
+float radius  = pc.radius;
+float radius2 = pc.radius2;          // precompute on CPU if possible
+float norm    = pc.densityNorm;      // precompute on CPU if possible
 
-	float r2 = pc.radius * pc.radius;
-	ITERATE_START(localPos,id)
-		vecN otherPos = particles[attributeID(otherId, attrDesc)];
-		vecN d = localPos - otherPos;
-		float dist2 = dot(d, d);
-		//distance(localPos, otherPos);
-		if(dist2 > r2)
-		{
-			continue;
-		}
-		density += KERNEL_WEIGHT(dist, pc.radius);
-	ITERATE_END
+ITERATE_START(localPos, id)
+    vecN otherPos = particles[attributeID(otherId, attrDesc)];
+    vecN d = localPos - otherPos;
+    float dist2 = dot(d, d);
 
-	density += KERNEL_WEIGHT(0, pc.radius);
+    if (dist2 >= radius2)
+    {
+        continue;
+    }
 
-	density *= KERNEL_NORMALIZATION(pc.radius)*pc.densityCoef * 0.0001;
-	particle_densities[id] = density;
+    density += KERNEL_SHAPE_R2(dist2, radius, radius2);
+ITERATE_END
+
+density += KERNEL_SHAPE_R2(0.0, radius, radius2);
+density *= norm * pc.densityCoef * 0.0001;
+
+particle_densities[id] = density;
 }

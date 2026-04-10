@@ -4,6 +4,83 @@ namespace vka
 {
 	namespace physics
 	{
+
+		#include <cmath>
+
+    constexpr float PI_F = 3.14159265358979323846f;
+
+    KernelParams computeKernelParams(
+        ShaderKernelType   kernel,
+        ParticleDimensions dim,
+        float              radius)
+    {
+	    KernelParams p{};
+
+	    p.radius  = radius;
+	    p.radius2 = radius * radius;
+
+	    float r2 = radius * radius;
+	    float r4 = r2 * r2;
+	    float r8 = r4 * r4;
+
+	    switch (kernel)
+	    {
+		    case SK_QUADRATIC: {
+			    if (dim == PD_2D)
+			    {
+				    // 6 / (pi * r^4)
+				    p.norm = 6.0f / (PI_F * r4);
+
+				    // derivative scale for d/dr[(h-r)^2]
+				    // 12 / (pi * r^4)
+				    p.derivScale = 12.0f / (PI_F * r4);
+			    }
+			    else        // PD_3D
+			    {
+				    float r5 = r4 * radius;
+
+				    // 15 / (pi * r^5)
+				    p.norm = 15.0f / (PI_F * r5);
+
+				    // derivative scale
+				    // 30 / (pi * r^5)
+				    p.derivScale = 30.0f / (PI_F * r5);
+			    }
+		    }
+		    break;
+
+		    case SK_SMOOTH: {
+			    if (dim == PD_2D)
+			    {
+				    // 4 / (pi * r^8)
+				    p.norm = 4.0f / (PI_F * r8);
+
+				    // derivative scale (fixed version!)
+				    // -24 / (pi * r^8)
+				    p.derivScale = -24.0f / (PI_F * r8);
+			    }
+			    else        // PD_3D
+			    {
+				    float r9 = r8 * radius;
+
+				    // 315 / (64 * pi * r^9)
+				    p.norm = 315.0f / (64.0f * PI_F * r9);
+
+				    // derivative scale
+				    // -945 / (32 * pi * r^9)
+				    p.derivScale = -945.0f / (32.0f * PI_F * r9);
+			    }
+		    }
+		    break;
+	    }
+
+	    return p;
+    }
+
+
+
+
+
 		std::string ParticleDescription::getStructDef() const
 		{
 			VKA_ASSERT(dimensions == PD_2D && structureSize % 8 == 0
@@ -103,12 +180,17 @@ namespace vka
 		        uint32_t structureSize;
 		        uint32_t structureOffset;
 		        float    densityCoef;
+		        float    radius2;
+		        float    densityNorm;
 	        } pc;
 	        pc.taskSize        = particleCount;
 	        pc.radius          = densityCI.particleDesc.radius;
 	        pc.structureSize   = densityCI.particleDesc.structureSize;
 	        pc.structureOffset = densityCI.particleDesc.posAttributeOffset;
 	        pc.densityCoef     = densityCI.densityCoef;
+			KernelParams kp = computeKernelParams(densityCI.kernelType, densityCI.particleDesc.dimensions, densityCI.particleDesc.radius);
+			pc.radius2      = kp.radius2;
+			pc.densityNorm   = kp.norm;
 	        cmd.pushConstant(&pc, sizeof(PC));
 	        cmd.pipelineDef.shaderDef.args.push_back({"SELECT_KERNEL_TYPE", std::to_string(densityCI.kernelType)});
 	        cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", densityCI.particleDesc.dimensions == PD_2D ? "2" : "3"});
@@ -132,6 +214,9 @@ namespace vka
 		        uint32_t structureOffset;
 		        float    forceCoef;
 		        float    targetDensity;
+
+		        float radius2;
+		        float derivScale;
 	        } pc;
 			pc.taskSize        = particleCount;
 	        pc.radius          = pressureCI.particleDesc.radius;
@@ -139,6 +224,10 @@ namespace vka
 	        pc.structureOffset = pressureCI.particleDesc.posAttributeOffset;
 	        pc.forceCoef       = pressureCI.forceCoef;
 	        pc.targetDensity   = pressureCI.targetDensity;
+	        KernelParams kp    = computeKernelParams(pressureCI.kernelType, pressureCI.particleDesc.dimensions, pressureCI.particleDesc.radius);
+	        pc.radius2         = kp.radius2;
+	        pc.derivScale      = kp.derivScale;
+
 	        cmd.pushConstant(&pc, sizeof(PC));
 	        cmd.pipelineDef.shaderDef.args.push_back({"SELECT_KERNEL_TYPE", std::to_string(pressureCI.kernelType)});
 	        cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", pressureCI.particleDesc.dimensions == PD_2D ? "2" : "3"});
@@ -164,12 +253,20 @@ namespace vka
 		        uint32_t structureSize;
 		        uint32_t structureOffset;
 		        float    forceCoef;
+
+				float radius2;
+		        float viscosityNorm;
 	        } pc;
 	        pc.taskSize        = particleCount;
 	        pc.radius          = ci.particleDesc.radius;
 	        pc.structureSize   = ci.particleDesc.structureSize;
 	        pc.structureOffset = ci.particleDesc.posAttributeOffset;
 	        pc.forceCoef       = ci.forceCoef;
+			KernelParams kp = computeKernelParams(ci.kernelType, ci.particleDesc.dimensions, ci.particleDesc.radius);
+			pc.radius2       = kp.radius2;
+	        pc.viscosityNorm   = kp.norm;
+
+
 	        cmd.pushConstant(&pc, sizeof(PC));
 	        cmd.pipelineDef.shaderDef.args.push_back({"SELECT_KERNEL_TYPE", std::to_string(ci.kernelType)});
 	        cmd.pipelineDef.shaderDef.args.push_back({"VECN_DIM", ci.particleDesc.dimensions == PD_2D ? "2" : "3"});

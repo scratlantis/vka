@@ -35,10 +35,13 @@ void main()
 	vecN localPos		= particles[attrID];
 	float density = 0.0f;
 
+	float r2 = pc.radius * pc.radius;
 	ITERATE_START(localPos,id)
 		vecN otherPos = particles[attributeID(otherId, attrDesc)];
-		float dist = distance(localPos, otherPos);
-		if(dist > pc.radius)
+		vecN d = localPos - otherPos;
+		float dist2 = dot(d, d);
+		//distance(localPos, otherPos);
+		if(dist2 > r2)
 		{
 			continue;
 		}

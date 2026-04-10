@@ -39,6 +39,7 @@ struct MapImgArgs
 	VkRect2D_OP		srcArea;
 	VkRect2D_OP		dstArea;
 	VkImageLayout	dstLayout;
+	float           slidingAverageCoef;
 };
 
 DrawCmd getCmdMapImg(Image src, Image dst, MapImgArgs args);

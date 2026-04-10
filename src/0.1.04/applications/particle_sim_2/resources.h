@@ -53,7 +53,6 @@ class ParticleResources
 	const Buffer getParamsBuf();
 	const Buffer getParticlePingPongBuf();
 	const Buffer getPredictedPosPingPongBuf();
-	const Buffer getVelocityPingPongBuf();
 	void swapPingPongBuffers();
 
 	uint32_t count() const

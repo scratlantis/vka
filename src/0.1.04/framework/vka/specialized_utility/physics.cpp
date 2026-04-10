@@ -70,7 +70,7 @@ namespace vka
 			return cmd;
 		};
 
-		ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices, uint32_t count)
+		ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices, Buffer endIndices, uint32_t count)
 		{
 	        ComputeCmd cmd = ComputeCmd(count, cVkaShaderPath + "physics/compute_start_id.comp", COMPUTE_CMD_FLAG_BIT_DYNAMIC);
 			cmd.pushLocal();
@@ -81,6 +81,7 @@ namespace vka
 	        cmd.pushConstant(&pc, sizeof(PushConstants));
 			cmd.pushDescriptor(cellKeys, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	        cmd.pushDescriptor(startIndices, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+			cmd.pushDescriptor(endIndices, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	        return cmd;
         }
 

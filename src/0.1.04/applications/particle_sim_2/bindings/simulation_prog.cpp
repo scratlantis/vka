@@ -41,8 +41,8 @@ Rect2D<float> getViewAdjustedArea()
 }
 
 GVar gvar_particle_generation_seed{"Particle Seed", 42U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {0U, 100U}};
-GVar gvar_particle_generation_count{"Particle Count", 1000U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {1U, 1000000U}};
-GVar gvar_particle_size{"Particle Size", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.01f, 10.f}};
+GVar gvar_particle_generation_count{"Particle Count", 1000U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_GEN, {1U, 100000U}};
+GVar gvar_particle_size{"Particle Size", 0.01f, GVAR_FLOAT_RANGE, GUI_CAT_PARTICLE_UPDATE, {0.1f, 10.f}};
 
 ComputeCmd getCmdGenParticles(ParticleResources *pRes)
 {
@@ -101,11 +101,9 @@ void cmdReorderParticles(CmdBuffer cmdBuf, ParticleResources *pRes)
 	cmd.pushLocal();
 	cmd.pushDescriptor(pRes->getParticleBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	cmd.pushDescriptor(pRes->getPredictedPosBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-	cmd.pushDescriptor(pRes->getVelocityBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	cmd.pushDescriptor(pRes->simRes.it.getPermutationBuffer(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	cmd.pushDescriptor(pRes->getParticlePingPongBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	cmd.pushDescriptor(pRes->getPredictedPosPingPongBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-	cmd.pushDescriptor(pRes->getVelocityPingPongBuf(), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 	struct PC
 	{
 		uint32_t taskSize;
@@ -248,9 +246,12 @@ void cmdComputeInteractionData(CmdBuffer cmdBuf, ParticleResources *pRes)
 		cmdInitBuffer(cmdBuf, pRes->simRes.forceBuffer, 0U, pRes->count() * pRes->descAttr.structureSize);
 		pRes->simRes.it.cmdUpdate(cmdBuf, pRes->getPredictedPosBuf(), pRes->descAttr);
 	}
+
 	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 	           VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+
 	cmdReorderParticles(cmdBuf, pRes);
+
 	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 	           VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 	{
@@ -287,7 +288,7 @@ void cmdComputeInteractionData(CmdBuffer cmdBuf, ParticleResources *pRes)
 	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 	           VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_READ_BIT);
 
-	//cmdReorderParticles(cmdBuf, pRes);
+	cmdReorderParticles(cmdBuf, pRes);
 }
 
 GVar gvar_simulation_step_count{"Simulation Steps Per Frame", 1U, GVAR_UINT_RANGE, GUI_CAT_PARTICLE_UPDATE, {1U, 10U}};

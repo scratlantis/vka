@@ -123,7 +123,16 @@ DrawCmd getCmdMapImg(Image src, Image dst, MapImgArgs args)
 	}
 	DrawCmd drawCmd = DrawCmd();
 	drawCmd.setGeometry(DrawSurface::screenFillingTriangle());
-	drawCmd.pushColorAttachment(dst, args.dstLayout);
+	if (args.slidingAverageCoef != 0.f)
+	{
+		// alpha blend
+		BlendOperation blendOp = {VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_FACTOR_DST_ALPHA, VK_BLEND_OP_ADD};
+		drawCmd.pushColorAttachment(dst, args.dstLayout, BlendOperation::alpha(), BlendOperation::add());
+	}
+	else
+	{
+		drawCmd.pushColorAttachment(dst, args.dstLayout);
+	}
 	drawCmd.pushDescriptor(src, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 	if (!args.useScissors)
 	{
@@ -140,6 +149,7 @@ DrawCmd getCmdMapImg(Image src, Image dst, MapImgArgs args)
 		float height;
 		float whitePoint;
 		float exposure;
+		float slidingAverageCoef;
 	} pc;
 	pc.exposure = args.exposure;
 	pc.whitePoint = args.whitePoint;
@@ -147,10 +157,15 @@ DrawCmd getCmdMapImg(Image src, Image dst, MapImgArgs args)
 	pc.y = region.y;
 	pc.width = region.width;
 	pc.height = region.height;
+	pc.slidingAverageCoef = args.slidingAverageCoef;
 	drawCmd.pushConstant(&pc, sizeof(PushStruct), VK_SHADER_STAGE_FRAGMENT_BIT);
 	drawCmd.renderArea = args.dstArea;
 	addShader(drawCmd.pipelineDef, cVkaShaderPath + "fill_texture.vert");
 	addShader(drawCmd.pipelineDef, cVkaShaderPath + "mapImg.frag");
+	if (args.slidingAverageCoef != 0.f)
+	{
+		drawCmd.pipelineDef.shaderDefinitions.back().args.push_back({"SLIDING_AVERAGE", {}});
+	}
 	if (args.normalize)
 	{
 		drawCmd.pipelineDef.shaderDefinitions.back().args.push_back({"NORMALIZE", ""});

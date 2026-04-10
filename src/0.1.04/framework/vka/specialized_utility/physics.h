@@ -27,7 +27,7 @@ namespace vka
 
 		};
 		ComputeCmd getCmdComputeCellKeys(Buffer particle, Buffer cellKeys, ParticleDescription desc);
-        ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices, uint32_t count);
+        ComputeCmd getCmdComputeStartId(Buffer cellKeys, Buffer startIndices, Buffer endIndices, uint32_t count);
 
 		enum ShaderKernelType
 		{

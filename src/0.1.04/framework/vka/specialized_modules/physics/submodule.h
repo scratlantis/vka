@@ -15,13 +15,14 @@ namespace vka
 			Buffer histogram = nullptr;
 			Buffer cellKeys = nullptr;
 			Buffer startIndices = nullptr;
+			Buffer endIndices = nullptr;
 			Buffer permutation = nullptr;
 			Buffer uniformBuf = nullptr;
 
 		public:
 			bool isInitialized() const
 			{
-				return cellKeys && startIndices && permutation
+		        return cellKeys && startIndices && endIndices && permutation
 					&& pingPongCellKeys && pingPongPermutation && histogram;
 			}
 			void init(IResourcePool* pPool, uint32_t preallocCount = 0);

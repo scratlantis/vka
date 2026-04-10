@@ -12,7 +12,6 @@ void ParticleResources::createTemporaryBuffers()
 	tmpVelocityBuffer = velocityMemory->getSubBuffer({0, *pParticleCount * vec_size_aligned(desc.dimensions)});
 	tmpParticlePingPongBuffer = particlePingPongMemory->getSubBuffer({0, *pParticleCount * desc.structureSize});
 	tmpPredPosPingPongBuffer  = predPosPingPongMemory->getSubBuffer({0, *pParticleCount * vec_size_aligned(desc.dimensions)});
-	tmpVelocityPingPongBuffer = velocityPingPongMemory->getSubBuffer({0, *pParticleCount * vec_size_aligned(desc.dimensions)});
 }
 
 void ParticleResources::refreshTemporaryBuffers()
@@ -26,9 +25,8 @@ void ParticleResources::refreshTemporaryBuffers()
 }
 void ParticleResources::swapPingPongBuffers()
 {
-	std::swap(tmpParticleBuffer, tmpParticlePingPongBuffer);
-	std::swap(tmpPredPosBuffer, tmpPredPosPingPongBuffer);
-	std::swap(tmpVelocityBuffer, tmpVelocityPingPongBuffer);
+	std::swap(particlePingPongMemory, tmpParticlePingPongBuffer);
+	std::swap(predPosPingPongMemory, tmpPredPosPingPongBuffer);
 
 }
 const Buffer ParticleResources::getVelocityBuf()
@@ -51,11 +49,6 @@ const Buffer ParticleResources::getPredictedPosPingPongBuf()
 	return tmpPredPosPingPongBuffer;
 }
 
-const Buffer ParticleResources::getVelocityPingPongBuf()
-{
-	refreshTemporaryBuffers();
-	return tmpVelocityPingPongBuffer;
-}
 
 const Buffer ParticleResources::getPredictedPosBuf()
 {
@@ -89,10 +82,6 @@ void ParticleResources::init(uint32_t maxParticleCount, const ParticleDescriptio
 	velocityMemory = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 	velocityMemory->changeSize(maxParticleCount * vec_size_aligned(desc.dimensions));
 	velocityMemory->recreate();
-
-	velocityPingPongMemory = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	velocityPingPongMemory->changeSize(maxParticleCount * vec_size_aligned(desc.dimensions));
-	velocityPingPongMemory->recreate();
 
 	this->desc            = desc;
 	this->pCurrentFrameID = pFrameID;

@@ -150,13 +150,24 @@ void addBlendAttachmentState(RasterizationPipelineDefinition &def, BlendOperatio
 	attachmentBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	attachmentBlendState.blendEnable    = VK_TRUE;
 
-	attachmentBlendState.srcAlphaBlendFactor = colorBlendOp.srcFactor;
-	attachmentBlendState.dstAlphaBlendFactor = colorBlendOp.dstFactor;
-	attachmentBlendState.alphaBlendOp        = colorBlendOp.op;
+	//attachmentBlendState.srcAlphaBlendFactor = colorBlendOp.srcFactor;
+	//attachmentBlendState.dstAlphaBlendFactor = colorBlendOp.dstFactor;
+	//attachmentBlendState.alphaBlendOp        = colorBlendOp.op;
+	//
+	//attachmentBlendState.srcColorBlendFactor = alphaBlendOp.srcFactor;
+	//attachmentBlendState.dstColorBlendFactor = alphaBlendOp.dstFactor;
+	//attachmentBlendState.colorBlendOp        = alphaBlendOp.op;
 
-	attachmentBlendState.srcColorBlendFactor = alphaBlendOp.srcFactor;
-	attachmentBlendState.dstColorBlendFactor = alphaBlendOp.dstFactor;
-	attachmentBlendState.colorBlendOp        = alphaBlendOp.op;
+	attachmentBlendState.srcColorBlendFactor = colorBlendOp.srcFactor;
+	attachmentBlendState.dstColorBlendFactor = colorBlendOp.dstFactor;
+	attachmentBlendState.colorBlendOp        = colorBlendOp.op;
+
+	attachmentBlendState.srcAlphaBlendFactor = alphaBlendOp.srcFactor;
+	attachmentBlendState.dstAlphaBlendFactor = alphaBlendOp.dstFactor;
+	attachmentBlendState.alphaBlendOp        = alphaBlendOp.op;
+
+
+
 	def.colorBlendAttachmentStates.push_back(attachmentBlendState);
 }
 

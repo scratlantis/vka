@@ -1,0 +1,58 @@
+#include "interface_structs.glsl"
+#include "../lib/lib/random.glsl"
+
+
+struct PushStruct
+{
+#if VECN_DIM == 3
+	vec3 minRange;
+	uint pad0;
+
+	vec3 maxRange;
+	uint pad1;
+#else
+	vec2 minRange;
+	vec2 maxRange;
+#endif
+	uint seed;
+	uint taskSize;
+	float radius;
+};
+
+#if VECN_DIM == 3
+#define PARTICLE_TYPE GLSLParticle3D
+#else
+#define PARTICLE_TYPE GLSLParticle
+#endif
+
+layout(push_constant) uniform PC {PushStruct pc;};
+layout(binding = LOCAL_BINDING_OFFSET + 0) writeonly buffer PARTICLES { PARTICLE_TYPE particles[];};
+layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer PREDICTED_POS { vecN pred_pos[];};
+
+void main()
+{
+	if(gl_GlobalInvocationID.x >= pc.taskSize)
+	{
+		return;
+	}
+
+	uint id = gl_GlobalInvocationID.x;
+	uint seed = pc.taskSize*pc.seed + id + 46732468;
+
+	vecN rng;
+	#if VECN_DIM == 3
+	rng = vec3(unormNext(seed), unormNext(seed), unormNext(seed));
+	#else
+	rng = vec2(unormNext(seed), unormNext(seed));
+	#endif
+
+	vecN scale = pc.maxRange - pc.minRange - vecN(2.0*pc.radius);
+	vecN offset = pc.minRange + vecN(pc.radius);
+
+	PARTICLE_TYPE elem;
+	elem.pos = rng * scale * 0.5f + scale * 0.25f + offset;
+	//elem.pos = rng * vecN(1.0);
+	elem.vel = vecN(0.0);
+	particles[id] = elem;
+	pred_pos[id] = elem.pos;
+}

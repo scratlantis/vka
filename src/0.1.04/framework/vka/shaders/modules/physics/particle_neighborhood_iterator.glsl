@@ -6,6 +6,7 @@
 layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 0) readonly buffer PNI_PERMUTATION { uint pni_permutation[]; };
 layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 1) readonly buffer PNI_CELL_KEYS { uint pni_cell_keys[]; };
 layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 2) readonly buffer PNI_START_ID { uint pni_start_id[]; };
+layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 3) readonly buffer PNI_END_ID { uint pni_end_id[]; };
 
 struct PNI_Uniform
 {
@@ -13,7 +14,7 @@ struct PNI_Uniform
 	uint range;
 };
 
-layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 3) uniform UNIFORM { PNI_Uniform pni_uniform; };
+layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 4) uniform UNIFORM { PNI_Uniform pni_uniform; };
 
 #ifndef MAX_PARTICLES_PER_CELL
 #define MAX_PARTICLES_PER_CELL 1024
@@ -35,22 +36,19 @@ layout(binding = PARTICLE_NEIGHBORHOOD_ITERATOR_BINDING_OFFSET + 3) uniform UNIF
 		uint hash = hashCell(neighborCell);				\
 		uint key = keyFromHash(hash, pni_uniform.range);\
 		uint startID = pni_start_id[key];				\
+		uint endID = pni_end_id[key];					\
 		if(startID == 0xFFFFFFFF)						\
 		{												\
 			continue;									\
 		}												\
-		for(uint j = 0; j<MAX_PARTICLES_PER_CELL; j++)	\
+		for(uint j = startID; j<endID; j++)	\
 		{												\
-			if(pni_cell_keys[startID + j] != key)		\
-			{											\
-				break;									\
-			}											\
-			uint otherId = pni_permutation[startID + j];\
+			uint otherId = j; \
 			if(ID == otherId)							\
 			{											\
 				continue;								\
 			}											\
-			// CODE(otherId)
+
 #define ITERATE_END \
 		}		    \
 	}

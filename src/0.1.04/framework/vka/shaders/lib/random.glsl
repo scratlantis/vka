@@ -158,6 +158,22 @@ float perlinNoise(vec3 val)
 	return mix(cellNoiseZ[0], cellNoiseZ[1], a.z);
 }
 
+float perlinNoise1D(float val)
+{
+	float frac = fract(val);
+	float a = EASE_IN_OUT(frac);
+	float cellNoise[2];
+	[[unroll]]
+	for(uint x = 0; x<=1; x++)
+	{
+		float cell = floor(val) + float(x);
+		float cellDir = random(cell) * 2 - 1;
+		float compVec = frac - float(x);
+		cellNoise[x] = cellDir * compVec;
+	}
+	return mix(cellNoise[0], cellNoise[1], a);
+}
+
 // iteratively construct a bit mask with P(mask[i] = 1) = p
 #if 1
 uint randomBitMask(float p, uint iterations, inout uint seed)

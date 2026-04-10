@@ -1,6 +1,8 @@
 
 layout(binding = LOCAL_BINDING_OFFSET + 0) readonly buffer CELL_KEYS { uint cellKeys[]; };
 layout(binding = LOCAL_BINDING_OFFSET + 1) writeonly buffer START_INDICES { uint startIndices[]; };
+// end indices
+layout(binding = LOCAL_BINDING_OFFSET + 2) writeonly buffer END_INDICES { uint endIndices[]; };
 
 struct PushStruct
 {
@@ -24,5 +26,10 @@ void main()
 	if (id == 0 || key != cellKeys[id - 1])
 	{
 		startIndices[key] = id;
+	}
+	// end index of the previous key
+	if (id == pc.taskSize - 1 || key != cellKeys[id + 1])
+	{
+		endIndices[key] = id + 1;
 	}
 }

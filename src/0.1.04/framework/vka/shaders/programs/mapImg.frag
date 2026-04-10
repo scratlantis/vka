@@ -13,6 +13,7 @@ layout(push_constant) uniform PC
 	float height;
 	float whitePoint;
 	float exposure;
+	float slidingAverageCoef;
 } pc;
 
 layout(binding = 0) uniform sampler2D smp;
@@ -49,4 +50,9 @@ void main()
 #endif
 #endif
 	outColor = color;
+#ifdef SLIDING_AVERAGE
+	// Sliding average for white point adaptation
+	outColor.a = clamp(1.0-pc.slidingAverageCoef, 0.0, 1.0);
+#endif
+
 }

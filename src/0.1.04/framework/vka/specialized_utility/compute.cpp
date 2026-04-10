@@ -245,4 +245,19 @@ void cmdLoadScalarField(CmdBuffer cmdBuf, Buffer src, Image dst, const ScalarFie
 	cmd.exec(cmdBuf);
 }
 
+void prefixSumBinary(CmdBuffer cmdBuf, Image src, Buffer dst)
+{
+	VKA_ASSERT(src->getFormat() == VK_FORMAT_R8_UINT);
+	dst->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	VkExtent2D extent = src->getExtent2D();
+	dst->changeSize(extent.width * extent.height * sizeof(uint32_t));
+
+	// prefix sum rows
+	{
+		ComputeCmd cmd(extent.height, cVkaShaderPath + "prefix_sum_binary_rows.comp");
+		cmd.pipelineDef.shaderDef.args.push_back({"FORMAT", getGLSLFormat(src->getFormat())});
+
+	}
+}
+
 }        // namespace vka

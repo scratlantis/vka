@@ -1,0 +1,28 @@
+
+
+#ifdef STEP_1
+#undef STEP_2
+#endif
+#ifdef STEP_2
+#undef STEP_3
+#endif
+
+
+
+
+struct PushStruct
+{
+	uint width;
+	uint height;
+}
+
+layout(binding = 0, FORMAT) readonly uniform image2D img;
+layout(binding = 1) writeonly buffer OUTPUT{ BUFFER_TYPE buf[]; };
+
+void main()
+{
+	if(validInvocation())
+	{
+
+	}
+}

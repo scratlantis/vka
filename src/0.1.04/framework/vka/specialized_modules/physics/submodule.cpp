@@ -12,6 +12,7 @@ namespace vka
 		{
 			cellKeys = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 			startIndices = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	        endIndices = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 			permutation = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 			pingPongCellKeys = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 			pingPongPermutation = createBuffer(pPool, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
@@ -27,6 +28,10 @@ namespace vka
 				startIndices->changeSize(preallocCount * sizeof(uint32_t));
 				startIndices->recreate();
 		        startIndices->addFlags(BUFFER_FLAG_DONT_REDUCE);
+
+				endIndices->changeSize(preallocCount * sizeof(uint32_t));
+				endIndices->recreate();
+		        endIndices->addFlags(BUFFER_FLAG_DONT_REDUCE);
 			
 				permutation->changeSize(preallocCount * sizeof(uint32_t));
 				permutation->recreate();
@@ -65,10 +70,12 @@ namespace vka
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
 			startIndices->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+	        endIndices->addUsage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 	        cmdInitBuffer(cmdBuf, startIndices, 0xFFFFFFFF, sizeof(uint32_t) * particleCount);
+			cmdInitBuffer(cmdBuf, endIndices, static_cast<uint32_t>(0x0), sizeof(uint32_t) * particleCount);
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-	        getCmdComputeStartId(cellKeys, startIndices, particleCount).exec(cmdBuf);
+	        getCmdComputeStartId(cellKeys, startIndices, endIndices, particleCount).exec(cmdBuf);
 		}
 
 		void NeighborhoodIterator::bind(ComputeCmd &cmd, const ParticleDescription& desc) const
@@ -77,6 +84,7 @@ namespace vka
 			cmd.pushDescriptor(permutation, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 			cmd.pushDescriptor(cellKeys, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 			cmd.pushDescriptor(startIndices, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+	        cmd.pushDescriptor(endIndices, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 			cmd.pushDescriptor(uniformBuf, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 			//cmd.pushSpecializationConst(desc.radius);
 			//cmd.pushSpecializationConst(static_cast<uint32_t>(permutation->getSize() / sizeof(uint32_t)));

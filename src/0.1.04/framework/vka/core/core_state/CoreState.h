@@ -16,6 +16,7 @@ struct Frame
 	VkSemaphore    imageAvailableSemaphore;
 	VkFence        inFlightFence;
 	uint32_t       frameIndex;
+	uint32_t       imageIndex;
 	IResourcePool *stack;
 	Frame         *next;
 	Frame         *previous;
@@ -75,4 +76,3 @@ class CoreState
 	std::vector<Frame> frames;
 };
 }
-

@@ -1,6 +1,7 @@
 #pragma once
 #include "setup.h"
 #include "macros.h"
+#include <cstring>
 
 namespace vka
 {

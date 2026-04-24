@@ -14,6 +14,6 @@ class FeedbackDataCache
 	FeedbackDataCache(HostCache *pHostCache);
 	void clear();
 	bool fetch(Buffer &buf, hash_t key);
-	bool FeedbackDataCache::fetchHostData(void *&data, hash_t key, uint32_t *pSize = nullptr);
+	bool fetchHostData(void *&data, hash_t key, uint32_t *pSize = nullptr);
 };
 }        // namespace vka

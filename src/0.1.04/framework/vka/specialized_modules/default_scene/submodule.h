@@ -49,7 +49,7 @@ void cmdBuildBoxIntersector(CmdBuffer cmdBuf, BLAS srcBlas, Buffer srcInstanceBu
 	}
 	cmdWriteCopy(cmdBuf, tlasInstanceBuf, tlasInstances.data(), tlasInstances.size() * sizeof(VkAccelerationStructureInstanceKHR));
 	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
-	instance_type<Instance>().get_cmd_write_tlas_instance(srcInstanceBuf, tlasInstanceBuf, instanceCount).exec(cmdBuf);
+	vka::pbr::instance_type<Instance>().get_cmd_write_tlas_instance(srcInstanceBuf, tlasInstanceBuf, instanceCount).exec(cmdBuf);
 	cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);
 	cmdBuildAccelerationStructure(cmdBuf, dstTlas, tlasInstanceBuf, createStagingBuffer());
 }

@@ -63,6 +63,7 @@ endforeach()
 
 # vulkan
 find_package(Vulkan REQUIRED)
+find_package(OpenXR REQUIRED)
 # external depencenies contained in repo
 add_subdirectory(external)
 # threads
@@ -123,9 +124,10 @@ FOREACH(vka_version ${VKA_VERSIONS})
   # link
   target_include_directories(${current_lib} PUBLIC   ./src/${vka_version}/framework/ )
   target_include_directories(${current_lib} PRIVATE ${Vulkan_INCLUDE_DIRS})
+  target_include_directories(${current_lib} PRIVATE OpenXR::Headers)
   target_link_libraries(
       ${current_lib} Vulkan::Vulkan glfw imgui stb tinyexr glm tinyobjloader
-      implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma boxer openxr)
+      implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma boxer OpenXR::openxr_loader)
   
   # folder
   set_target_properties (${current_lib} PROPERTIES FOLDER ${vka_version}/framework )
@@ -161,8 +163,9 @@ FOREACH(vka_version ${VKA_VERSIONS})
     target_include_directories(${current_app} PUBLIC   ./src/${vka_version}/applications/${application}/ )
     target_include_directories(${current_app} PUBLIC   ./src/${vka_version}/framework/ )
     target_include_directories(${current_app} PRIVATE ${Vulkan_INCLUDE_DIRS})
+    target_include_directories(${current_app} PRIVATE OpenXR::Headers)
     target_link_libraries(${current_app} Vulkan::Vulkan glfw imgui stb tinyexr glm tinyobjloader
-    implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma boxer openxr)
+    implot imfile ktx csvwriter nlohmann_json ${CMAKE_DL_LIBS} vma boxer OpenXR::openxr_loader)
     target_link_libraries(${current_app} ${current_lib})
 
     # folder
@@ -185,5 +188,4 @@ install(TARGETS ${all_targets} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 else()
 install(TARGETS ${all_targets} DESTINATION bin)
 endif()
-
 

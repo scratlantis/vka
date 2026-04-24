@@ -231,8 +231,12 @@ struct vertex_type<glm::vec3>
 	}
 };
 
-
-
+// Forward declarations needed for the templated fetch() implementation.
+Buffer createStagingBuffer();
+Buffer createBuffer(IResourcePool *pPool, VkBufferUsageFlags usageFlags);
+void   cmdUploadCopy(CmdBuffer cmdBuf, Buffer srcBuffer, Buffer dstBuffer);
+void   cmdWriteCopy(CmdBuffer cmdBuf, Buffer dstBuffer, const void *data, size_t size);
+void   cmdBarrier(CmdBuffer cmdBuf, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage, VkAccessFlags srcAccess, VkAccessFlags dstAccess);
 
 class ModelCache
 {

@@ -30,7 +30,7 @@ namespace vka
 			NeighborhoodIterator(IResourcePool* pPool);
 
 
-	        void NeighborhoodIterator::cmdUpdate(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription &desc);
+	        void cmdUpdate(CmdBuffer cmdBuf, Buffer particleBuf, const ParticleDescription &desc);
 			void bind(ComputeCmd& cmd, const ParticleDescription& desc) const;
 	        Buffer getPermutationBuffer() const
 	        {

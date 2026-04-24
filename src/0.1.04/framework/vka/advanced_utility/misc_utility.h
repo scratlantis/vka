@@ -2,7 +2,7 @@
 #include <vka/core/core_utility/types.h>
 namespace vka
 {
-enum XrEye;
+enum XrEye : unsigned int;
 void               swapBuffers(std::vector<CmdBuffer> cmdBufs);
 vka::VkRect2D_OP   getScissorRect();
 vka::VkRect2D_OP   getScissorRect(float x, float y, float width, float height);

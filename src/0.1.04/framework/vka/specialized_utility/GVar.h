@@ -1,6 +1,7 @@
 #pragma once
 #include <vka/core/core_utility/types.h>
 #include <vka/core/resources/cachable/RenderPass.h>
+#include <vka/core/stateless/utility/enum.h>
 
 #include <imgui_impl_vulkan.h>
 #include <fstream>

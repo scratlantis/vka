@@ -27,6 +27,9 @@ void VrIOController::init()
 	format      = surfaceFormat.format;
 	presentMode = VK_PRESENT_MODE_FIFO_KHR;
 	selectByPreference(swapChainDetails.presentationMode, controllerCI.preferedPresentModes, presentMode);
+	selectByPreference(swapChainDetails.presentationMode,
+	                   std::vector<VkPresentModeKHR>{VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, presentMode},
+	                   presentMode);
 
 	imageCount = controllerCI.preferedSwapchainImageCount;
 	imageCount = std::max(imageCount, swapChainDetails.surfaceCapabilities.minImageCount);

@@ -1,11 +1,53 @@
 #include "misc_utility.h"
+#include <chrono>
 #include <vka/core/core_utility/cmd_buffer_utility.h>
 #include <vka/core/core_utility/general_commands.h>
 #include <vka/core/stateless/vk_types/default_values.h>
+#include <vka/advanced_state/vr/XrSwapchainImage.h>
 #include <vka/globals.h>
 
 namespace vka
 {
+namespace
+{
+using Clock = std::chrono::high_resolution_clock;
+
+struct SwapBuffersTiming
+{
+	uint64_t frames      = 0;
+	double   hostMs      = 0.0;
+	double   acquireMs   = 0.0;
+	double   submitMs    = 0.0;
+	double   presentMs   = 0.0;
+	double   nextFrameMs = 0.0;
+};
+
+SwapBuffersTiming gSwapTiming{};
+
+double elapsedMs(Clock::time_point start, Clock::time_point end)
+{
+	return std::chrono::duration<double, std::milli>(end - start).count();
+}
+
+void reportSwapTiming()
+{
+	if (gSwapTiming.frames == 0 || gSwapTiming.frames % 120 != 0)
+	{
+		return;
+	}
+
+	const double inv = 1.0 / static_cast<double>(gSwapTiming.frames);
+	printVka("swapBuffers avg over %llu frames: host=%.3fms acquire=%.3fms submit=%.3fms present=%.3fms next=%.3fms\n",
+	         static_cast<unsigned long long>(gSwapTiming.frames),
+	         gSwapTiming.hostMs * inv,
+	         gSwapTiming.acquireMs * inv,
+	         gSwapTiming.submitMs * inv,
+	         gSwapTiming.presentMs * inv,
+	         gSwapTiming.nextFrameMs * inv);
+	gSwapTiming = {};
+}
+}        // namespace
+
 
 void swapBuffersVr(std::vector<CmdBuffer> cmdBufs)
 {
@@ -44,11 +86,25 @@ void swapBuffers(std::vector<CmdBuffer> cmdBufs)
 	}
 	cmdBarrier(cmdBufs[0], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
 	           VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+	auto t0 = Clock::now();
 	gState.hostCache->update(cmdBufs[0]);
+	auto t1 = Clock::now();
 	SubmitSynchronizationInfo syncInfo = gState.acquireNextSwapchainImage();
+	auto t2 = Clock::now();
 	submit(cmdBufs, gState.device.universalQueues[0], syncInfo);
+	auto t3 = Clock::now();
 	gState.presentFrame();
+	auto t4 = Clock::now();
 	gState.nextFrame();
+	auto t5 = Clock::now();
+
+	gSwapTiming.frames += 1;
+	gSwapTiming.hostMs += elapsedMs(t0, t1);
+	gSwapTiming.acquireMs += elapsedMs(t1, t2);
+	gSwapTiming.submitMs += elapsedMs(t2, t3);
+	gSwapTiming.presentMs += elapsedMs(t3, t4);
+	gSwapTiming.nextFrameMs += elapsedMs(t4, t5);
+	reportSwapTiming();
 
 }
 

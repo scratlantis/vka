@@ -61,6 +61,7 @@ void VrState::initFrames()
 	for (size_t i = 0; i < io.imageCount; i++)
 	{
 		frames[i].frameIndex = i;
+		frames[i].imageIndex = i;
 		frames[i].next       = &frames[NEXT_INDEX(i, io.imageCount)];
 		frames[i].previous   = &frames[PREVIOUS_INDEX(i, io.imageCount)];
 		frames[i].stack      = new ResourcePool();
@@ -95,6 +96,7 @@ void VrState::coreNextFrame()
 	io.updateSwapchain();
 	if (io.swapchainRecreated())
 	{
+		printVka("VrState::coreNextFrame swapchain recreated: %u x %u\n", io.extent.width, io.extent.height);
 		frame = &frames[0];
 	}
 	io.imageLayouts[frame->frameIndex] = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -162,7 +164,7 @@ SubmitSynchronizationInfo VrState::acquireNextSwapchainImage()
 {
 	uint32_t imageIndex;
 	VK_CHECK(vkAcquireNextImageKHR(device.logical, io.swapchain, UINT64_MAX, frame->imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex));
-	VKA_ASSERT(imageIndex == frame->frameIndex);
+	frame->imageIndex = imageIndex;
 	VK_CHECK(vkResetFences(device.logical, 1, &frame->inFlightFence));
 	SubmitSynchronizationInfo syncInfo{};
 	syncInfo.waitSemaphores   = {frame->imageAvailableSemaphore};

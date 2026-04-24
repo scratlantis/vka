@@ -1,6 +1,7 @@
 #pragma once
 #include <vka/core/resources/cachable/RenderPass.h>
 #include <vka/core/core_utility/types.h>
+#include <vka/specialized_modules/plot/interface_structs.h>
 #include "GVar.h"
 #include <implot.h>
 
@@ -32,4 +33,3 @@ void addPlots(T *pPlots, uint32_t plotCount, void *pPlotData)
 
 
 }        // namespace vka
-

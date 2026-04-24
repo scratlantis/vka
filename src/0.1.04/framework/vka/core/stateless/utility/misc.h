@@ -1,6 +1,7 @@
 #pragma once
 #include "macros.h"
 #include <glm/glm.hpp>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -52,7 +53,7 @@ inline bool selectByPreference(const std::vector<T> &options, const std::vector<
 	{
 		for (size_t j = 0; j < preferences.size(); j++)
 		{
-			if (std::memcmp(&options[i], &preferences[j], sizeof(T)) == 0)
+			if (memcmp(&options[i], &preferences[j], sizeof(T)) == 0)
 			{
 				selection = options[i];
 				return true;

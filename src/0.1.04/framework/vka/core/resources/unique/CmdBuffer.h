@@ -157,7 +157,7 @@ class CmdBuffer_R : public Resource_T<VkCommandBuffer>
 		free();
 	}
 
-	void CmdBuffer_R::end()
+	void end()
 	{
 		if (stateBits & CMD_BUF_STATE_BITS_RECORDING)
 		{

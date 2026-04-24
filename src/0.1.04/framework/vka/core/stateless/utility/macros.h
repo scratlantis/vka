@@ -20,7 +20,7 @@
 #ifdef _WIN32
 #	define GLSLC_COMMAND "glslc.exe --target-env=vulkan1.3"
 #else        // not _WIN32
-#	define GLSLC_COMMAND "glslc --target-env vulkan1.3"
+#	define GLSLC_COMMAND "glslc --target-env=vulkan1.3"
 #endif        // _WIN32
 
 #define INTEL_VENDOR_ID 8086
@@ -33,7 +33,11 @@
 #else        // not _WIN32
 #	include <signal.h>
 #	define FILE_SEPARATOR '/'
-#	define DEBUG_BREAK raise(SIGTRAP);
+#	if defined(DEBUG) || defined(_DEBUG)
+#		define DEBUG_BREAK raise(SIGTRAP);
+#	else
+#		define DEBUG_BREAK
+#	endif
 
 #endif        // _WIN32
 
@@ -119,7 +123,7 @@
 #define ZERO_PAD(TYPE) TYPE##_ZERO_PAD
 
 #define DEFINE_EQUALS_OVERLOAD(CHILD_TYPE, PARENT_TYPE)             \
-	bool CHILD_TYPE## ::operator==(const PARENT_TYPE & other) const \
+	bool CHILD_TYPE::operator==(const PARENT_TYPE & other) const    \
 	{                                                               \
 		if (typeid(*this) == typeid(other))                         \
 		{                                                           \
@@ -136,7 +140,7 @@
 	{                                             \
 		size_t operator()(TYPE const &type) const \
 		{                                         \
-			return type.##FUNC##();               \
+			return type.FUNC();                   \
 		}                                         \
 	};                                            \
 	}

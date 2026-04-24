@@ -34,7 +34,7 @@ class ImageEstimatorComparator
 	void garbageCollect();
 
 	void cmdReset(CmdBuffer cmdBuf, Image imgLeft = nullptr, Image imgRight = nullptr);
-	void ImageEstimatorComparator::cmdReset(CmdBuffer cmdBuf, IECTarget target);
+	void cmdReset(CmdBuffer cmdBuf, IECTarget target);
 	template <class EstimatorArgs>
 	void cmdRunEqualRate(CmdBuffer cmdBuf, std::function<void(CmdBuffer, Image, EstimatorArgs)> estimator, EstimatorArgs argsLeft, EstimatorArgs argsRight,
 	                     float *timigsLeft = nullptr, float *timigsRight = nullptr, uint32_t flags = 0);

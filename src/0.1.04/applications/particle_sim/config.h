@@ -107,7 +107,7 @@ struct DefaultIOControlerCI : IOControlerCI
 		size = { width, height };
 		cursorMode = vka::WINDOW_CURSOR_MODE_VISIBLE;
 		preferedFormats = { {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}, {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR} };
-		preferedPresentModes = { VK_PRESENT_MODE_MAILBOX_KHR };
+		preferedPresentModes = { VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_KHR };
 		preferedSwapchainImageCount = 3;
 		menuBar = useMenuBar;
 	}
@@ -120,5 +120,3 @@ struct DefaultAdvancedStateConfig : AdvancedStateConfig
 		modelUsage = 0;
 	}
 };
-
-

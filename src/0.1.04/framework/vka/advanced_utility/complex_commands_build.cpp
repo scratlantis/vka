@@ -174,7 +174,7 @@ DrawCmd::DrawCmd()
 {
 	instanceCount = 1;
 	pipelineDef   = defaultRasterizationPipeline();
-	renderArea = VkRect2D_OP({0, 0, gState.io.extent.width, gState.io.extent.height});
+	renderArea    = VkRect2D_OP(0U, 0U, gState.io.extent.width, gState.io.extent.height);
 }
 
 

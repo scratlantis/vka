@@ -166,6 +166,10 @@ GlfwWindow::~GlfwWindow()
 void GlfwWindow::framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
 	GlfwWindow *thisWindow = static_cast<GlfwWindow *>(glfwGetWindowUserPointer(window));
+	if (thisWindow->width == width && thisWindow->height == height)
+	{
+		return;
+	}
 	thisWindow->width      = width;
 	thisWindow->height     = height;
 	gState.io.requestSwapchainRecreation();

@@ -2,6 +2,7 @@
 #include "shader_interface.h"
 #include "ui.h"
 #include "resources.h"
+#include <chrono>
 #include <boxer/boxer.h>
 
 VrState     gState;
@@ -15,7 +16,7 @@ using namespace vka::physics;
 #include <bindings/interface_structs.h>
 
 
-static const float cParticle_size_scale = 0.1f;
+const float cParticle_size_scale = 0.1f;
 
 extern GVar gvar_menu;
 extern GVar gvar_particle_size;
@@ -33,6 +34,48 @@ enum ApplicationMode
 	AM_2D,
 	AM_3D
 };
+
+namespace
+{
+using Clock = std::chrono::high_resolution_clock;
+
+struct MainLoopTiming
+{
+	uint64_t frames        = 0;
+	double   guiMs         = 0.0;
+	double   simMs         = 0.0;
+	double   fillMs        = 0.0;
+	double   renderMs      = 0.0;
+	double   composeMs     = 0.0;
+	double   totalPreSwapMs = 0.0;
+};
+
+MainLoopTiming gMainLoopTiming{};
+
+double elapsedMs(Clock::time_point start, Clock::time_point end)
+{
+	return std::chrono::duration<double, std::milli>(end - start).count();
+}
+
+void reportMainLoopTiming()
+{
+	if (gMainLoopTiming.frames == 0 || gMainLoopTiming.frames % 120 != 0)
+	{
+		return;
+	}
+
+	const double inv = 1.0 / static_cast<double>(gMainLoopTiming.frames);
+	printVka("mainLoop avg over %llu frames: gui=%.3fms sim=%.3fms fill=%.3fms render=%.3fms compose=%.3fms preSwap=%.3fms\n",
+	         static_cast<unsigned long long>(gMainLoopTiming.frames),
+	         gMainLoopTiming.guiMs * inv,
+	         gMainLoopTiming.simMs * inv,
+	         gMainLoopTiming.fillMs * inv,
+	         gMainLoopTiming.renderMs * inv,
+	         gMainLoopTiming.composeMs * inv,
+	         gMainLoopTiming.totalPreSwapMs * inv);
+	gMainLoopTiming = {};
+}
+}        // namespace
 
 
 void load(std::string s, std::vector<int> ids = {})
@@ -69,7 +112,7 @@ void load(std::string s, std::vector<int> ids = {})
 int main()
 {
 	bool doRestart = true;
-	if (boxer::Selection::Yes == boxer::show("Use VR? ", "particle simulation", boxer::Buttons::YesNo))
+	if (false && boxer::Selection::Yes == boxer::show("Use VR? ", "particle simulation", boxer::Buttons::YesNo))
 	{
 		gState.enableVr();
 	}
@@ -145,6 +188,7 @@ int main()
 		// Main Loop
 		while (!gState.io.shouldTerminate())
 		{
+			auto frameStart = Clock::now();
 			gvar_display_frame_time.val.v_float = static_cast<float>(gState.frameTime);
 
 			bool shaderRecompiled = false;
@@ -161,6 +205,7 @@ int main()
 			reset = reset || gState.isVrEnabled() && gState.xrControllers.getBPress(CONTROLER_INDEX_A);
 
 			std::vector<bool> settingsChanged = buildGui();
+			auto afterGui = Clock::now();
 
 			if (curFrameCount == 0 || curAppMode != static_cast<ApplicationMode>(gvar_application_mode.val.v_uint))
 			{
@@ -282,12 +327,14 @@ int main()
 				cmdSimulateParticles(cmdBuf, &particleRes, params, step);
 				cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
 			}
+			auto afterSim = Clock::now();
 
 			cmdBarrier(cmdBuf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 
 			// Fill swapchain with background color
 			Image     swapchainImg = getSwapchainImage();
 			getCmdFill(swapchainImg, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, vec4(0.25, 0.25, 0.3, 1.0)).exec(cmdBuf);
+			auto afterFill = Clock::now();
 
 
 			
@@ -373,6 +420,7 @@ int main()
 					getCmdRenderParticles3D(eyeImages[i], particleRes.getParticleBuf(), particleRes.simRes.densityBuffer, particleRes.simRes.forceBuffer).exec(cmdBuf);
 				}
 			}
+			auto afterRender = Clock::now();
 
 		
 
@@ -409,6 +457,17 @@ int main()
 
 				cmdRenderGui(cmdBuf, swapchainImg);
 			}
+			auto beforeSwap = Clock::now();
+
+			gMainLoopTiming.frames += 1;
+			gMainLoopTiming.guiMs += elapsedMs(frameStart, afterGui);
+			gMainLoopTiming.simMs += elapsedMs(afterGui, afterSim);
+			gMainLoopTiming.fillMs += elapsedMs(afterSim, afterFill);
+			gMainLoopTiming.renderMs += elapsedMs(afterFill, afterRender);
+			gMainLoopTiming.composeMs += elapsedMs(afterRender, beforeSwap);
+			gMainLoopTiming.totalPreSwapMs += elapsedMs(frameStart, beforeSwap);
+			reportMainLoopTiming();
+
 			swapBuffers({cmdBuf});
 			curFrameCount++;
 		}

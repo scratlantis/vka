@@ -4,10 +4,10 @@
 namespace vka
 {
 
-	enum XrEye
+	enum XrEye : unsigned int
 	{
-		XR_EYE_LEFT  = 0,
-		XR_EYE_RIGHT = 1,
+		XR_EYE_LEFT  = 0U,
+		XR_EYE_RIGHT = 1U,
 	};
 class XrSwapchainImage_R : public SwapchainImage_R
 {

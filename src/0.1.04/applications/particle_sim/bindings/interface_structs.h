@@ -4,7 +4,7 @@ using namespace glm;
 #include "../shaders/interface_structs.glsl"
 
 template <>
-struct vertex_type<GLSLParticle>
+struct vka::vertex_type<GLSLParticle>
 {
 	VertexDataLayout data_layout()
 	{
@@ -43,7 +43,7 @@ struct particle_type<GLSLParticle>
 
 
 template <>
-struct vertex_type<GLSLParticle3D>
+struct vka::vertex_type<GLSLParticle3D>
 {
 	VertexDataLayout data_layout()
 	{

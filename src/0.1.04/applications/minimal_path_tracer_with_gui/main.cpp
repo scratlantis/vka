@@ -1,7 +1,7 @@
 #include "config.h"
 #include "shader_interface.h"
 #include "ui.h"
-AdvancedState     gState;
+VrState           gState;
 const std::string gShaderOutputDir = SHADER_OUTPUT_DIR;
 const std::string gAppShaderRoot   = std::string(APP_SRC_DIR) + "/shaders/";
 using namespace glm;

@@ -53,3 +53,6 @@ CMakeSettings.json
 
 # shader logs
 *.log.txt
+
+# volumetric data (large, not tracked)
+resources/digimouse_data/

@@ -24,7 +24,7 @@ extern GVar gvar_camera_reset;
 
 GVar gvar_application_mode{"Application Mode", 0U, GVAR_ENUM, GUI_CAT_GENERAL, std::vector<std::string>{"2D", "3D"}};
 GVar gvar_display_frame_time{"Frame Time: %.4f ms", 1.f, GVAR_DISPLAY_FLOAT, GUI_CAT_GENERAL};
-GVar gvar_sliding_average_coef{"Sliding Average Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_GENERAL, {0.5f, 1.f}};
+GVar gvar_sliding_average_coef{"Sliding Average Coefficient", 1.0f, GVAR_FLOAT_RANGE, GUI_CAT_GENERAL, {0.0f, 1.f}};
 
 enum ApplicationMode
 {
